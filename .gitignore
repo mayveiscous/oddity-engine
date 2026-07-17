@@ -1,4 +1,6 @@
 *.ps1
 
 test.lua
-\ignore
+ignore/
+engine_render/include
+engine_render/src/glad.h
