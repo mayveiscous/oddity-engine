@@ -1,0 +1,1 @@
+g++ -Iinclude src/main.cpp src/glad.c -lglfw3 -lopengl32 -lgdi32 -o render_test.exe
