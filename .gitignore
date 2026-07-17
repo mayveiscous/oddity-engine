@@ -4,4 +4,4 @@
 test.lua
 ignore/
 engine_render/include
-engine_render/src/glad.h
+engine_render/src/glad.c
