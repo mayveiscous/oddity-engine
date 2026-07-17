@@ -2,7 +2,7 @@ local Instance = require("src.core.instance")
 local Game = require("src.game")
 local task = require("task")
 local Vector3 = require("src.types.vector3")
-local RunService = require("src.services.runservice")
+local RunService = require("src.classes.runservice")
 
 local scrapi = require("src.scripting.scriptapi")
 

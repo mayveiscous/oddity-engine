@@ -111,6 +111,10 @@ function Instance:SetParent(newParent)
         return
     end
 
+    if state.CanReparent ~= nil and state.CanReparent == false then
+        return
+    end
+
     if oldParent then
         local oldState = rawget(oldParent, "_state")
         oldState._children[self] = nil
@@ -190,6 +194,10 @@ function Instance:OnExactChange(propName)
 end
 
 function Instance:Destroy()
+    if state.CanBeDeleted ~= nil and state.CanBeDeleted == false then
+        return
+    end
+
     self:SetParent(nil)
     for _, child in ipairs(self:GetChildren()) do
         child:Destroy()

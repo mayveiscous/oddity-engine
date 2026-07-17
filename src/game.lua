@@ -1,7 +1,6 @@
 local Instance = require("src.core.instance")
 
 local Game = {}
-Game.Workspace = Instance.new("Instance")
-Game.Workspace.Name = "Workspace"
+Game.Workspace = Instance.new("Workspace")
 
 return Game

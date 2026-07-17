@@ -1,9 +1,9 @@
 local Instance = require("src.core.instance")
 local Vector3 = require("src.types.vector3")
 
-local Part = Instance:RegisterClass("Part", "Instance")
+local Block = Instance:RegisterClass("Block", "Instance")
 
-Part.Defaults = function()
+Block.Defaults = function()
     return {
         Position = Vector3.new(0, 0, 0),
         Size = Vector3.new(1, 1, 1),
@@ -12,4 +12,4 @@ Part.Defaults = function()
     }
 end
 
-return Part
+return Block
