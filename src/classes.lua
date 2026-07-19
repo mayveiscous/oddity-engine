@@ -16,6 +16,7 @@ local classList = {
     "model",
     "motor",
     "player",
+    "sky",
     "spawn",
     "spring",
     "tunascript",

@@ -3,7 +3,7 @@ local Instance = require("src.core.instance")
 local Player = Instance:RegisterClass("Player", "Instance")
 
 Player.PropertyTypes = {
-    Character = "Character",
+    Character = "Instance",
     UserId = "number",
 }
 

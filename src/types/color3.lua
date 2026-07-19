@@ -37,7 +37,34 @@ end
 
 function Color3.new(r, g, b)
     local self = setmetatable({}, buildMeta())
+    
+    if r > 1 then
+        r = r / 255
+    end
+
+    if g > 1 then
+        g = g / 255
+    end
+
+    if b > 1 then
+        b = b / 255
+    end
+
     rawset(self, "_state", { R = r or 0, G = g or 0, B = b or 0, _owner = nil, _key = nil, _isColor3 = true })
+    return self
+end
+
+function Color3.fromHex(hex)
+    local self = setmetatable({}, buildMeta())
+
+    hex = hex:gsub("#", "")
+    assert(#hex == 6, "Expected a h")
+
+    local r = (tonumber(hex:sub(1, 2), 16) / 255)
+    local g = (tonumber(hex:sub(3, 4), 16) / 255)
+    local b = (tonumber(hex:sub(5, 6), 16) / 255)
+
+    rawset(self, "_state", {R=r, G=g,B=b,_owner=nil,_key=nil,_isColor3=true})
     return self
 end
 

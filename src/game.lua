@@ -6,6 +6,7 @@ local Lighting = require("src.classes.lighting")
 local Players = require("src.classes.players")
 local Player = require("src.classes.player")
 local Workspace = require("src.classes.workspace")
+local Sky = require("src.classes.sky")
 
 
 local Game = {}
@@ -16,6 +17,9 @@ Game.CurrentCamera.Position = Vector3.new(2, 2, 4)
 Game.CurrentCamera.LookAt = Vector3.new(0, 0, 0)
 
 Game.Lighting = Instance.new("Lighting")
+Game.Lighting.Sky = Instance.new("Sky")
+Game.Lighting.Sky.Texture = "" -- texture id here
+
 Game.Players = Instance.new("Players")
 Game.Players.Players["mayveiscous"] = Instance.new("Player")
 

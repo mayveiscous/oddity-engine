@@ -4,9 +4,17 @@ local Color3 = require("src.types.color3")
 
 local DefaultRig = {}
 
-function DefaultRig.Create(parent, position, color)
-    color = color or Color3.new(0.9, 0.8, 0.2)
+function DefaultRig.Create(parent, position, name)
+    local color = Color3.new(0.9, 0.8, 0.2)
     position = position or Vector3.new(0, 0, 0)
+
+    local character = Instance.new("Character")
+    character.Parent = parent
+    character.Name = name
+
+    local controller = Instance.new("Controller")
+    controller.Parent = character
+    character.Controller = controller
 
     local bodySize = Vector3.new(1.4, 1.4, 1.4)
     local armSize = Vector3.new(0.4, 1.4, 0.4)
@@ -15,7 +23,7 @@ function DefaultRig.Create(parent, position, color)
     local bodyY = legSize.Y + (bodySize.Y / 2)
 
     local body = Instance.new("Block")
-    body.Parent = parent
+    body.Parent = character
     body.Size = bodySize
     body.Position = Vector3.new(position.X, position.Y + bodyY, position.Z)
     body.Color = color
@@ -23,7 +31,7 @@ function DefaultRig.Create(parent, position, color)
 
     local function attachLimb(name, size, c0, c1, limbColor)
         local limb = Instance.new("Block")
-        limb.Parent = parent
+        limb.Parent = character
         limb.Size = size
         limb.Color = limbColor
         limb.Name = name
@@ -68,13 +76,7 @@ function DefaultRig.Create(parent, position, color)
         Color3.new(0.2, 0.3, 0.8)
     )
 
-    return {
-        Body = body,
-        LeftArm = leftArm, RightArm = rightArm,
-        LeftLeg = leftLeg, RightLeg = rightLeg,
-        LeftArmMotor = leftArmMotor, RightArmMotor = rightArmMotor,
-        LeftLegMotor = leftLegMotor, RightLegMotor = rightLegMotor,
-    }
+    return character
 end
 
 return DefaultRig

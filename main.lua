@@ -6,7 +6,7 @@ local runservice = require("src.classes.runservice")
 runservice:Init()
 
 require("src.core.camera_controller")
-require("src.populate_game")
-require("test")
+require("src.create_character")
+require("tests.test")
 
 runservice:Run()

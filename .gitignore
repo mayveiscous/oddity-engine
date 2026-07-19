@@ -5,6 +5,7 @@
 
 test.lua
 ignore/
+tests/
 engine_render/include
 engine_render/src/glad.c
 engine_render/src/main.cpp
