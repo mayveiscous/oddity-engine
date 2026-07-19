@@ -1,0 +1,80 @@
+local Instance = require("src.core.instance")
+local Vector3 = require("src.types.vector3")
+local Color3 = require("src.types.color3")
+
+local DefaultRig = {}
+
+function DefaultRig.Create(parent, position, color)
+    color = color or Color3.new(0.9, 0.8, 0.2)
+    position = position or Vector3.new(0, 0, 0)
+
+    local bodySize = Vector3.new(1.4, 1.4, 1.4)
+    local armSize = Vector3.new(0.4, 1.4, 0.4)
+    local legSize = Vector3.new(0.4, 1.4, 0.4)
+
+    local bodyY = legSize.Y + (bodySize.Y / 2)
+
+    local body = Instance.new("Block")
+    body.Parent = parent
+    body.Size = bodySize
+    body.Position = Vector3.new(position.X, position.Y + bodyY, position.Z)
+    body.Color = color
+    body.Name = "Body"
+
+    local function attachLimb(name, size, c0, c1, limbColor)
+        local limb = Instance.new("Block")
+        limb.Parent = parent
+        limb.Size = size
+        limb.Color = limbColor
+        limb.Name = name
+
+        local motor = Instance.new("Motor")
+        motor.Parent = body
+        motor.Part0 = body
+        motor.Part1 = limb
+        motor.C0 = c0
+        motor.C1 = c1
+        motor.Name = name
+
+        return limb, motor
+    end
+
+    local leftArm, leftArmMotor = attachLimb(
+        "LeftArm", armSize,
+        Vector3.new(-(bodySize.X / 2) - 0.2, (body.Position.Y / 3) - 0.5, 0),
+        Vector3.new(0, armSize.Y / 2, 0),
+        color
+    )
+    leftArmMotor.RestRotation = Vector3.new(0, 0, -45)
+
+    local rightArm, rightArmMotor = attachLimb(
+        "RightArm", armSize,
+        Vector3.new((bodySize.X / 2) + 0.2, (body.Position.Y / 3) - 0.5, 0),
+        Vector3.new(0, armSize.Y / 2, 0),
+        color
+    )
+    rightArmMotor.RestRotation = Vector3.new(0, 0, 45) 
+
+    local leftLeg, leftLegMotor = attachLimb(
+        "LeftLeg", legSize,
+        Vector3.new(-0.35, -(bodySize.Y / 2), 0),
+        Vector3.new(0, legSize.Y / 2, 0),
+        Color3.new(0.2, 0.3, 0.8)
+    )
+    local rightLeg, rightLegMotor = attachLimb(
+        "RightLeg", legSize,
+        Vector3.new(0.35, -(bodySize.Y / 2), 0),
+        Vector3.new(0, legSize.Y / 2, 0),
+        Color3.new(0.2, 0.3, 0.8)
+    )
+
+    return {
+        Body = body,
+        LeftArm = leftArm, RightArm = rightArm,
+        LeftLeg = leftLeg, RightLeg = rightLeg,
+        LeftArmMotor = leftArmMotor, RightArmMotor = rightArmMotor,
+        LeftLegMotor = leftLegMotor, RightLegMotor = rightLegMotor,
+    }
+end
+
+return DefaultRig

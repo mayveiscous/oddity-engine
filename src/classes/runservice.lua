@@ -3,6 +3,7 @@ local task = require("task")
 local render = require("render")
 
 local Vector3 = require("src.types.vector3")
+local AnimUtil = require("src.core.animutil")
 
 local Game = require("src.game")
 
@@ -14,19 +15,21 @@ local running = false
 local lastTime = nil
 
 local function updateMotors(AllMotors)
-    for _, obj in ipairs(AllMotors) do -- see "tracking motors" note below
-        local motor = obj
+    for _, motor in ipairs(AllMotors) do
         if motor.Part0 and motor.Part1 then
-            motor.Part1.Position = Vector3.new(
-                motor.Part0.Position.X + motor.C0.X,
-                motor.Part0.Position.Y + motor.C0.Y,
-                motor.Part0.Position.Z + motor.C0.Z
+            local totalRotation = Vector3.new(
+                motor.Part0.Rotation.X + motor.RestRotation.X + motor.CurrentRotation.X,
+                motor.Part0.Rotation.Y + motor.RestRotation.Y + motor.CurrentRotation.Y,
+                motor.Part0.Rotation.Z + motor.RestRotation.Z + motor.CurrentRotation.Z
             )
-            motor.Part1.Rotation = Vector3.new(
-                motor.Part0.Rotation.X + motor.CurrentRotation.X,
-                motor.Part0.Rotation.Y + motor.CurrentRotation.Y,
-                motor.Part0.Rotation.Z + motor.CurrentRotation.Z
-            )
+
+            local rotatedC0 = AnimUtil.rotateVector3(motor.C0, motor.Part0.Rotation)
+            local pivotWorld = motor.Part0.Position + rotatedC0
+
+            local rotatedC1 = AnimUtil.rotateVector3(motor.C1, totalRotation)
+            motor.Part1.Position = pivotWorld - rotatedC1
+
+            motor.Part1.Rotation = totalRotation
         end
     end
 end

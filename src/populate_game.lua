@@ -38,5 +38,5 @@ local function createCharacter(player)
 end
 
 for _, player in pairs(Game.Players.Players) do
-    createCharacter(player)
+    -- createCharacter(player)
 end

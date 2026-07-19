@@ -9,6 +9,7 @@ Motor.PropertyTypes = {
     Part1 = "Instance",
     C0 = "Vector3",
     C1 = "Vector3",
+    RestRotation = "Vector3",
     CurrentRotation = "Vector3",
 }
 
@@ -18,6 +19,7 @@ Motor.Defaults = function()
         Part1 = nil,
         C0 = Vector3.Zero,
         C1 = Vector3.Zero,
+        RestRotation = Vector3.Zero,
         CurrentRotation = Vector3.Zero,
     }
 end

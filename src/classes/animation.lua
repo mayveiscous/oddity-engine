@@ -4,9 +4,9 @@ local Animation = Instance:RegisterClass("Animation", "Instance")
 
 Animation.Defaults = function()
     return {
-        Playing = false,
-        Speed = 1,
-        Duration = 0,
+        Length = 1.0,
+        Tracks = {}, -- { [motorName] = { {time=.., rotation=Vector3}, ... } }
+        Looped = true,
     }
 end
 
