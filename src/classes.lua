@@ -1,6 +1,9 @@
 local classList = {
+    "workspace",
+    "runservice",
     "block",
-    "script",
+    "luascript",
+    "tunascript",
     "folder",
     "model",
     "weld",

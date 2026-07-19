@@ -5,6 +5,20 @@ local function buildMeta()
     return {
         __index = function(t, k)
             local state = rawget(t, "_state")
+
+            if k == "Magnitude" then
+                return math.sqrt(state.X^2 + state.Y^2 + state.Z^2)
+            end
+
+            if k == "Unit" then
+                local mag = math.sqrt(state.X^2 + state.Y^2 + state.Z^2)
+                if mag == 0 then
+                    return Vector3.new(0, 0, 0)
+                end
+
+                return Vector3.new(state.X / mag, state.Y / mag, state.Z / mag)
+            end
+
             local v = state[k]
             if v ~= nil then return v end
             return Vector3[k]
@@ -28,6 +42,30 @@ local function buildMeta()
             end
         end,
 
+        __add = function(a, b)
+            return Vector3.new(a.X + b.X, a.Y + b.Y, a.Z + b.Z)
+        end,
+
+        __sub = function(a, b)
+            return Vector3.new(a.X - b.X, a.Y - b.Y, a.Z - b.Z)
+        end,
+
+        __mul = function(a, b)
+            if type(b) == "number" then
+                return Vector3.new(
+                    a.X * b,
+                    a.Y * b,
+                    a.Z * b
+                )
+            end
+
+            return Vector3.new(
+                a.X * b.X,
+                a.Y * b.Y,
+                a.Z * b.Z
+            )   
+        end,
+
         __tostring = function(t)
             local s = rawget(t, "_state")
             return ("Vector3(%g, %g, %g)"):format(s.X, s.Y, s.Z)
@@ -41,14 +79,22 @@ function Vector3.new(x, y, z)
     return self
 end
 
+function Vector3.zero()
+    local self = setmetatable({}, buildMeta())
+    rawset(self, "_state", {X = 0, Y = 0, Z = 0, _owner = nil, _key = nil, _isVector3 = true })
+    return self
+end
+
+function Vector3.__index(t, k)
+    if k == "Zero" then
+        return Vector3.new(0, 0, 0)
+    end
+end
+
 function Vector3._bind(vec, owner, key)
     local state = rawget(vec, "_state")
     state._owner = owner
     state._key = key
-end
-
-function Vector3.__add(a, b)
-    return Vector3.new(a.X + b.X, a.Y + b.Y, a.Z + b.Z)
 end
 
 return Vector3

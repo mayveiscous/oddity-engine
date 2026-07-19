@@ -44,6 +44,15 @@ local function buildMeta(classTable)
                 return
             end
 
+            local expectedType = classTable.PropertyTypes and classTable.PropertyTypes[k]
+            if expectedType and v ~= nil then
+                local TypeCheck = require("src.core.typecheck")
+                local actType = TypeCheck.typeName(v)
+                if actType ~= expectedType then 
+                    error(("'%s' expects %s, got %s"):format(k, expectedType, actType), 2)
+                end
+            end
+
             local old = state[k]
             state[k] = v
 
@@ -147,10 +156,14 @@ function Instance:GetAttribute(name)
 end
 
 function Instance:SetAttribute(name, value)
+    if type(name) ~= "string" then
+        error("Attribute names must be a string", 2)
+    end
+
     local state = rawget(self, "_state")
     state._attributes[name] = value
+    state.AttributeSet:Fire(name, value)
 end
-
 
 function Instance:GetChildren()
     local state = rawget(self, "_state")
@@ -194,6 +207,7 @@ function Instance:OnExactChange(propName)
 end
 
 function Instance:Destroy()
+    local state = rawget(self, "_state")
     if state.CanBeDeleted ~= nil and state.CanBeDeleted == false then
         return
     end

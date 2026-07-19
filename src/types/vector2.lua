@@ -10,7 +10,7 @@ local function buildMeta()
             return Vector2[k]
         end,
 
-        __newindex = function(t, k)
+        __newindex = function(t, k, v)
             local state = rawget(t, "_state")
             if k ~= "X" and k ~= "Y" then
                 error(("Vector2 has no member '%s'"):format(k))
