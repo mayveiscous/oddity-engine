@@ -12,8 +12,20 @@ function Instance:RegisterClass(className, parentClassName)
     return class
 end
 
--- base "Instance" class itself
--- so Instance.new("Instance") is valid
+local readOnly = {
+    ClassName = true,
+    UniqueId = true,
+
+    _children = true,
+    _attributes = true,
+
+    Changed = true,
+    ChildAdded = true,
+    ChildRemoved = true,
+    AncestryChanged = true,
+    AttributeSet = true,
+}
+
 ClassRegistry["Instance"] = Instance
 Instance.__index = Instance
 
@@ -38,6 +50,10 @@ local function buildMeta(classTable)
 
         __newindex = function(t, k, v)
             local state = rawget(t, "_state")
+
+            if readOnly[k] then
+                error(("Property '%s' is read-only!"):format(k), 2)
+            end
 
             if k == "Parent" then
                 t:SetParent(v)
@@ -68,6 +84,16 @@ local function buildMeta(classTable)
     }
 end
 
+local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+
+local function generateId()
+    return string.gsub(template, "[xy]", function(c)
+        local r = math.random(0, 15)
+        local v = c == "x" and r or (r % 4) + 8
+        return string.format("%x", v)
+    end)
+end
+
 function Instance.new(className)
     local classTable = ClassRegistry[className]
     if not classTable then
@@ -77,6 +103,7 @@ function Instance.new(className)
     local state = {
         ClassName = className,
         Name = className,
+        UniqueId = generateId(),
         _attributes = {},
         Parent = nil,
         _children = {},
@@ -110,6 +137,25 @@ function Instance.new(className)
     end
 
     return self
+end
+
+function Instance:GetProperties()
+    local state = rawget(self, "_state")
+    local properties = {}
+
+    for key, value in pairs(state) do
+        if not string.match(key, "^_") 
+            and key ~= "Changed"
+            and key ~= "ChildAdded"
+            and key ~= "ChildRemoved"
+            and key ~= "AncestryChanged"
+            and key ~= "AttributeSet"
+        then
+            properties[key] = value
+        end
+    end
+
+    return properties
 end
 
 function Instance:SetParent(newParent)

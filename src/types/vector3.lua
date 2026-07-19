@@ -85,6 +85,14 @@ function Vector3.zero()
     return self
 end
 
+function Vector3:Lerp(goal, alpha)
+    return Vector3.new(
+        self.X + (goal.X - self.X) * alpha,
+        self.Y + (goal.Y - self.Y) * alpha,
+        self.Z + (goal.Z - self.Z) * alpha
+    )
+end
+
 function Vector3._bind(vec, owner, key)
     local state = rawget(vec, "_state")
     state._owner = owner

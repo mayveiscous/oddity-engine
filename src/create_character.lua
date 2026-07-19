@@ -4,6 +4,8 @@ local DefaultRig = require("src.rig.default_rig")
 local Vector3 = require("src.types.vector3")
 local Color3 = require("src.types.color3")
 
+local char_cam = require("src.core.camera.character_camera")
+
 local ground = Instance.new("Block")
 ground.Name = "Ground"
 ground.Parent = Game.Workspace
@@ -20,6 +22,8 @@ spawn.Size = Vector3.new(4, 1, 4)
 spawn.Color = Color3.new(0.2, 0.6, 0.9)
 spawn.Transparency = 0.5
 
+local characters = {}
+
 local function getSpawnPoint()
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("Spawn") and obj.Enabled then
@@ -32,12 +36,21 @@ end
 local function createCharacter(player)
     local spawnPos = getSpawnPoint()
     local ch = DefaultRig.Create(Game.Workspace, spawnPos, player.Name)
+
     player.Character = ch
+    char_cam.Attach(ch.RootPart)
+    characters[player.Name] = ch
+
     return ch
+end
+
+local function getCharacter(name)
+    return characters[name]
 end
 
 for _, player in pairs(Game.Players.Players) do
     createCharacter(player)
 end
 
-return { createCharacter = createCharacter }
+
+return { createCharacter = createCharacter, getCharacter = getCharacter }

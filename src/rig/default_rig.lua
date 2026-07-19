@@ -18,7 +18,7 @@ function DefaultRig.Create(parent, position, name)
 
     local bodySize = Vector3.new(1.4, 1.4, 1.4)
     local armSize = Vector3.new(0.4, 1.4, 0.4)
-    local legSize = Vector3.new(0.4, 1.4, 0.4)
+    local legSize = Vector3.new(0.4, 0.75, 0.4)
 
     local bodyY = legSize.Y + (bodySize.Y / 2)
 
@@ -28,6 +28,8 @@ function DefaultRig.Create(parent, position, name)
     body.Position = Vector3.new(position.X, position.Y + bodyY, position.Z)
     body.Color = color
     body.Name = "Body"
+    
+    character.RootPart = body
 
     local function attachLimb(name, size, c0, c1, limbColor)
         local limb = Instance.new("Block")
@@ -49,7 +51,7 @@ function DefaultRig.Create(parent, position, name)
 
     local leftArm, leftArmMotor = attachLimb(
         "LeftArm", armSize,
-        Vector3.new(-(bodySize.X / 2) - 0.2, (body.Position.Y / 3) - 0.5, 0),
+        Vector3.new(-(bodySize.X / 2) + 0.1, (body.Position.Y / 3) - 0.7, 0),
         Vector3.new(0, armSize.Y / 2, 0),
         color
     )
@@ -57,7 +59,7 @@ function DefaultRig.Create(parent, position, name)
 
     local rightArm, rightArmMotor = attachLimb(
         "RightArm", armSize,
-        Vector3.new((bodySize.X / 2) + 0.2, (body.Position.Y / 3) - 0.5, 0),
+        Vector3.new((bodySize.X / 2) - 0.1, (body.Position.Y / 3) - 0.7, 0),
         Vector3.new(0, armSize.Y / 2, 0),
         color
     )

@@ -5,6 +5,9 @@ local render = require("render")
 local Vector3 = require("src.types.vector3")
 local AnimUtil = require("src.core.animutil")
 
+local Explorer = require("src.editor.explorer")
+local Inspector = require("src.editor.inspector")
+
 local Game = require("src.game")
 
 local RunService = {}
@@ -45,6 +48,7 @@ function RunService:Step()
     local now = os.clock()
     local dt = now - lastTime
 
+    -- draw lights prior to frame begin
     local opaque, transparent, motors = {}, {}, {}
 
     render.clearPointLights()
@@ -70,6 +74,11 @@ function RunService:Step()
 
     render.beginFrame()
 
+    -- draw ui
+    Explorer.drawExplorer(Game.Workspace)
+    Inspector.drawInspector()
+
+    -- draw camera and lighting
     if Game.CurrentCamera then
         local cam = Game.CurrentCamera
         render.setCamera(cam.Position.X, cam.Position.Y, cam.Position.Z, cam.LookAt.X, cam.LookAt.Y, cam.LookAt.Z)
@@ -83,6 +92,7 @@ function RunService:Step()
         )
     end
 
+    -- draw meshes
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj.EnsureMesh then
             local meshId = obj:EnsureMesh()

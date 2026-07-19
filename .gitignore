@@ -9,3 +9,5 @@ tests/
 engine_render/include
 engine_render/src/glad.c
 engine_render/src/main.cpp
+engine_render/imgui/
+engine_render/src/render_module_noUI.cpp

@@ -8,6 +8,10 @@
 #include <vector>
 #include <iostream>
 
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
 #define MAX_POINT_LIGHTS 8
 #define MAX_SPOT_LIGHTS 8
 
@@ -234,9 +238,27 @@ static int lua_setCamera(lua_State* L) {
     return 0;
 }
 
+static int g_width = 800;
+static int g_height = 600;
+
+static bool g_fullscreen = false;
+static GLFWmonitor* g_monitor = nullptr;
+static int g_windowX, g_windowY;
+static int g_windowWidth, g_windowHeight;
+
+static void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    g_width = width;
+    g_height = height;
+    glViewport(0, 0, width, height);
+}
+
 static int lua_init(lua_State* L) {
     int width = (int)luaL_optinteger(L, 1, 800);
     int height = (int)luaL_optinteger(L, 2, 600);
+
+    g_width = width;
+    g_height = height;
+
     const char* title = luaL_optstring(L, 3, "Engine Window");
 
     glfwSetErrorCallback(glfwErrorCallback);
@@ -249,6 +271,7 @@ static int lua_init(lua_State* L) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     g_window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (!g_window) {
@@ -256,12 +279,20 @@ static int lua_init(lua_State* L) {
         return 0;
     }
 
+    glfwSetFramebufferSizeCallback(g_window, framebufferSizeCallback);
     glfwMakeContextCurrent(g_window);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         luaL_error(L, "Failed to init GLAD");
         return 0;
     }
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(g_window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
 
     glfwSetScrollCallback(g_window, glfwScrollCallback);
 
@@ -297,13 +328,53 @@ static int lua_init(lua_State* L) {
     return 0;
 }
 
+static int lua_setFullscreen(lua_State* L) {
+    bool fullscreen = lua_toboolean(L, 1);
+
+    if (fullscreen == g_fullscreen)
+        return 0;
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+
+    if (fullscreen) {
+        glfwGetWindowPos(g_window, &g_windowX, &g_windowY);
+        glfwGetWindowSize(g_window, &g_windowWidth, &g_windowHeight);
+
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+        glfwSetWindowMonitor(
+            g_window,
+            monitor,
+            0,
+            0,
+            mode->width,
+            mode->height,
+            mode->refreshRate
+        );
+    } else {
+        glfwSetWindowMonitor(
+            g_window,
+            nullptr,
+            g_windowX,
+            g_windowY,
+            g_windowWidth,
+            g_windowHeight,
+            0
+        );
+    }
+
+    g_fullscreen = fullscreen;
+
+    return 0;
+}
+
 static int lua_getMouseScroll(lua_State* L) {
     if (!g_window) {
         luaL_error(L, "render.getMouseScroll() called before render.init()");
         return 0;
     }
     lua_pushnumber(L, g_scrollDeltaY);
-    g_scrollDeltaY = 0.0; // consume it — each frame only sees scroll since last poll
+    g_scrollDeltaY = 0.0;
     return 1;
 }
 
@@ -324,9 +395,6 @@ static int lua_setLight(lua_State* L) {
     return 0;
 }
 
-// --- point light array state ---
-// Rebuilt each frame: Lua calls render.clearPointLights() then
-// render.addPointLight(...) once per active PointLight, before beginFrame.
 static std::vector<glm::vec3> g_pointPositions;
 static std::vector<glm::vec3> g_pointColors;
 static std::vector<float> g_pointConstants;
@@ -344,7 +412,7 @@ static int lua_clearPointLights(lua_State* L) {
 
 static int lua_addPointLight(lua_State* L) {
     if ((int)g_pointPositions.size() >= MAX_POINT_LIGHTS) {
-        return 0; // silently ignore extras beyond the cap
+        return 0;
     }
 
     g_pointPositions.push_back(glm::vec3(
@@ -364,7 +432,6 @@ static int lua_addPointLight(lua_State* L) {
     return 0;
 }
 
-// --- spot light array state, same pattern as point lights ---
 static std::vector<glm::vec3> g_spotPositions;
 static std::vector<glm::vec3> g_spotDirs;
 static std::vector<glm::vec3> g_spotColors;
@@ -388,7 +455,7 @@ static int lua_clearSpotLights(lua_State* L) {
 
 static int lua_addSpotLight(lua_State* L) {
     if ((int)g_spotPositions.size() >= MAX_SPOT_LIGHTS) {
-        return 0; // silently ignore extras beyond the cap
+        return 0;
     }
 
     g_spotPositions.push_back(glm::vec3(
@@ -480,10 +547,21 @@ static int lua_beginFrame(lua_State* L) {
     glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
     glUseProgram(g_shaderProgram);
 
     glm::mat4 view = glm::lookAt(g_cameraPos, g_cameraTarget, glm::vec3(0, 1, 0));
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 500.0f);
+    float aspect = (float)g_width / (float)g_height;
+
+    glm::mat4 projection = glm::perspective(
+        glm::radians(45.0f),
+        aspect,
+        0.1f,
+        500.0f
+    );
 
     glUniformMatrix4fv(g_viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(g_projLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -527,6 +605,10 @@ static int lua_endFrame(lua_State* L) {
         luaL_error(L, "render.endFrame() called before render.init()");
         return 0;
     }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(g_window);
     return 0;
 }
@@ -590,6 +672,178 @@ static int lua_isMouseButtonDown(lua_State* L) {
     return 1;
 }
 
+static int lua_imguiBegin(lua_State* L) {
+    const char* title = luaL_checkstring(L, 1);
+    ImGui::Begin(title);
+    return 0;
+}
+
+static int lua_imguiEnd(lua_State* L) {
+    ImGui::End();
+    return 0;
+}
+
+static int lua_imguiTreeNode(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    bool selected = lua_toboolean(L, 2);
+
+    bool clicked = ImGui::TreeNodeEx(
+        label,
+        selected ? ImGuiTreeNodeFlags_Selected : 0
+    );
+
+    lua_pushboolean(L, clicked);
+    return 1;
+}
+
+static int lua_imguiTreeNodeEx(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    bool open = ImGui::TreeNodeEx(
+        label,
+        ImGuiTreeNodeFlags_OpenOnArrow
+    );
+
+    bool clicked = ImGui::IsItemClicked();
+
+    lua_pushboolean(L, open);
+    lua_pushboolean(L, clicked);
+
+    return 2;
+}
+
+static int lua_imguiTreePop(lua_State* L) {
+    ImGui::TreePop();
+    return 0;
+}
+
+static int lua_imguiSelectable(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    bool clicked = ImGui::Selectable(
+        label,
+        false,
+        ImGuiSelectableFlags_AllowOverlap
+    );
+
+    lua_pushboolean(L, clicked);
+    return 1;
+}
+
+static int lua_imguiSeparator(lua_State* L) {
+    ImGui::Separator();
+
+    return 0;
+}
+
+static int lua_imguiText(lua_State* L) {
+    const char* text = luaL_checkstring(L, 1);
+
+    ImGui::Text("%s", text);
+
+    return 0;
+}
+
+static int lua_imguiInputText(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    const char* initial = luaL_checkstring(L, 2);
+
+    char buffer[256];
+    strncpy(buffer, initial, sizeof(buffer));
+    buffer[sizeof(buffer)-1] = '\0';
+
+    bool changed = ImGui::InputText(label, buffer, sizeof(buffer));
+
+    lua_pushstring(L, buffer);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
+static int lua_imguiInputInt(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    int value = (int)luaL_checkinteger(L, 2);
+
+    bool changed = ImGui::InputInt(label, &value);
+
+    lua_pushinteger(L, value);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
+static int lua_imguiInputFloat(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    float value = luaL_checknumber(L, 2);
+
+    bool changed = ImGui::InputFloat(label, &value);
+
+    lua_pushnumber(L, value);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
+static int lua_imguiVector3(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    float x = (float)luaL_checknumber(L, 2);
+    float y = (float)luaL_checknumber(L, 3);
+    float z = (float)luaL_checknumber(L, 4);
+
+    float values[3] = {x, y, z};
+
+    bool changed = ImGui::DragFloat3(
+        label,
+        values,
+        0.1f
+    );
+
+    lua_pushnumber(L, values[0]);
+    lua_pushnumber(L, values[1]);
+    lua_pushnumber(L, values[2]);
+    lua_pushboolean(L, changed);
+
+    return 4;
+}
+
+static int lua_imguiColor(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    float r = (float)luaL_checknumber(L, 2);
+    float g = (float)luaL_checknumber(L, 3);
+    float b = (float)luaL_checknumber(L, 4);
+
+    float color[3] = {r, g, b};
+
+    bool changed = ImGui::ColorEdit3(
+        label,
+        color
+    );
+
+    lua_pushnumber(L, color[0]);
+    lua_pushnumber(L, color[1]);
+    lua_pushnumber(L, color[2]);
+    lua_pushboolean(L, changed);
+
+    return 4;
+}
+
+static int lua_imguiCheckbox(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    bool value = lua_toboolean(L, 2);
+
+    bool changed = ImGui::Checkbox(
+        label,
+        &value
+    );
+
+    lua_pushboolean(L, value);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -609,6 +863,21 @@ static const luaL_Reg renderFunctions[] = {
     {"clearSpotLights", lua_clearSpotLights},
     {"addSpotLight", lua_addSpotLight},
     {"getMouseScroll", lua_getMouseScroll},
+    {"imguiBegin", lua_imguiBegin},
+    {"imguiEnd", lua_imguiEnd},
+    {"imguiTreeNode", lua_imguiTreeNode},
+    {"imguiTreeNodeEx", lua_imguiTreeNodeEx},
+    {"imguiTreePop", lua_imguiTreePop},
+    {"imguiSelectable", lua_imguiSelectable},
+    {"imguiText", lua_imguiText},
+    {"imguiSeparator", lua_imguiSeparator},
+    {"imguiInputInt", lua_imguiInputInt},
+    {"imguiInputFloat", lua_imguiInputFloat},
+    {"imguiInputText", lua_imguiInputText},
+    {"imguiVector3", lua_imguiVector3},
+    {"imguiColor", lua_imguiColor},
+    {"imguiCheckbox", lua_imguiCheckbox},
+    {"setFullscreen", lua_setFullscreen},
     {nullptr, nullptr}
 };
 
