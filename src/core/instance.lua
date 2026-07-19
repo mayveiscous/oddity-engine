@@ -174,6 +174,23 @@ function Instance:GetChildren()
     return list
 end
 
+function Instance:GetDescendants()
+    local descendants = {}
+
+    local function recurse(instance)
+        local state = rawget(instance, "_state")
+
+        for child in pairs(state._children) do
+            table.insert(descendants, child)
+            recurse(child)
+        end
+    end
+
+    recurse(self)
+
+    return descendants
+end
+
 function Instance:FindFirstChild(name)
     local state = rawget(self, "_state")
     for child in pairs(state._children) do

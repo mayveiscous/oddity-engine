@@ -2,6 +2,8 @@ local Signal = require("src.core.signal")
 local task = require("task")
 local render = require("render")
 
+local Vector3 = require("src.types.vector3")
+
 local Game = require("src.game")
 
 local RunService = {}
@@ -10,6 +12,24 @@ RunService.Heartbeat = Signal.new()
 
 local running = false
 local lastTime = nil
+
+local function updateMotors(AllMotors)
+    for _, obj in ipairs(AllMotors) do -- see "tracking motors" note below
+        local motor = obj
+        if motor.Part0 and motor.Part1 then
+            motor.Part1.Position = Vector3.new(
+                motor.Part0.Position.X + motor.C0.X,
+                motor.Part0.Position.Y + motor.C0.Y,
+                motor.Part0.Position.Z + motor.C0.Z
+            )
+            motor.Part1.Rotation = Vector3.new(
+                motor.Part0.Rotation.X + motor.CurrentRotation.X,
+                motor.Part0.Rotation.Y + motor.CurrentRotation.Y,
+                motor.Part0.Rotation.Z + motor.CurrentRotation.Z
+            )
+        end
+    end
+end
 
 function RunService:Init()
     render.init()
@@ -41,9 +61,9 @@ function RunService:Step()
     end
 
     -- draw all objects
-    local opaque, transparent = {}, {}
+    local opaque, transparent, motors = {}, {}, {}
 
-    for _, obj in ipairs(Game.Workspace:GetChildren()) do
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj.EnsureMesh then
             local meshId = obj:EnsureMesh()
             if meshId then
@@ -53,6 +73,10 @@ function RunService:Step()
                     table.insert(opaque, obj)
                 end
             end
+        end
+
+        if obj:IsA("Motor") then
+            table.insert(motors, obj)
         end
     end
 
@@ -66,6 +90,7 @@ function RunService:Step()
             1
         )
     end
+
     for _, obj in ipairs(transparent) do 
         render.drawMesh(
             obj._meshId,
@@ -76,6 +101,8 @@ function RunService:Step()
             1 - obj.Transparency
         )
     end
+
+    updateMotors(motors)
 
     -- fire heartbeat signal
     -- for script objects

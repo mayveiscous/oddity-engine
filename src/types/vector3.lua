@@ -85,16 +85,22 @@ function Vector3.zero()
     return self
 end
 
-function Vector3.__index(t, k)
-    if k == "Zero" then
-        return Vector3.new(0, 0, 0)
-    end
-end
-
 function Vector3._bind(vec, owner, key)
     local state = rawget(vec, "_state")
     state._owner = owner
     state._key = key
 end
+
+setmetatable(Vector3, {
+    __index = function(t, k)
+        if k == "Zero" then
+            return Vector3.new(0, 0, 0)
+        end
+
+        if k == "One" then 
+            return Vector3.new(1, 1, 1)
+        end
+    end
+})
 
 return Vector3

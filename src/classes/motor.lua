@@ -1,4 +1,6 @@
-local Instance = require("scr.core.instance")
+local Instance = require("src.core.instance")
+
+local Vector3 = require("src.types.vector3")
 
 local Motor = Instance:RegisterClass("Motor", "Instance")
 
