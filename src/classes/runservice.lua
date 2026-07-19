@@ -41,15 +41,35 @@ end
 function RunService:Step()
     if not running then return end
 
-    -- compute dt
     lastTime = lastTime or os.clock()
     local now = os.clock()
     local dt = now - lastTime
-    
-    -- start renderer frame
+
+    local opaque, transparent, motors = {}, {}, {}
+
+    render.clearPointLights()
+    render.clearSpotLights()
+
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj:IsA("PointLight") and obj.Enabled then
+            render.addPointLight(
+                obj.Position.X, obj.Position.Y, obj.Position.Z,
+                obj.Color.R, obj.Color.G, obj.Color.B
+            )
+        elseif obj:IsA("SpotLight") and obj.Enabled then
+            render.addSpotLight(
+                obj.Position.X, obj.Position.Y, obj.Position.Z,
+                obj.Direction.X, obj.Direction.Y, obj.Direction.Z,
+                obj.Color.R, obj.Color.G, obj.Color.B,
+                obj.InnerAngle, obj.OuterAngle
+            )
+        elseif obj:IsA("Motor") then
+            table.insert(motors, obj)
+        end
+    end
+
     render.beginFrame()
 
-    -- position the camera
     if Game.CurrentCamera then
         local cam = Game.CurrentCamera
         render.setCamera(cam.Position.X, cam.Position.Y, cam.Position.Z, cam.LookAt.X, cam.LookAt.Y, cam.LookAt.Z)
@@ -63,9 +83,6 @@ function RunService:Step()
         )
     end
 
-    -- draw all objects
-    local opaque, transparent, motors = {}, {}, {}
-
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj.EnsureMesh then
             local meshId = obj:EnsureMesh()
@@ -77,24 +94,20 @@ function RunService:Step()
                 end
             end
         end
-
-        if obj:IsA("Motor") then
-            table.insert(motors, obj)
-        end
     end
 
     for _, obj in ipairs(opaque) do
         render.drawMesh(
-            obj._meshId, 
+            obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
-            obj.Size.X, obj.Size.Y, obj.Size.Z, 
-            obj.Color.R, obj.Color.G, obj.Color.B, 
-            obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z, 
+            obj.Size.X, obj.Size.Y, obj.Size.Z,
+            obj.Color.R, obj.Color.G, obj.Color.B,
+            obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1
         )
     end
 
-    for _, obj in ipairs(transparent) do 
+    for _, obj in ipairs(transparent) do
         render.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -107,12 +120,9 @@ function RunService:Step()
 
     updateMotors(motors)
 
-    -- fire heartbeat signal
-    -- for script objects
     task.update()
     RunService.Heartbeat:Fire(dt)
 
-    -- end frame
     render.endFrame()
     render.pollEvents()
 

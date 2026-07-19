@@ -31,7 +31,7 @@ end
 
 local function createCharacter(player)
     local spawnPos = getSpawnPoint()
-    local ch = DefaultRig.Create(Game.Workspace, spawnPos)
+    local ch = DefaultRig.Create(Game.Workspace, spawnPos, player.Name)
     player.Character = ch
     return ch
 end

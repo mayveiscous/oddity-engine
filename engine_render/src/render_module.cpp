@@ -8,6 +8,9 @@
 #include <vector>
 #include <iostream>
 
+#define MAX_POINT_LIGHTS 8
+#define MAX_SPOT_LIGHTS 8
+
 struct Mesh {
     GLuint vao, vbo;
     int vertexCount;
@@ -51,22 +54,81 @@ in vec3 FragPos;
 in vec3 Normal;
 out vec4 FragColor;
 
+#define MAX_POINT_LIGHTS 8
+#define MAX_SPOT_LIGHTS 8
+
 uniform vec4 objectColor;
+
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 
+uniform int numPointLights;
+uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
+uniform vec3 pointLightColor[MAX_POINT_LIGHTS];
+uniform float pointLightConstant[MAX_POINT_LIGHTS];
+uniform float pointLightLinear[MAX_POINT_LIGHTS];
+uniform float pointLightQuadratic[MAX_POINT_LIGHTS];
+
+uniform int numSpotLights;
+uniform vec3 spotLightPos[MAX_SPOT_LIGHTS];
+uniform vec3 spotLightDir[MAX_SPOT_LIGHTS];
+uniform vec3 spotLightColor[MAX_SPOT_LIGHTS];
+uniform float spotLightInnerCutoff[MAX_SPOT_LIGHTS];
+uniform float spotLightOuterCutoff[MAX_SPOT_LIGHTS];
+uniform float spotLightConstant[MAX_SPOT_LIGHTS];
+uniform float spotLightLinear[MAX_SPOT_LIGHTS];
+uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
+
 void main() {
     vec3 norm = normalize(Normal);
-    float diff = max(dot(norm, -lightDir), 0.0);
     vec3 ambient = 0.15 * lightColor;
-    vec3 diffuse = diff * lightColor;
-    vec3 result = (ambient + diffuse) * objectColor.rgb;
+
+    float dirDiff = max(dot(norm, -lightDir), 0.0);
+    vec3 dirDiffuse = dirDiff * lightColor;
+
+    vec3 pointDiffuse = vec3(0.0);
+    for (int i = 0; i < numPointLights; i++) {
+        vec3 toLight = pointLightPos[i] - FragPos;
+        float dist = length(toLight);
+        vec3 dir = toLight / max(dist, 0.0001); // avoid divide-by-zero
+        float diff = max(dot(norm, dir), 0.0);
+        float atten = 1.0 / (pointLightConstant[i] + pointLightLinear[i] * dist + pointLightQuadratic[i] * dist * dist);
+        pointDiffuse += diff * pointLightColor[i] * atten;
+    }
+
+    vec3 spotDiffuse = vec3(0.0);
+    for (int i = 0; i < numSpotLights; i++) {
+        vec3 toSpot = spotLightPos[i] - FragPos;
+        float spotDist = length(toSpot);
+        vec3 spotDirToFrag = toSpot / max(spotDist, 0.0001);
+
+        float theta = dot(spotDirToFrag, -spotLightDir[i]);
+        float epsilon = spotLightInnerCutoff[i] - spotLightOuterCutoff[i];
+        float spotIntensity = clamp((theta - spotLightOuterCutoff[i]) / max(epsilon, 0.0001), 0.0, 1.0);
+
+        float spotDiff = max(dot(norm, spotDirToFrag), 0.0);
+        float spotAttenuation = 1.0 / (spotLightConstant[i] + spotLightLinear[i] * spotDist + spotLightQuadratic[i] * spotDist * spotDist);
+        spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
+    }
+
+    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * objectColor.rgb;
     FragColor = vec4(result, objectColor.a);
 }
 )";
 
 static GLint g_colorLoc = -1;
 static GLint g_lightDirLoc = -1, g_lightColorLoc = -1;
+
+// point light array uniform locations
+static GLint g_numPointLightsLoc = -1;
+static GLint g_pointPosLoc = -1, g_pointColorLoc = -1;
+static GLint g_pointConstLoc = -1, g_pointLinearLoc = -1, g_pointQuadLoc = -1;
+
+// spot light array uniform locations
+static GLint g_numSpotLightsLoc = -1;
+static GLint g_spotPosLoc = -1, g_spotDirLoc = -1, g_spotColorLoc = -1;
+static GLint g_spotInnerLoc = -1, g_spotOuterLoc = -1;
+static GLint g_spotConstLoc = -1, g_spotLinearLoc = -1, g_spotQuadLoc = -1;
 
 static double g_scrollDeltaY = 0.0;
 
@@ -212,9 +274,25 @@ static int lua_init(lua_State* L) {
     g_viewLoc = glGetUniformLocation(g_shaderProgram, "view");
     g_projLoc = glGetUniformLocation(g_shaderProgram, "projection");
     g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
-    g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
     g_lightDirLoc = glGetUniformLocation(g_shaderProgram, "lightDir");
     g_lightColorLoc = glGetUniformLocation(g_shaderProgram, "lightColor");
+
+    g_numPointLightsLoc = glGetUniformLocation(g_shaderProgram, "numPointLights");
+    g_pointPosLoc = glGetUniformLocation(g_shaderProgram, "pointLightPos");
+    g_pointColorLoc = glGetUniformLocation(g_shaderProgram, "pointLightColor");
+    g_pointConstLoc = glGetUniformLocation(g_shaderProgram, "pointLightConstant");
+    g_pointLinearLoc = glGetUniformLocation(g_shaderProgram, "pointLightLinear");
+    g_pointQuadLoc = glGetUniformLocation(g_shaderProgram, "pointLightQuadratic");
+
+    g_numSpotLightsLoc = glGetUniformLocation(g_shaderProgram, "numSpotLights");
+    g_spotPosLoc = glGetUniformLocation(g_shaderProgram, "spotLightPos");
+    g_spotDirLoc = glGetUniformLocation(g_shaderProgram, "spotLightDir");
+    g_spotColorLoc = glGetUniformLocation(g_shaderProgram, "spotLightColor");
+    g_spotInnerLoc = glGetUniformLocation(g_shaderProgram, "spotLightInnerCutoff");
+    g_spotOuterLoc = glGetUniformLocation(g_shaderProgram, "spotLightOuterCutoff");
+    g_spotConstLoc = glGetUniformLocation(g_shaderProgram, "spotLightConstant");
+    g_spotLinearLoc = glGetUniformLocation(g_shaderProgram, "spotLightLinear");
+    g_spotQuadLoc = glGetUniformLocation(g_shaderProgram, "spotLightQuadratic");
 
     return 0;
 }
@@ -242,6 +320,101 @@ static int lua_setLight(lua_State* L) {
 
     g_lightDir = glm::normalize(glm::vec3(dx, dy, dz));
     g_lightColor = glm::vec3(r, g, b);
+
+    return 0;
+}
+
+// --- point light array state ---
+// Rebuilt each frame: Lua calls render.clearPointLights() then
+// render.addPointLight(...) once per active PointLight, before beginFrame.
+static std::vector<glm::vec3> g_pointPositions;
+static std::vector<glm::vec3> g_pointColors;
+static std::vector<float> g_pointConstants;
+static std::vector<float> g_pointLinears;
+static std::vector<float> g_pointQuadratics;
+
+static int lua_clearPointLights(lua_State* L) {
+    g_pointPositions.clear();
+    g_pointColors.clear();
+    g_pointConstants.clear();
+    g_pointLinears.clear();
+    g_pointQuadratics.clear();
+    return 0;
+}
+
+static int lua_addPointLight(lua_State* L) {
+    if ((int)g_pointPositions.size() >= MAX_POINT_LIGHTS) {
+        return 0; // silently ignore extras beyond the cap
+    }
+
+    g_pointPositions.push_back(glm::vec3(
+        (float)luaL_checknumber(L, 1),
+        (float)luaL_checknumber(L, 2),
+        (float)luaL_checknumber(L, 3)
+    ));
+    g_pointColors.push_back(glm::vec3(
+        (float)luaL_checknumber(L, 4),
+        (float)luaL_checknumber(L, 5),
+        (float)luaL_checknumber(L, 6)
+    ));
+    g_pointConstants.push_back((float)luaL_optnumber(L, 7, 1.0));
+    g_pointLinears.push_back((float)luaL_optnumber(L, 8, 0.09));
+    g_pointQuadratics.push_back((float)luaL_optnumber(L, 9, 0.032));
+
+    return 0;
+}
+
+// --- spot light array state, same pattern as point lights ---
+static std::vector<glm::vec3> g_spotPositions;
+static std::vector<glm::vec3> g_spotDirs;
+static std::vector<glm::vec3> g_spotColors;
+static std::vector<float> g_spotInners;
+static std::vector<float> g_spotOuters;
+static std::vector<float> g_spotConstants;
+static std::vector<float> g_spotLinears;
+static std::vector<float> g_spotQuadratics;
+
+static int lua_clearSpotLights(lua_State* L) {
+    g_spotPositions.clear();
+    g_spotDirs.clear();
+    g_spotColors.clear();
+    g_spotInners.clear();
+    g_spotOuters.clear();
+    g_spotConstants.clear();
+    g_spotLinears.clear();
+    g_spotQuadratics.clear();
+    return 0;
+}
+
+static int lua_addSpotLight(lua_State* L) {
+    if ((int)g_spotPositions.size() >= MAX_SPOT_LIGHTS) {
+        return 0; // silently ignore extras beyond the cap
+    }
+
+    g_spotPositions.push_back(glm::vec3(
+        (float)luaL_checknumber(L, 1),
+        (float)luaL_checknumber(L, 2),
+        (float)luaL_checknumber(L, 3)
+    ));
+    g_spotDirs.push_back(glm::normalize(glm::vec3(
+        (float)luaL_checknumber(L, 4),
+        (float)luaL_checknumber(L, 5),
+        (float)luaL_checknumber(L, 6)
+    )));
+    g_spotColors.push_back(glm::vec3(
+        (float)luaL_checknumber(L, 7),
+        (float)luaL_checknumber(L, 8),
+        (float)luaL_checknumber(L, 9)
+    ));
+
+    float innerDeg = (float)luaL_optnumber(L, 10, 12.5);
+    float outerDeg = (float)luaL_optnumber(L, 11, 17.5);
+    g_spotInners.push_back(cosf(glm::radians(innerDeg)));
+    g_spotOuters.push_back(cosf(glm::radians(outerDeg)));
+
+    g_spotConstants.push_back((float)luaL_optnumber(L, 12, 1.0));
+    g_spotLinears.push_back((float)luaL_optnumber(L, 13, 0.09));
+    g_spotQuadratics.push_back((float)luaL_optnumber(L, 14, 0.032));
 
     return 0;
 }
@@ -317,6 +490,34 @@ static int lua_beginFrame(lua_State* L) {
 
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
+
+    // --- point lights: upload whatever was accumulated via addPointLight
+    // this frame, via the array uniform variants (note trailing 'v' and
+    // the count parameter — these upload N vec3/float entries in one call,
+    // not a single value like glUniform3f does) ---
+    int numPoints = (int)g_pointPositions.size();
+    glUniform1i(g_numPointLightsLoc, numPoints);
+    if (numPoints > 0) {
+        glUniform3fv(g_pointPosLoc, numPoints, glm::value_ptr(g_pointPositions[0]));
+        glUniform3fv(g_pointColorLoc, numPoints, glm::value_ptr(g_pointColors[0]));
+        glUniform1fv(g_pointConstLoc, numPoints, g_pointConstants.data());
+        glUniform1fv(g_pointLinearLoc, numPoints, g_pointLinears.data());
+        glUniform1fv(g_pointQuadLoc, numPoints, g_pointQuadratics.data());
+    }
+
+    // --- spot lights, same pattern ---
+    int numSpots = (int)g_spotPositions.size();
+    glUniform1i(g_numSpotLightsLoc, numSpots);
+    if (numSpots > 0) {
+        glUniform3fv(g_spotPosLoc, numSpots, glm::value_ptr(g_spotPositions[0]));
+        glUniform3fv(g_spotDirLoc, numSpots, glm::value_ptr(g_spotDirs[0]));
+        glUniform3fv(g_spotColorLoc, numSpots, glm::value_ptr(g_spotColors[0]));
+        glUniform1fv(g_spotInnerLoc, numSpots, g_spotInners.data());
+        glUniform1fv(g_spotOuterLoc, numSpots, g_spotOuters.data());
+        glUniform1fv(g_spotConstLoc, numSpots, g_spotConstants.data());
+        glUniform1fv(g_spotLinearLoc, numSpots, g_spotLinears.data());
+        glUniform1fv(g_spotQuadLoc, numSpots, g_spotQuadratics.data());
+    }
 
     return 0;
 }
@@ -403,6 +604,10 @@ static const luaL_Reg renderFunctions[] = {
     {"setCursorLocked", lua_setCursorLocked},
     {"isMouseButtonDown", lua_isMouseButtonDown},
     {"setLight", lua_setLight},
+    {"clearPointLights", lua_clearPointLights},
+    {"addPointLight", lua_addPointLight},
+    {"clearSpotLights", lua_clearSpotLights},
+    {"addSpotLight", lua_addSpotLight},
     {"getMouseScroll", lua_getMouseScroll},
     {nullptr, nullptr}
 };
