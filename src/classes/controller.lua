@@ -8,7 +8,7 @@ Controller.PropertyTypes = {
     WalkSpeed = "number",
     JumpPower = "number",
     Gravity = "number",
-    Helth = "number",
+    Health = "number",
 
     MoveDirection = "Vector3",
     Velocity = "Vector3",
