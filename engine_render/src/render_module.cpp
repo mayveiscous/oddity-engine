@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 #include <iostream>
+#include <cfloat>
+#include <algorithm>
 
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
@@ -19,6 +21,18 @@ struct Mesh {
     GLuint vao, vbo;
     int vertexCount;
 };
+
+struct RenderObject {
+    int meshId;
+
+    glm::vec3 position;
+    glm::vec3 scale;
+    glm::vec3 rotation;
+
+    std::string uniqueId;
+};
+
+static std::vector<RenderObject> renderObjects;
 
 static std::unordered_map<int, Mesh> meshRegistry;
 static int nextMeshId = 1;
@@ -514,6 +528,7 @@ static int lua_drawMesh(lua_State* L) {
     float ry = (float)luaL_optnumber(L, 12, 0.0);
     float rz = (float)luaL_optnumber(L, 13, 0.0);
     float a = (float)luaL_optnumber(L, 14, 1.0);
+    const char* uniqueId = luaL_checkstring(L, 15);
 
     auto it = meshRegistry.find(meshId);
     if (it == meshRegistry.end()) {
@@ -534,6 +549,16 @@ static int lua_drawMesh(lua_State* L) {
     glBindVertexArray(mesh.vao);
     glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
     glBindVertexArray(0);
+
+    RenderObject obj;
+    obj.meshId = meshId;
+    obj.position = glm::vec3(x,y,z);
+    obj.scale = glm::vec3(sx,sy,sz);
+    obj.rotation = glm::vec3(rx,ry,rz);
+
+    obj.uniqueId = uniqueId;
+
+    renderObjects.push_back(obj);
 
     return 0;
 }
@@ -569,10 +594,6 @@ static int lua_beginFrame(lua_State* L) {
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
 
-    // --- point lights: upload whatever was accumulated via addPointLight
-    // this frame, via the array uniform variants (note trailing 'v' and
-    // the count parameter — these upload N vec3/float entries in one call,
-    // not a single value like glUniform3f does) ---
     int numPoints = (int)g_pointPositions.size();
     glUniform1i(g_numPointLightsLoc, numPoints);
     if (numPoints > 0) {
@@ -583,7 +604,6 @@ static int lua_beginFrame(lua_State* L) {
         glUniform1fv(g_pointQuadLoc, numPoints, g_pointQuadratics.data());
     }
 
-    // --- spot lights, same pattern ---
     int numSpots = (int)g_spotPositions.size();
     glUniform1i(g_numSpotLightsLoc, numSpots);
     if (numSpots > 0) {
@@ -605,6 +625,7 @@ static int lua_endFrame(lua_State* L) {
         luaL_error(L, "render.endFrame() called before render.init()");
         return 0;
     }
+    renderObjects.clear();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -625,6 +646,108 @@ static int lua_shouldClose(lua_State* L) {
     }
     bool close = glfwWindowShouldClose(g_window);
     lua_pushboolean(L, close);
+    return 1;
+}
+
+glm::vec3 screenToWorldRay(float mouseX, float mouseY) {
+    float x = (2.0f * mouseX) / g_width - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / g_height;
+
+    glm::mat4 projection = glm::perspective(
+        glm::radians(45.0f),
+        (float)g_width / g_height,
+        0.1f,
+        500.0f
+    );
+
+    glm::mat4 view = glm::lookAt(
+        g_cameraPos,
+        g_cameraTarget,
+        glm::vec3(0,1,0)
+    );
+
+    glm::vec4 rayClip(x,y,-1,1);
+
+    glm::vec4 rayEye =
+        glm::inverse(projection) * rayClip;
+
+    rayEye = glm::vec4(
+        rayEye.x,
+        rayEye.y,
+        -1,
+        0
+    );
+
+    glm::vec3 rayWorld =
+        glm::normalize(
+            glm::vec3(
+                glm::inverse(view) * rayEye
+            )
+        );
+
+    return rayWorld;
+}
+
+bool rayBox(const glm::vec3& origin, const glm::vec3& dir, const glm::vec3& min, const glm::vec3& max, float& t) {
+    float tx1 = (min.x - origin.x) / dir.x;
+    float tx2 = (max.x - origin.x) / dir.x;
+
+    float tmin = std::min(tx1, tx2);
+    float tmax = std::max(tx1, tx2);
+
+    float ty1 = (min.y - origin.y) / dir.y;
+    float ty2 = (max.y - origin.y) / dir.y;
+
+    tmin = std::max(tmin, std::min(ty1, ty2));
+    tmax = std::min(tmax, std::max(ty1, ty2));
+
+    float tz1 = (min.z - origin.z) / dir.z;
+    float tz2 = (max.z - origin.z) / dir.z;
+
+    tmin = std::max(tmin, std::min(tz1, tz2));
+    tmax = std::min(tmax, std::max(tz1, tz2));
+
+    if (tmax < 0.0f)
+        return false;
+
+    if (tmin > tmax)
+        return false;
+
+    t = (tmin >= 0.0f) ? tmin : tmax;
+    return true;
+}
+
+static int lua_raycast(lua_State* L) {
+    float mx = (float)luaL_checknumber(L, 1);
+    float my = (float)luaL_checknumber(L, 2);
+
+    glm::vec3 origin = g_cameraPos;
+    glm::vec3 dir = screenToWorldRay(mx, my);
+
+    float closestT = FLT_MAX;
+    RenderObject* closest = nullptr;
+
+    for (auto& obj : renderObjects) {
+        glm::vec3 half = obj.scale * 0.5f;
+
+        glm::vec3 min = obj.position - half;
+        glm::vec3 max = obj.position + half;
+
+        float t;
+        if (rayBox(origin, dir, min, max, t)) {
+            if (t < closestT) {
+                closestT = t;
+                closest = &obj;
+            }
+        }
+    }
+
+    if (closest) {
+        lua_pushstring(L, closest->uniqueId.c_str());
+    } else {
+        lua_pushnil(L);
+    }
+
     return 1;
 }
 
@@ -698,10 +821,19 @@ static int lua_imguiTreeNode(lua_State* L) {
 
 static int lua_imguiTreeNodeEx(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
-    bool open = ImGui::TreeNodeEx(
-        label,
-        ImGuiTreeNodeFlags_OpenOnArrow
-    );
+    bool selected = lua_toboolean(L, 2);
+    bool forceOpen = lua_toboolean(L, 3);
+
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_OpenOnArrow;
+
+    if (selected)
+        flags |= ImGuiTreeNodeFlags_Selected;
+
+    if (forceOpen)
+        flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
+    bool open = ImGui::TreeNodeEx(label, flags);
 
     bool clicked = ImGui::IsItemClicked();
 
@@ -844,6 +976,14 @@ static int lua_imguiCheckbox(lua_State* L) {
     return 2;
 }
 
+static int lua_imguiWantsMouse(lua_State* L) {
+    bool wantsMouse = ImGui::GetIO().WantCaptureMouse;
+
+    lua_pushboolean(L, wantsMouse);
+
+    return 1;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -877,7 +1017,9 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiVector3", lua_imguiVector3},
     {"imguiColor", lua_imguiColor},
     {"imguiCheckbox", lua_imguiCheckbox},
+    {"imguiWantsMouse", lua_imguiWantsMouse},
     {"setFullscreen", lua_setFullscreen},
+    {"raycast", lua_raycast},
     {nullptr, nullptr}
 };
 

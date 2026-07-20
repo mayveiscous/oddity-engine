@@ -1,20 +1,50 @@
+local SelectionService = require("src.classes.selectionservice")
 local render = require("render")
 
-local selectedInstance = nil
+local expanded = {}
+
+local function shouldExpand(instance)
+    local selected = SelectionService.current
+
+    if not selected then
+        return false
+    end
+
+    if selected == instance then
+        return true
+    end
+
+    for _, ancestor in ipairs(selected:GetAncestors()) do
+        if ancestor == instance then
+            return true
+        end
+    end
+
+    return false
+end
 
 local function drawNode(instance)
     local label = instance.Name .. " (" .. instance.ClassName .. ")"
 
-    local open, clicked = render.imguiTreeNodeEx(label)
+    local selected = (SelectionService.current == instance)
+
+    local forceOpen = shouldExpand(instance)
+
+    local open, clicked = render.imguiTreeNodeEx(
+        label,
+        selected,
+        forceOpen
+    )
 
     if clicked then
-        selectedInstance = instance
+        SelectionService.Select(instance)
     end
 
     if open then
         for _, child in ipairs(instance:GetChildren()) do
             drawNode(child)
         end
+
         render.imguiTreePop()
     end
 end
@@ -28,6 +58,6 @@ end
 return {
     drawExplorer = drawExplorer,
     getSelected = function()
-        return selectedInstance
+        return SelectionService.current
     end
 }

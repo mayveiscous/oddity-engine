@@ -225,6 +225,7 @@ function Instance:GetDescendants()
 
     local function recurse(instance)
         local state = rawget(instance, "_state")
+        assert(state, ("Expected Instance, got %s"):format(tostring(instance)))
 
         for child in pairs(state._children) do
             table.insert(descendants, child)
@@ -235,6 +236,19 @@ function Instance:GetDescendants()
     recurse(self)
 
     return descendants
+end
+
+function Instance:GetAncestors()
+    local ancestors = {}
+
+    local current = self.Parent
+
+    while current do
+        table.insert(ancestors, current)
+        current = current.Parent
+    end
+
+    return ancestors
 end
 
 function Instance:FindFirstChild(name)

@@ -9,6 +9,7 @@ runservice:Init()
 require("src.game")
 require("src.create_character")
 require("src.core.camera.character_camera")
+require("src.editor.selection")
 require("tests.test")
 
 runservice:Run()

@@ -1,6 +1,10 @@
 local classList = {
     "workspace",
     "runservice",
+    "inputservice",
+    "selectionservice",
+    "lighting",
+    "players",
 
     "animation",
     "animation_player",

@@ -14,4 +14,17 @@ Workspace.Defaults = function()
     }
 end
 
+function Workspace:FindByUniqueId(id)
+    local inst = nil
+
+    for _, desc in ipairs(self:GetDescendants()) do
+        if desc.UniqueId == id then
+            inst = desc
+            break
+        end
+    end
+
+    return inst
+end
+
 return Workspace

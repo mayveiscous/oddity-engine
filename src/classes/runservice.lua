@@ -113,7 +113,8 @@ function RunService:Step()
             obj.Size.X, obj.Size.Y, obj.Size.Z,
             obj.Color.R, obj.Color.G, obj.Color.B,
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
-            1
+            1,
+            obj.UniqueId
         )
     end
 
@@ -124,7 +125,8 @@ function RunService:Step()
             obj.Size.X, obj.Size.Y, obj.Size.Z,
             obj.Color.R, obj.Color.G, obj.Color.B,
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
-            1 - obj.Transparency
+            1 - obj.Transparency,
+            obj.UniqueId
         )
     end
 
