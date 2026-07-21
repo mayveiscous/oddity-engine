@@ -22,8 +22,11 @@ local defaultPitch = -15
 local yaw = defaultYaw
 local pitch = defaultPitch
 
-local lastMouseX, lastMouseY = nil, nil
+local shiftLock = false
+local lastShift = false
 
+local smoothedY = nil
+local heightFollowRate = 3
 
 local function directionFromYawPitch(yawDeg, pitchDeg)
     local yawRad = math.rad(yawDeg)
@@ -36,13 +39,20 @@ local function directionFromYawPitch(yawDeg, pitchDeg)
     )
 end
 
-
 function Camera.Attach(character)
     subject = character
 end
 
 function Camera.GetForward()
     return directionFromYawPitch(yaw, 0)
+end
+
+function Camera.IsShiftLocked()
+    return shiftLock
+end
+
+function Camera.GetYaw()
+    return yaw
 end
 
 math.clamp = function(min, max, value)
@@ -56,37 +66,32 @@ RunService.Heartbeat:Connect(function(dt)
         return
     end
 
+    local shiftDown = InputService.IsKeyDown("LeftShift")
+    if shiftDown and not lastShift then
+        shiftLock = not shiftLock
+    end
+    lastShift = shiftDown
+
     local cam = Game.CurrentCamera
 
-    local mx, my = render.getMousePos()
+    local shiftDown = InputService.IsKeyDown("LeftShift")
+    if shiftDown and not lastShift then
+        shiftLock = not shiftLock
+        render.getMouseDelta()
+    end
+    lastShift = shiftDown
 
-    if InputService.IsMouseButtonDown("Two") then
+    if shiftLock or InputService.IsMouseButtonDown("Two") then
         render.setCursorLocked(true)
 
-        if lastMouseX then
-            local dx = mx - lastMouseX
-            local dy = my - lastMouseY
+        local dx, dy = render.getMouseDelta()
 
-            yaw = yaw + dx * mouseSensitivity
-            pitch = pitch - dy * mouseSensitivity
+        yaw = yaw + dx * mouseSensitivity
+        pitch = pitch - dy * mouseSensitivity
 
-            pitch = math.max(
-                -pitchLimit,
-                math.min(pitchLimit, pitch)
-            )
-        end
-
-        lastMouseX = mx
-        lastMouseY = my
+        pitch = math.max(-pitchLimit, math.min(pitchLimit, pitch))
     else
-        local alpha = math.min(dt * 5, 1)
-
-        yaw = yaw + (defaultYaw - yaw) * alpha
-        pitch = pitch + (defaultPitch - pitch) * alpha
-
         render.setCursorLocked(false)
-        lastMouseX = nil
-        lastMouseY = nil
     end
 
     local scroll = InputService.GetMouseScroll()
@@ -95,11 +100,22 @@ RunService.Heartbeat:Connect(function(dt)
         distance = math.clamp(minScroll, maxScroll, distance - scroll)
     end
 
-    local target = subject.Position + Vector3.new(0, height, 0)
+    if not smoothedY then
+        smoothedY = subject.Position.Y
+    end
+
+    local heightAlpha = 1 - math.exp(-heightFollowRate * dt)
+    smoothedY = smoothedY + (subject.Position.Y - smoothedY) * heightAlpha
+
+    local target = Vector3.new(subject.Position.X, smoothedY + height, subject.Position.Z)
+    
     local direction = directionFromYawPitch(yaw, pitch)
     local offset = direction * distance
 
-    cam.Position = cam.Position:Lerp(target - offset, dt * 10)
+
+    local followRate = 10
+    local alpha = 1 - math.exp(-followRate * dt)
+    cam.Position = cam.Position:Lerp(target - offset, alpha)
     cam.LookAt = target
 end)
 

@@ -8,6 +8,9 @@ local AnimUtil = require("src.core.animutil")
 local Explorer = require("src.editor.explorer")
 local Inspector = require("src.editor.inspector")
 
+local PhysicsRuntime = require("src.physics.physics_runtime")
+local Gravity = require("src.physics.gravity")
+
 local Game = require("src.game")
 
 local RunService = {}
@@ -37,6 +40,18 @@ local function updateMotors(AllMotors)
     end
 end
 
+local function updateBodyMotor(character)
+    local hitbox = character.RootPart
+    if not hitbox then return end
+
+    local body = character:FindFirstChild("Body")
+    local motor = hitbox:FindFirstChild("BodyMotor")
+    if not (body and motor) then return end
+
+    body.Position = hitbox.Position + AnimUtil.rotateVector3(motor.C0, hitbox.Rotation)
+    body.Rotation = hitbox.Rotation
+end
+
 function RunService:Init()
     render.init()
 end
@@ -48,18 +63,19 @@ function RunService:Step()
     local now = os.clock()
     local dt = now - lastTime
 
-    -- draw lights prior to frame begin
-    local opaque, transparent, motors = {}, {}, {}
+    local opaque, transparent, motors, characters, forces = {}, {}, {}, {}, {}
 
     render.clearPointLights()
     render.clearSpotLights()
 
+    -- collection
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("PointLight") and obj.Enabled then
             render.addPointLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B
             )
+
         elseif obj:IsA("SpotLight") and obj.Enabled then
             render.addSpotLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -67,8 +83,45 @@ function RunService:Step()
                 obj.Color.R, obj.Color.G, obj.Color.B,
                 obj.InnerAngle, obj.OuterAngle
             )
+
         elseif obj:IsA("Motor") then
-            table.insert(motors, obj)
+            if obj.Name ~= "BodyMotor" then
+                table.insert(motors, obj)
+            end
+
+        elseif obj:IsA("Character") then
+            table.insert(characters, obj)
+
+        elseif obj:IsA("Force") and obj.Enabled then
+            table.insert(forces, obj)
+        end
+    end
+
+    task.update()
+    RunService.Heartbeat:Fire(dt)
+
+    -- physics
+    PhysicsRuntime.Update(dt, characters, forces)
+
+    for _, character in ipairs(characters) do
+        updateBodyMotor(character)
+    end
+
+    updateMotors(motors)
+
+    -- apply forces (BodyVelocity-style)
+    for _, force in ipairs(forces) do
+        local parent = force.Parent
+        if parent and parent.Position then
+            local vel = force.Velocity
+            local max = force.MaxForce
+
+            local pos = parent.Position
+            parent.Position = Vector3.new(
+                pos.X + ((max.X ~= 0) and vel.X or 0) * dt,
+                pos.Y + ((max.Y ~= 0) and vel.Y or 0) * dt,
+                pos.Z + ((max.Z ~= 0) and vel.Z or 0) * dt
+            )
         end
     end
 
@@ -78,24 +131,37 @@ function RunService:Step()
     Explorer.drawExplorer(Game.Workspace)
     Inspector.drawInspector()
 
-    -- draw camera and lighting
+    -- camera
     if Game.CurrentCamera then
         local cam = Game.CurrentCamera
-        render.setCamera(cam.Position.X, cam.Position.Y, cam.Position.Z, cam.LookAt.X, cam.LookAt.Y, cam.LookAt.Z)
-    end
-
-    if Game.Lighting then
-        local light = Game.Lighting
-        render.setLight(
-            light.Direction.X, light.Direction.Y, light.Direction.Z,
-            light.Color.R, light.Color.G, light.Color.B
+        render.setCamera(
+            cam.Position.X,
+            cam.Position.Y,
+            cam.Position.Z,
+            cam.LookAt.X,
+            cam.LookAt.Y,
+            cam.LookAt.Z
         )
     end
 
-    -- draw meshes
+    -- lighting
+    if Game.Lighting then
+        local light = Game.Lighting
+        render.setLight(
+            light.Direction.X,
+            light.Direction.Y,
+            light.Direction.Z,
+            light.Color.R,
+            light.Color.G,
+            light.Color.B
+        )
+    end
+
+    -- collect meshes
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj.EnsureMesh then
             local meshId = obj:EnsureMesh()
+
             if meshId then
                 if obj.Transparency and obj.Transparency > 0 then
                     table.insert(transparent, obj)
@@ -106,6 +172,7 @@ function RunService:Step()
         end
     end
 
+    -- render opaque
     for _, obj in ipairs(opaque) do
         render.drawMesh(
             obj._meshId,
@@ -118,6 +185,7 @@ function RunService:Step()
         )
     end
 
+    -- render transparent
     for _, obj in ipairs(transparent) do
         render.drawMesh(
             obj._meshId,
@@ -129,11 +197,6 @@ function RunService:Step()
             obj.UniqueId
         )
     end
-
-    updateMotors(motors)
-
-    task.update()
-    RunService.Heartbeat:Fire(dt)
 
     render.endFrame()
     render.pollEvents()

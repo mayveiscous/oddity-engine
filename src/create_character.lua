@@ -4,15 +4,19 @@ local DefaultRig = require("src.rig.default_rig")
 local Vector3 = require("src.types.vector3")
 local Color3 = require("src.types.color3")
 
-local char_cam = require("src.core.camera.character_camera")
+local RunService = require("src.classes.runservice")
+
+local char_cam = require("src.scripting.default_modules.character_camera")
+local char_controller = require("src.scripting.default_modules.character_controller")
+local anim_controller = require("src.scripting.default_modules.animation_controller")
 
 local ground = Instance.new("Block")
 ground.Name = "Ground"
 ground.Parent = Game.Workspace
 ground.Locked = true
+ground.Position = Vector3.new(0, 0, 0)
 ground.Size = Vector3.new(100, 1, 100)
 ground.Color = Color3.new(0.4, 0.16, 0.16)
-ground.CanCollide = true
 
 local spawn = Instance.new("Spawn")
 spawn.Name = "SpawnPoint"
@@ -39,6 +43,9 @@ local function createCharacter(player)
 
     player.Character = ch
     char_cam.Attach(ch.RootPart)
+    char_controller.Attach(ch)
+    anim_controller.Attach(ch)
+    ch.RootPart.Position = Vector3.new(spawnPos.X, spawnPos.Y + 25, spawnPos.Z)
     characters[player.Name] = ch
 
     return ch

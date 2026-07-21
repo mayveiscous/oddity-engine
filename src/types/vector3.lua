@@ -66,6 +66,26 @@ local function buildMeta()
             )   
         end,
 
+        __div = function(a, b)
+            if type(b) == "number" then
+                return Vector3.new(
+                    a.X / b,
+                    a.Y / b,
+                    a.Z / b
+                )
+            end
+
+            return Vector3.new(
+                a.X / b.X,
+                a.Y / b.Y,
+                a.Z / b.Z
+            )
+        end,
+
+        __unm = function(a)
+            return Vector3.new(-a.X, -a.Y, -a.Z)
+        end,
+
         __tostring = function(t)
             local s = rawget(t, "_state")
             return ("Vector3(%g, %g, %g)"):format(s.X, s.Y, s.Z)

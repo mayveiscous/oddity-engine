@@ -1,12 +1,13 @@
 local Instance = require("src.core.instance")
-local Game = require("src.game")
 local task = require("task")
-local Vector3 = require("src.types.vector3")
-local RunService = require("src.classes.runservice")
-
-local scrapi = require("src.scripting.scriptapi")
+local ScriptRunner = require("src.scripting.script_runner")
+local requireInstance = require("src.scripting.instance_require")
 
 local LuaScript = Instance:RegisterClass("LuaScript", "Instance")
+
+LuaScript.PropertyTypes = {
+    Source = "string",
+}
 
 LuaScript.Defaults = function()
     return {
@@ -15,19 +16,9 @@ LuaScript.Defaults = function()
     }
 end
 
-local function buildScriptEnv(self)
-    local custom = scrapi.build(self)
-
-    return setmetatable(custom, {
-        __index = _G,
-        __newindex = function(_, k, v)
-            rawset(custom, k, v)
-        end
-    })
-end
-
 function LuaScript:Init()
     self.AncestryChanged:Connect(function()
+        -- should i add checks for things like storage services and stuff
         if self.Parent then
             self:_start()
         else
@@ -37,15 +28,7 @@ function LuaScript:Init()
 end
 
 function LuaScript:_start()
-    local env = buildScriptEnv(self)
-    local fn, err = load(self.Source, self.Name, "t", env)
-
-    if not fn then
-        print(("[LuaScript:%s] failed to load: %s"):format(self.Name, err))
-        return
-    end
-
-    self._thread = task.spawn(fn)
+    self._thread = ScriptRunner.RunAsync(self)
 end
 
 function LuaScript:_stop()

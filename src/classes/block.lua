@@ -17,6 +17,7 @@ Block.PropertyTypes = {
     Anchored = "boolean",
     CanCollide = "boolean",
     Shape = "string",
+    Material = "string",
 }
 
 Block.Defaults = function()
@@ -30,6 +31,7 @@ Block.Defaults = function()
         Transparency = 0,
         Locked = false,
         Shape = "Block",
+        Material = "Plastic",
         _meshId = nil,
     }
 end

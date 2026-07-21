@@ -251,6 +251,16 @@ function Instance:GetAncestors()
     return ancestors
 end
 
+function Instance:IsDescendantOf(inst)
+    local current = self.Parent
+    if current == inst then return true end
+
+    while current do
+        if current == inst then return true end
+        current = current.Parent
+    end
+end
+
 function Instance:FindFirstChild(name)
     local state = rawget(self, "_state")
     for child in pairs(state._children) do

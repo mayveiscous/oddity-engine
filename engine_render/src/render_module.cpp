@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <cfloat>
+#include <cstring>
 #include <algorithm>
 
 #include "imgui.h"
@@ -152,6 +153,32 @@ static double g_scrollDeltaY = 0.0;
 
 static void glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
     g_scrollDeltaY += yoffset;
+}
+
+static double g_mouseDeltaX = 0.0;
+static double g_mouseDeltaY = 0.0;
+static double g_prevCursorX = 0.0;
+static double g_prevCursorY = 0.0;
+static bool g_cursorInit = false;
+
+static GLFWcursorposfun g_prevCursorPosCallback = nullptr;
+
+static void glfwCursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
+    if (!g_cursorInit) {
+        g_prevCursorX = xpos;
+        g_prevCursorY = ypos;
+        g_cursorInit = true;
+    } else {
+        g_mouseDeltaX += xpos - g_prevCursorX;
+        g_mouseDeltaY += ypos - g_prevCursorY;
+        g_prevCursorX = xpos;
+        g_prevCursorY = ypos;
+    }
+
+    // forward to ImGui's own callback so it still sees mouse movement
+    if (g_prevCursorPosCallback) {
+        g_prevCursorPosCallback(window, xpos, ypos);
+    }
 }
 
 static GLuint compileShaderProgram() {
@@ -309,6 +336,7 @@ static int lua_init(lua_State* L) {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     glfwSetScrollCallback(g_window, glfwScrollCallback);
+    g_prevCursorPosCallback = glfwSetCursorPosCallback(g_window, glfwCursorPosCallback);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -390,6 +418,18 @@ static int lua_getMouseScroll(lua_State* L) {
     lua_pushnumber(L, g_scrollDeltaY);
     g_scrollDeltaY = 0.0;
     return 1;
+}
+
+static int lua_getMouseDelta(lua_State* L) {
+    if (!g_window) {
+        luaL_error(L, "render.getMouseDelta() called before render.init()");
+        return 0;
+    }
+    lua_pushnumber(L, g_mouseDeltaX);
+    lua_pushnumber(L, g_mouseDeltaY);
+    g_mouseDeltaX = 0.0;
+    g_mouseDeltaY = 0.0;
+    return 2;
 }
 
 static glm::vec3 g_lightDir = glm::vec3(-0.5f, -1.0f, -0.3f);
@@ -751,6 +791,45 @@ static int lua_raycast(lua_State* L) {
     return 1;
 }
 
+static int lua_raycastWorld(lua_State* L) {
+    float ox = (float)luaL_checknumber(L, 1);
+    float oy = (float)luaL_checknumber(L, 2);
+    float oz = (float)luaL_checknumber(L, 3);
+    float dx = (float)luaL_checknumber(L, 4);
+    float dy = (float)luaL_checknumber(L, 5);
+    float dz = (float)luaL_checknumber(L, 6);
+
+    glm::vec3 origin(ox, oy, oz);
+    glm::vec3 dir = glm::normalize(glm::vec3(dx, dy, dz));
+
+    float closestT = FLT_MAX;
+    RenderObject* closest = nullptr;
+
+    for (auto& obj : renderObjects) {
+        glm::vec3 half = obj.scale * 0.5f;
+        glm::vec3 min = obj.position - half;
+        glm::vec3 max = obj.position + half;
+        float t;
+        if (rayBox(origin, dir, min, max, t) && t < closestT) {
+            closestT = t;
+            closest = &obj;
+        }
+    }
+
+    if (closest) {
+        lua_pushstring(L, closest->uniqueId.c_str());
+        lua_pushnumber(L, closestT);
+        glm::vec3 hitPos = origin + dir * closestT;
+        lua_pushnumber(L, hitPos.x);
+        lua_pushnumber(L, hitPos.y);
+        lua_pushnumber(L, hitPos.z);
+        return 5;
+    }
+
+    lua_pushnil(L);
+    return 1;
+}
+
 static int lua_isKeyDown(lua_State* L) {
     if (!g_window) {
         luaL_error(L, "render.isKeyDown() called before render.init()");
@@ -797,7 +876,21 @@ static int lua_isMouseButtonDown(lua_State* L) {
 
 static int lua_imguiBegin(lua_State* L) {
     const char* title = luaL_checkstring(L, 1);
-    ImGui::Begin(title);
+    ImGuiWindowFlags flags = 0;
+    if (lua_istable(L, 2)) {
+        int len = (int)lua_rawlen(L, 2);
+        for (int i = 1; i <= len; i++) {
+            lua_rawgeti(L, 2, i);
+            const char* flag = luaL_checkstring(L, -1);
+            if (strcmp(flag, "NoMove") == 0) flags |= ImGuiWindowFlags_NoMove;
+            else if (strcmp(flag, "NoResize") == 0) flags |= ImGuiWindowFlags_NoResize;
+            else if (strcmp(flag, "NoCollapse") == 0) flags |= ImGuiWindowFlags_NoCollapse;
+            else if (strcmp(flag, "NoTitleBar") == 0) flags |= ImGuiWindowFlags_NoTitleBar;
+            else if (strcmp(flag, "NoScrollbar") == 0) flags |= ImGuiWindowFlags_NoScrollbar;
+            lua_pop(L, 1);
+        }
+    }
+    ImGui::Begin(title, nullptr, flags);
     return 0;
 }
 
@@ -1003,6 +1096,7 @@ static const luaL_Reg renderFunctions[] = {
     {"clearSpotLights", lua_clearSpotLights},
     {"addSpotLight", lua_addSpotLight},
     {"getMouseScroll", lua_getMouseScroll},
+    {"getMouseDelta", lua_getMouseDelta},
     {"imguiBegin", lua_imguiBegin},
     {"imguiEnd", lua_imguiEnd},
     {"imguiTreeNode", lua_imguiTreeNode},
@@ -1020,6 +1114,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiWantsMouse", lua_imguiWantsMouse},
     {"setFullscreen", lua_setFullscreen},
     {"raycast", lua_raycast},
+    {"raycastWorld", lua_raycastWorld},
     {nullptr, nullptr}
 };
 

@@ -1,8 +1,9 @@
 local Instance = require("src.core.instance")
 local Game = require("src.game")
 local task = require("task")
-local Vector3 = require("src.types.vector3")
-local RunService = require("src.classes.runservice")
+
+local ScriptRunner = require("src.scripting.script_runner")
+local requireInstance = require("src.scripting.instance_require")
 
 local scrapi = require("src.scripting.scriptapi")
 
@@ -17,6 +18,15 @@ end
 
 local function buildScriptEnv(self)
     local custom = scrapi.build(self)
+
+    local realRequire = _G.require
+
+    custom.require = function(mod)
+        if type(mod) == "table" and mod.ClassName and mod.Parent then
+            return mod
+        end
+        return realRequire(mod)
+    end
 
     return setmetatable(custom, {
         __index = _G,
@@ -37,15 +47,7 @@ function TunaScript:Init()
 end
 
 function TunaScript:_start()
-    local env = buildScriptEnv(self)
-    local fn, err = load(self.Source, self.Name, "t", env)
-
-    if not fn then
-        print(("[TunaScript:%s] failed to load: %s"):format(self.Name, err))
-        return
-    end
-
-    self._thread = task.spawn(fn)
+    self._thread = ScriptRunner.RunAsync(self)
 end
 
 function TunaScript:_stop()

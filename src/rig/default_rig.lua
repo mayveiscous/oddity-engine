@@ -28,8 +28,24 @@ function DefaultRig.Create(parent, position, name)
     body.Position = Vector3.new(position.X, position.Y + bodyY, position.Z)
     body.Color = color
     body.Name = "Body"
-    
-    character.RootPart = body
+
+    local hitboxHeight = legSize.Y + bodySize.Y
+    local hitbox = Instance.new("Block")
+    hitbox.Parent = character
+    hitbox.Name = "Hitbox"
+    hitbox.Transparency = 1
+    hitbox.Size = Vector3.new(1.2, hitboxHeight, 1.2)
+    hitbox.Position = Vector3.new(position.X, position.Y + hitboxHeight / 2, position.Z)
+
+    character.RootPart = hitbox
+
+    local bodyMotor = Instance.new("Motor")
+    bodyMotor.Parent = hitbox
+    bodyMotor.Part0 = hitbox
+    bodyMotor.Part1 = body
+    bodyMotor.C0 = Vector3.new(0, legSize.Y / 2, 0)
+    bodyMotor.C1 = Vector3.zero()
+    bodyMotor.Name = "BodyMotor"
 
     local function attachLimb(name, size, c0, c1, limbColor)
         local limb = Instance.new("Block")
@@ -63,7 +79,7 @@ function DefaultRig.Create(parent, position, name)
         Vector3.new(0, armSize.Y / 2, 0),
         color
     )
-    rightArmMotor.RestRotation = Vector3.new(0, 0, 45) 
+    rightArmMotor.RestRotation = Vector3.new(0, 0, 45)
 
     local leftLeg, leftLegMotor = attachLimb(
         "LeftLeg", legSize,

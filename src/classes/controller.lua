@@ -19,7 +19,7 @@ Controller.PropertyTypes = {
 Controller.Defaults = function()
     return {
         WalkSpeed = 16,
-        JumpPower = 50,
+        JumpPower = 40,
         Gravity = 196.2,
         Health = 100,
 
