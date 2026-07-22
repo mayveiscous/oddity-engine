@@ -1,12 +1,12 @@
 local graphics = require("graphics")
-local Layout = require("src.editor.layout")
+local Log = require("src.editor.log")
 
 local Output = {}
 
-local logs = {
-    "[Info] Engine started.",
-    "[Info] Loaded workspace.",
-    --"[Warning] Missing texture."
+local prefixes = {
+    info = "         ",
+    warn = "[WARN]   ",
+    error = "[ERROR] ",
 }
 
 function Output.draw(rects)
@@ -14,12 +14,18 @@ function Output.draw(rects)
     graphics.imguiSetNextWindowSize(rects.w, rects.h)
     graphics.imguiBegin("Output", {"NoMove"})
 
-    for _, line in ipairs(logs) do
-        graphics.imguiText(line)
+    if graphics.imguiButton("Clear") then
+        Log.clear()
+    end
+
+    graphics.imguiSeparator()
+
+    for _, entry in ipairs(Log.getEntries()) do
+        local prefix = prefixes[entry.level] or ""
+        graphics.imguiSelectable(prefix .. entry.message)
     end
 
     graphics.imguiEnd()
-
 end
 
 return Output

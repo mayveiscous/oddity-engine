@@ -1,4 +1,5 @@
 local task = require("task")
+local Log = require("src.editor.log")
 
 local ScriptRunner = {}
 
@@ -27,7 +28,7 @@ end
 function ScriptRunner.RunAsync(instance)
     local fn, err = ScriptRunner.Compile(instance)
     if not fn then
-        print(("[%s:%s] failed to load: %s"):format(instance.ClassName, instance.Name, err))
+        Log.error(("[%s:%s] failed to load: %s"):format(instance.ClassName, instance.Name, err))
         return nil
     end
     return task.spawn(fn)
@@ -36,6 +37,7 @@ end
 function ScriptRunner.RunSync(instance)
     local fn, err = ScriptRunner.Compile(instance)
     if not fn then
+        Log.error(("[%s:%s] failed to load: %s"):format(instance.ClassName, instance.Name, err))
         error(("[%s:%s] failed to load: %s"):format(instance.ClassName, instance.Name, err), 0)
     end
     return fn()

@@ -12,7 +12,6 @@ function TopBar.draw(rects)
     if graphics.imguiBegin("Top Bar", {"NoMove", "NoResize"}) then
 
         if graphics.imguiBeginMenuBar() then
-
             if graphics.imguiBeginMenu("File") then
                 if graphics.imguiMenuItem("New") then
                     print("New project")
@@ -48,12 +47,7 @@ function TopBar.draw(rects)
         }
 
         for _, tool in ipairs(tools) do
-            if graphics.imguiButtonEx(
-                tool,
-                currentTool == tool,
-                70,
-                24
-            ) then
+            if graphics.imguiButtonEx(tool, currentTool == tool, 70, 24) then
                 currentTool = tool
             end
 
@@ -62,7 +56,7 @@ function TopBar.draw(rects)
 
     end
 
-    graphics.imguiEnd("Top Bar")
+    graphics.imguiEnd()
 end
 
 return TopBar
