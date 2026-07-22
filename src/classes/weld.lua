@@ -10,4 +10,17 @@ Weld.Defaults = function()
     }
 end
 
+Weld.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Weld = {
+        "Position",
+        "Enabled",
+    },
+}
+
 return Weld

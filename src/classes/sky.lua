@@ -9,6 +9,14 @@ Sky.PropertyTypes = {
     Texture = "string",
 }
 
+Sky.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 Sky.Defaults = function()
     return {
         Texture = nil,

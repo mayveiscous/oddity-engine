@@ -10,6 +10,20 @@ Lighting.PropertyTypes = {
     Sky = "Instance",
 }
 
+Lighting.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Lighting = {
+        "Sky",
+        "Color",
+        "Direction",
+    },
+}
+
 Lighting.Defaults = function()
     return {
         Direction = Vector3.new(-0.5, -1.0, -0.3),

@@ -10,4 +10,17 @@ Spring.Defaults = function()
     }
 end
 
+Spring.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Spring = {
+        "Force",
+        "Position",
+    },
+}
+
 return Spring

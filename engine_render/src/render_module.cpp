@@ -222,7 +222,6 @@ static GLuint compileShaderProgram() {
 }
 
 // --- mesh helpers ---
-
 static Mesh createMeshInternal(const std::vector<GLfloat>& vertices) {
     Mesh mesh;
     mesh.vertexCount = (int)(vertices.size() / 6);
@@ -1069,12 +1068,59 @@ static int lua_imguiCheckbox(lua_State* L) {
     return 2;
 }
 
+static int lua_imguiCollapsingHeader(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    bool defaultOpen = false;
+
+    if (lua_gettop(L) >= 2)
+    {
+        defaultOpen = lua_toboolean(L, 2);
+    }
+
+    ImGuiTreeNodeFlags flags = 0;
+
+    if (defaultOpen)
+        flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
+    bool open = ImGui::CollapsingHeader(label, flags);
+
+    lua_pushboolean(L, open);
+    return 1;
+}
+
 static int lua_imguiWantsMouse(lua_State* L) {
     bool wantsMouse = ImGui::GetIO().WantCaptureMouse;
 
     lua_pushboolean(L, wantsMouse);
 
     return 1;
+}
+
+static int lua_getWindowSize(lua_State* L) {
+    if (!g_window) {
+        luaL_error(L, "render.getWindowSize() called before render.init()");
+        return 0;
+    }
+    int w, h;
+    glfwGetWindowSize(g_window, &w, &h);
+    lua_pushinteger(L, w);
+    lua_pushinteger(L, h);
+    return 2;
+}
+
+static int lua_imguiSetNextWindowPos(lua_State* L) {
+    float x = (float)luaL_checknumber(L, 1);
+    float y = (float)luaL_checknumber(L, 2);
+    ImGui::SetNextWindowPos(ImVec2(x, y));
+    return 0;
+}
+
+static int lua_imguiSetNextWindowSize(lua_State* L) {
+    float w = (float)luaL_checknumber(L, 1);
+    float h = (float)luaL_checknumber(L, 2);
+    ImGui::SetNextWindowSize(ImVec2(w, h));
+    return 0;
 }
 
 static const luaL_Reg renderFunctions[] = {
@@ -1115,6 +1161,10 @@ static const luaL_Reg renderFunctions[] = {
     {"setFullscreen", lua_setFullscreen},
     {"raycast", lua_raycast},
     {"raycastWorld", lua_raycastWorld},
+    {"getWindowSize", lua_getWindowSize},
+    {"imguiSetNextWindowPos", lua_imguiSetNextWindowPos},
+    {"imguiSetNextWindowSize", lua_imguiSetNextWindowSize},
+    {"imguiCollapsingHeader", lua_imguiCollapsingHeader},
     {nullptr, nullptr}
 };
 

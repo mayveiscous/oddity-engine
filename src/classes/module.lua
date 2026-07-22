@@ -8,4 +8,12 @@ Module.Defaults = function()
     }
 end
 
+Module.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 return Module

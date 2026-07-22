@@ -80,7 +80,12 @@ local function buildMeta(classTable)
             if old ~= v and state.Changed then
                 state.Changed:Fire(k, v)
             end
-        end
+        end,
+
+        __tostring = function(t) 
+            local state = rawget(t, "_state")
+            return state.Name or state.ClassName or "Instance"
+        end,
     }
 end
 
@@ -140,18 +145,26 @@ function Instance.new(className)
 end
 
 function Instance:GetProperties()
-    local state = rawget(self, "_state")
     local properties = {}
+    local class = ClassRegistry[self.ClassName]
 
-    for key, value in pairs(state) do
-        if not string.match(key, "^_") 
-            and key ~= "Changed"
-            and key ~= "ChildAdded"
-            and key ~= "ChildRemoved"
-            and key ~= "AncestryChanged"
-            and key ~= "AttributeSet"
-        then
-            properties[key] = value
+    local categories = {}
+
+    while class do
+        if class.Properties then
+            table.insert(categories, class.Properties)
+        end
+
+        class = class.__ParentClass
+    end
+
+    for _, propertyGroups in ipairs(categories) do
+        for category, names in pairs(propertyGroups) do
+            properties[category] = properties[category] or {}
+
+            for _, name in ipairs(names) do
+                properties[category][name] = self[name]
+            end
         end
     end
 

@@ -10,4 +10,17 @@ Animation.Defaults = function()
     }
 end
 
+Animation.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+    Animation = {
+        "Length",
+        "Looped",
+        
+    },
+}
+
 return Animation

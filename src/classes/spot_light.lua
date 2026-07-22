@@ -13,6 +13,23 @@ SpotLight.PropertyTypes = {
     Enabled = "boolean",
 }
 
+SpotLight.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    SpotLight = {
+        "Color",
+        "Position",
+        "Direction",
+        "Enabled",
+        "InnerAngle",
+        "OuterAngle",
+    },
+}
+
 SpotLight.Defaults = function()
     return {
         Position = Vector3.new(0, 5, 0),

@@ -7,6 +7,19 @@ Player.PropertyTypes = {
     UserId = "number",
 }
 
+Player.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Player = {
+        "Character",
+        "UserId"
+    },
+}
+
 Player.Defaults = function()
     return {
         Character = nil,

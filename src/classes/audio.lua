@@ -8,4 +8,11 @@ Audio.Defaults = function()
     }
 end
 
+Audio.Properties = {
+    Data = {
+        "Name",
+        "Volume",
+    }
+}
+
 return Audio

@@ -16,6 +16,24 @@ Controller.PropertyTypes = {
     Grounded = "boolean",
 }
 
+Controller.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Controller = {
+        "Health",
+        "WalkSpeed",
+        "JumpPower",
+        "Gravity",
+        "Velocity",
+        "Grounded",
+        "MoveDirection",
+    },
+}
+
 Controller.Defaults = function()
     return {
         WalkSpeed = 16,

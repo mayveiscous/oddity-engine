@@ -16,6 +16,14 @@ Workspace.Defaults = function()
     }
 end
 
+Workspace.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 function Workspace:FindByUniqueId(id)
     local inst = nil
 

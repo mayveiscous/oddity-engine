@@ -8,6 +8,18 @@ Camera.PropertyTypes = {
     LookAt = "Vector3",
 }
 
+Camera.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+    Transform = {
+        "Position",
+        "LookAt",
+    }
+}
+
 Camera.Defaults = function()
     return {
         Position = Vector3.new(0, 0, 3),

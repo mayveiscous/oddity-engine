@@ -7,6 +7,14 @@ Players.PropertyTypes = {
     CanReparent = "boolean",
 }
 
+Players.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 Players.Defaults = function()
     return {
         CanBeDeleted = false,

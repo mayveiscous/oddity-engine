@@ -10,6 +10,20 @@ PointLight.PropertyTypes = {
     Enabled = "boolean",
 }
 
+PointLight.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    PointLight = {
+        "Color",
+        "Position",
+        "Enabled",
+    },
+}
+
 PointLight.Defaults = function()
     return {
         Position = Vector3.new(0, 3, 0),

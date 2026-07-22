@@ -8,6 +8,19 @@ AnimationPlayer.PropertyTypes = {
     Character = "Instance",
 }
 
+AnimationPlayer.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    AnimationPlayer = {
+        "Animation",
+        "Character",
+    }
+}
+
 AnimationPlayer.Defaults = function()
     return {
         Animation = nil,

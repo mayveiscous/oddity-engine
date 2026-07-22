@@ -13,6 +13,23 @@ Motor.PropertyTypes = {
     CurrentRotation = "Vector3",
 }
 
+Motor.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Motor = {
+        "Part0",
+        "Part1",
+        "C0",
+        "C1",
+        "RestRotation",
+        "CurrentRotation",
+    },
+}
+
 Motor.Defaults = function()
     return {
         Part0 = nil,

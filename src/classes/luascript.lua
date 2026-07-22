@@ -16,6 +16,14 @@ LuaScript.Defaults = function()
     }
 end
 
+LuaScript.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 function LuaScript:Init()
     self.AncestryChanged:Connect(function()
         -- should i add checks for things like storage services and stuff

@@ -11,4 +11,21 @@ Model.Defaults = function()
     }
 end
 
+Model.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Transform = {
+        "Position",
+    },
+
+    Model = {
+        "RootPart",
+        "Scale",
+    },
+}
+
 return Model

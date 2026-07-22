@@ -1,4 +1,6 @@
 local SelectionService = require("src.classes.selectionservice")
+local Layout = require("src.editor.layout")
+
 local render = require("render")
 
 local expanded = {}
@@ -50,7 +52,10 @@ local function drawNode(instance)
 end
 
 local function drawExplorer(workspace)
-    render.imguiBegin("Explorer")
+    local rects = Layout.apply()
+    render.imguiSetNextWindowPos(rects.Explorer.x, rects.Explorer.y)
+    render.imguiSetNextWindowSize(rects.Explorer.w, rects.Explorer.h)
+    render.imguiBegin("Explorer", {"NoMove", "NoResize", "NoCollapse"})
     drawNode(workspace)
     render.imguiEnd()
 end

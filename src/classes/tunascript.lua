@@ -16,6 +16,14 @@ TunaScript.Defaults = function()
     }
 end
 
+TunaScript.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+}
+
 local function buildScriptEnv(self)
     local custom = scrapi.build(self)
 

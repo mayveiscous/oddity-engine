@@ -10,4 +10,20 @@ Hinge.Defaults = function()
     }
 end
 
+Hinge.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Transform = {
+        "Position",
+    },
+
+    Physics = {
+        "Enabled",
+    },
+}
+
 return Hinge

@@ -8,6 +8,19 @@ Force.PropertyTypes = {
     MaxForce = "Vector3",
 }
 
+Force.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Force = {
+        "Velocity",
+        "MaxForce",
+    },
+}
+
 Force.Defaults = function()
     return {
         Enabled = true,

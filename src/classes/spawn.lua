@@ -10,4 +10,17 @@ Spawn.Defaults = function()
     }
 end
 
+Spawn.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+
+    Spawn = {
+        "Enabled",
+        "ProtectionDuration",
+    }
+}
+
 return Spawn

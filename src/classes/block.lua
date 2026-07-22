@@ -36,6 +36,30 @@ Block.Defaults = function()
     }
 end
 
+Block.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent"
+    },
+
+    Transform = {
+        "Size",
+        "Position",
+        "Rotation"
+    },
+
+    Appearance = {
+        "Color",
+        "Material"
+    },
+
+    Physics = {
+        "Anchored",
+        "CanCollide",
+    },
+}
+
 function Block:Init()
     
 end

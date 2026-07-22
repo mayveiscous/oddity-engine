@@ -7,6 +7,18 @@ Character.PropertyTypes = {
     RootPart = "Instance",
 }
 
+Character.Properties = {
+    Data = {
+        "Name",
+        "ClassName",
+        "Parent",
+    },
+    Character = {
+        "Controller",
+        "RootPart",
+    }
+}
+
 Character.Defaults = function()
     return {
         Controller = nil,
