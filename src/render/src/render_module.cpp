@@ -889,6 +889,7 @@ static int lua_imguiBegin(lua_State* L) {
             else if (strcmp(flag, "NoMove") == 0) flags |= ImGuiWindowFlags_NoMove;
             else if (strcmp(flag, "NoTitleBar") == 0) flags |= ImGuiWindowFlags_NoTitleBar;
             else if (strcmp(flag, "NoScrollbar") == 0) flags |= ImGuiWindowFlags_NoScrollbar;
+            else if (strcmp(flag, "MenuBar") == 0) flags |= ImGuiWindowFlags_MenuBar;
             lua_pop(L, 1);
         }
     }

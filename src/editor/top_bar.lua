@@ -9,8 +9,7 @@ function TopBar.draw(rects)
     graphics.imguiSetNextWindowPos(rects.x, rects.y)
     graphics.imguiSetNextWindowSize(rects.w, rects.h)
 
-    if graphics.imguiBegin("Top Bar", {"NoMove", "NoResize"}) then
-
+    if graphics.imguiBegin("Top Bar", {"NoMove", "NoResize", "MenuBar"}) then
         if graphics.imguiBeginMenuBar() then
             if graphics.imguiBeginMenu("File") then
                 if graphics.imguiMenuItem("New") then

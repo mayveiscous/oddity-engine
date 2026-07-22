@@ -3,12 +3,12 @@
 *.dll
 *.ini
 
-test.lua
 ignore/
 tests/
 .vscode/
-engine_render/include
-engine_render/src/glad.c
-engine_render/src/main.cpp
-engine_render/imgui/
-engine_render/src/render_module_noUI.cpp
+
+src/render/imgui
+src/render/include
+src/render/build
+src/render/src/glad.c
+src/render/src/main.cpp
