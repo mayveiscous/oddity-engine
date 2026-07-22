@@ -1,4 +1,5 @@
 local graphics = require("graphics")
+local AnimationEditor = require("src.editor.animation_editor")
 
 local TopBar = {}
 
@@ -27,6 +28,11 @@ function TopBar.draw(rects)
             if graphics.imguiBeginMenu("Edit") then
                 graphics.imguiMenuItem("Undo")
                 graphics.imguiMenuItem("Redo")
+
+                if graphics.imguiMenuItem("Animation Editor") then
+                    AnimationEditor.toggle()
+                end
+
                 graphics.imguiEndMenu()
             end
 
