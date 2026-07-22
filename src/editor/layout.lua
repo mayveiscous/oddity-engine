@@ -4,22 +4,58 @@ local Layout = {}
 
 local explorerHeightRatio = 0.55
 local panelWidth = 300
+local outputHeight = 250
+local topBarHeight = 100
+local collapsedMargin = 20
 
-function Layout.apply()
+function Layout.apply(collapsed)
     local winW, winH = graphics.getWindowSize()
 
-    local rects = {
-        Explorer = {
-            x = winW - panelWidth, y = 0,
-            w = panelWidth, h = winH * explorerHeightRatio,
+    local topOffset = collapsed.TopBar and collapsedMargin or topBarHeight
+
+    local editorHeight = winH - topOffset
+    local editorWidth = winW - panelWidth
+
+    local explorerHeight
+    local inspectorHeight
+
+    if collapsed.Explorer then
+        explorerHeight = collapsedMargin
+    else
+        explorerHeight = editorHeight * explorerHeightRatio
+    end
+
+    inspectorHeight = editorHeight - explorerHeight
+
+    return {
+        TopBar = {
+            x = 0,
+            y = 0,
+            w = winW,
+            h = topBarHeight,
         },
+
+        Explorer = {
+            x = winW - panelWidth,
+            y = topOffset,
+            w = panelWidth,
+            h = explorerHeight,
+        },
+
         Inspector = {
-            x = winW - panelWidth, y = winH * explorerHeightRatio,
-            w = panelWidth, h = winH * (1 - explorerHeightRatio),
+            x = winW - panelWidth,
+            y = topOffset + explorerHeight,
+            w = panelWidth,
+            h = inspectorHeight,
+        },
+
+        Output = {
+            x = 0,
+            y = winH - outputHeight,
+            w = editorWidth,
+            h = outputHeight,
         },
     }
-
-    return rects
 end
 
 return Layout

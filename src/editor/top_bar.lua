@@ -2,39 +2,67 @@ local graphics = require("graphics")
 
 local TopBar = {}
 
-function TopBar.draw()
+local currentTool = "Select"
+local playing = false
 
-    if graphics.imguiBeginMainMenuBar() then
+function TopBar.draw(rects)
+    graphics.imguiSetNextWindowPos(rects.x, rects.y)
+    graphics.imguiSetNextWindowSize(rects.w, rects.h)
 
-        if graphics.imguiBeginMenu("File") then
-            graphics.imguiMenuItem("New")
-            graphics.imguiMenuItem("Open")
-            graphics.imguiMenuItem("Save")
-            graphics.imguiEndMenu()
+    if graphics.imguiBegin("Top Bar", {"NoMove", "NoResize"}) then
+
+        if graphics.imguiBeginMenuBar() then
+
+            if graphics.imguiBeginMenu("File") then
+                if graphics.imguiMenuItem("New") then
+                    print("New project")
+                end
+
+                if graphics.imguiMenuItem("Save") then
+                    print("Save project")
+                end
+
+                graphics.imguiEndMenu()
+            end
+
+
+            if graphics.imguiBeginMenu("Edit") then
+                graphics.imguiMenuItem("Undo")
+                graphics.imguiMenuItem("Redo")
+                graphics.imguiEndMenu()
+            end
+
+
+            graphics.imguiEndMenuBar()
         end
 
-        if graphics.imguiBeginMenu("Edit") then
-            graphics.imguiMenuItem("Undo")
-            graphics.imguiMenuItem("Redo")
-            graphics.imguiEndMenu()
+
+        graphics.imguiSeparator()
+
+
+        local tools = {
+            "Select",
+            "Move",
+            "Scale",
+            "Rotate"
+        }
+
+        for _, tool in ipairs(tools) do
+            if graphics.imguiButtonEx(
+                tool,
+                currentTool == tool,
+                70,
+                24
+            ) then
+                currentTool = tool
+            end
+
+            graphics.imguiSameLine()
         end
 
-        if graphics.imguiBeginMenu("View") then
-            graphics.imguiMenuItem("Explorer")
-            graphics.imguiMenuItem("Properties")
-            graphics.imguiMenuItem("Output")
-            graphics.imguiEndMenu()
-        end
-
-        if graphics.imguiBeginMenu("Test") then
-            graphics.imguiMenuItem("Play")
-            graphics.imguiMenuItem("Stop")
-            graphics.imguiEndMenu()
-        end
-
-        graphics.imguiEndMainMenuBar()
     end
 
+    graphics.imguiEnd("Top Bar")
 end
 
 return TopBar

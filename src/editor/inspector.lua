@@ -64,13 +64,12 @@ local function drawProperty(name, value)
     return value
 end
 
-local function drawInspector()
-    local inst = Explorer.getSelected()
+local function drawInspector(rects)
+    graphics.imguiSetNextWindowPos(rects.x, rects.y)
+    graphics.imguiSetNextWindowSize(rects.w, rects.h)
+    graphics.imguiBegin("Properties", {"NoMove"})
 
-    local rects = Layout.apply()
-    graphics.imguiSetNextWindowPos(rects.Inspector.x, rects.Inspector.y)
-    graphics.imguiSetNextWindowSize(rects.Inspector.w, rects.Inspector.h)
-    graphics.imguiBegin("Properties")
+    local inst = Explorer.getSelected()
 
     if inst then
         local props = inst:GetProperties()

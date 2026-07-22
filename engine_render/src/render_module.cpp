@@ -873,6 +873,8 @@ static int lua_isMouseButtonDown(lua_State* L) {
     return 1;
 }
 
+static std::unordered_map<std::string, bool> g_WindowCollapsed;
+
 static int lua_imguiBegin(lua_State* L) {
     const char* title = luaL_checkstring(L, 1);
     ImGuiWindowFlags flags = 0;
@@ -884,12 +886,16 @@ static int lua_imguiBegin(lua_State* L) {
             if (strcmp(flag, "NoMove") == 0) flags |= ImGuiWindowFlags_NoMove;
             else if (strcmp(flag, "NoResize") == 0) flags |= ImGuiWindowFlags_NoResize;
             else if (strcmp(flag, "NoCollapse") == 0) flags |= ImGuiWindowFlags_NoCollapse;
+            else if (strcmp(flag, "NoMove") == 0) flags |= ImGuiWindowFlags_NoMove;
             else if (strcmp(flag, "NoTitleBar") == 0) flags |= ImGuiWindowFlags_NoTitleBar;
             else if (strcmp(flag, "NoScrollbar") == 0) flags |= ImGuiWindowFlags_NoScrollbar;
             lua_pop(L, 1);
         }
     }
     ImGui::Begin(title, nullptr, flags);
+    bool collapsed = ImGui::IsWindowCollapsed();
+
+    g_WindowCollapsed[title] = collapsed; 
     return 0;
 }
 
@@ -1184,6 +1190,101 @@ static int lua_imguiSetColor(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiWindowCollapsed(lua_State* L) {
+    const char* id_name = luaL_checkstring(L, 1);
+
+    auto it = g_WindowCollapsed.find(id_name);
+
+    if (it == g_WindowCollapsed.end()) {
+        lua_pushboolean(L, false);
+        return 1;
+    }
+
+    lua_pushboolean(L, it->second);
+
+    return 1;
+}
+
+static int lua_imguiSameLine(lua_State* L) {
+    float offset = (float)luaL_optnumber(L, 1, 0.0);
+    float spacing = (float)luaL_optnumber(L, 2, -1.0);
+
+    ImGui::SameLine(offset, spacing);
+
+    return 0;
+}
+
+static int lua_imguiSpacing(lua_State* L) {
+    ImGui::Spacing();
+
+    return 0;
+}
+
+static int lua_imguiButton(lua_State* L) {
+    const char* text = luaL_checkstring(L, 1);
+
+    float width = (float)luaL_optnumber(L, 2, 0);
+    float height = (float)luaL_optnumber(L, 3, 0);
+
+    bool clicked;
+
+    if (width > 0 || height > 0)
+        clicked = ImGui::Button(text, ImVec2(width, height));
+    else
+        clicked = ImGui::Button(text);
+
+    lua_pushboolean(L, clicked);
+
+    return 1;
+}
+
+static int lua_imguiSmallButton(lua_State* L) {
+    const char* text = luaL_checkstring(L, 1);
+
+    bool clicked = ImGui::SmallButton(text);
+
+    lua_pushboolean(L, clicked);
+
+    return 1;
+}
+
+static int lua_imguiImage(lua_State* L) {
+    unsigned int texture = (unsigned int)luaL_checkinteger(L, 1);
+
+    float width = (float)luaL_checknumber(L, 2);
+
+    float height = (float)luaL_checknumber(L, 3);
+
+    ImGui::Image((ImTextureID)(intptr_t)texture, ImVec2(width, height));
+
+    return 0;
+}
+
+static int lua_imguiButtonEx(lua_State* L) {
+    const char* text = luaL_checkstring(L, 1);
+    bool selected = lua_toboolean(L, 2);
+
+    float width = (float)luaL_optnumber(L, 3, 0);
+    float height = (float)luaL_optnumber(L, 4, 0);
+
+    if (selected)
+        ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonActive]);
+
+    bool clicked;
+
+    if (width > 0 || height > 0)
+        clicked = ImGui::Button(text, ImVec2(width, height));
+    else
+        clicked = ImGui::Button(text);
+
+    if (selected)
+        ImGui::PopStyleColor();
+
+    lua_pushboolean(L, clicked);
+
+    return 1;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1228,6 +1329,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiCollapsingHeader", lua_imguiCollapsingHeader},
     {"imguiSetStyle", lua_imguiSetStyle},
     {"imguiSetColor", lua_imguiSetColor},
+    {"imguiWindowCollapsed", lua_imguiWindowCollapsed},
     {nullptr, nullptr}
 };
 

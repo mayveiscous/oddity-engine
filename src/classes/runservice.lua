@@ -5,8 +5,7 @@ local graphics = require("graphics")
 local Vector3 = require("src.types.vector3")
 local AnimUtil = require("src.core.animutil")
 
-local Explorer = require("src.editor.explorer")
-local Inspector = require("src.editor.inspector")
+local EditorUI = require("src.editor.load")
 
 local PhysicsRuntime = require("src.physics.physics_runtime")
 local Gravity = require("src.physics.gravity")
@@ -128,8 +127,7 @@ function RunService:Step()
     graphics.beginFrame()
 
     -- draw ui
-    Explorer.drawExplorer(Game.Workspace)
-    Inspector.drawInspector()
+    EditorUI.draw(Game.Workspace)
 
     -- camera
     if Game.CurrentCamera then

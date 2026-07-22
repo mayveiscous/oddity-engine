@@ -51,12 +51,14 @@ local function drawNode(instance)
     end
 end
 
-local function drawExplorer(workspace)
-    local rects = Layout.apply()
-    graphics.imguiSetNextWindowPos(rects.Explorer.x, rects.Explorer.y)
-    graphics.imguiSetNextWindowSize(rects.Explorer.w, rects.Explorer.h)
-    graphics.imguiBegin("Explorer", {"NoMove", "NoResize", "NoCollapse"})
+local function drawExplorer(workspace, rect)
+    graphics.imguiSetNextWindowPos(rect.x, rect.y)
+    graphics.imguiSetNextWindowSize(rect.w, rect.h)
+
+    graphics.imguiBegin("Explorer", {"NoMove"})
+
     drawNode(workspace)
+
     graphics.imguiEnd()
 end
 
