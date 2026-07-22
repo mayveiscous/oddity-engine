@@ -1,26 +1,26 @@
-local render = require("render")
+local graphics = require("graphics")
 
 local AnimationEditor = {}
 
 function AnimationEditor.draw()
 
-    render.imguiBegin("Animation Editor")
+    graphics.imguiBegin("Animation Editor")
 
-    render.imguiText("Animation")
+    graphics.imguiText("Animation")
 
-    render.imguiSeparator()
+    graphics.imguiSeparator()
 
-    render.imguiButton("Play")
-    render.imguiSameLine()
-    render.imguiButton("Pause")
-    render.imguiSameLine()
-    render.imguiButton("Stop")
+    graphics.imguiButton("Play")
+    graphics.imguiSameLine()
+    graphics.imguiButton("Pause")
+    graphics.imguiSameLine()
+    graphics.imguiButton("Stop")
 
-    render.imguiSeparator()
+    graphics.imguiSeparator()
 
-    render.imguiText("Timeline")
+    graphics.imguiText("Timeline")
 
-    render.imguiEnd()
+    graphics.imguiEnd()
 
 end
 

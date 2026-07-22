@@ -1,6 +1,6 @@
 local Signal = require("src.core.signal")
 local task = require("task")
-local render = require("render")
+local graphics = require("graphics")
 
 local Vector3 = require("src.types.vector3")
 local AnimUtil = require("src.core.animutil")
@@ -53,7 +53,7 @@ local function updateBodyMotor(character)
 end
 
 function RunService:Init()
-    render.init()
+    graphics.init()
 end
 
 function RunService:Step()
@@ -65,19 +65,19 @@ function RunService:Step()
 
     local opaque, transparent, motors, characters, forces = {}, {}, {}, {}, {}
 
-    render.clearPointLights()
-    render.clearSpotLights()
+    graphics.clearPointLights()
+    graphics.clearSpotLights()
 
     -- collection
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("PointLight") and obj.Enabled then
-            render.addPointLight(
+            graphics.addPointLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B
             )
 
         elseif obj:IsA("SpotLight") and obj.Enabled then
-            render.addSpotLight(
+            graphics.addSpotLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Direction.X, obj.Direction.Y, obj.Direction.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B,
@@ -125,7 +125,7 @@ function RunService:Step()
         end
     end
 
-    render.beginFrame()
+    graphics.beginFrame()
 
     -- draw ui
     Explorer.drawExplorer(Game.Workspace)
@@ -134,7 +134,7 @@ function RunService:Step()
     -- camera
     if Game.CurrentCamera then
         local cam = Game.CurrentCamera
-        render.setCamera(
+        graphics.setCamera(
             cam.Position.X,
             cam.Position.Y,
             cam.Position.Z,
@@ -147,7 +147,7 @@ function RunService:Step()
     -- lighting
     if Game.Lighting then
         local light = Game.Lighting
-        render.setLight(
+        graphics.setLight(
             light.Direction.X,
             light.Direction.Y,
             light.Direction.Z,
@@ -172,9 +172,9 @@ function RunService:Step()
         end
     end
 
-    -- render opaque
+    -- graphics opaque
     for _, obj in ipairs(opaque) do
-        render.drawMesh(
+        graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
             obj.Size.X, obj.Size.Y, obj.Size.Z,
@@ -185,9 +185,9 @@ function RunService:Step()
         )
     end
 
-    -- render transparent
+    -- graphics transparent
     for _, obj in ipairs(transparent) do
-        render.drawMesh(
+        graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
             obj.Size.X, obj.Size.Y, obj.Size.Z,
@@ -198,8 +198,8 @@ function RunService:Step()
         )
     end
 
-    render.endFrame()
-    render.pollEvents()
+    graphics.endFrame()
+    graphics.pollEvents()
 
     lastTime = now
 end
@@ -208,7 +208,7 @@ function RunService:Run()
     running = true
     lastTime = os.clock()
 
-    while running and not render.shouldClose() do
+    while running and not graphics.shouldClose() do
         self:Step()
     end
 end

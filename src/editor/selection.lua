@@ -2,12 +2,12 @@ local Game = require("src.game")
 local RunService = require("src.classes.runservice")
 local InputService = require("src.classes.inputservice")
 local SelectionService = require("src.classes.selectionservice")
-local render = require("render")
+local graphics = require("graphics")
 
 RunService.Heartbeat:Connect(function(dt)
-    if not render.imguiWantsMouse() and InputService.IsMouseButtonDown("One") then
+    if not graphics.imguiWantsMouse() and InputService.IsMouseButtonDown("One") then
         local x, y = InputService.GetMousePos()
-        local hit = render.raycast(x, y)
+        local hit = graphics.raycast(x, y)
 
         if hit then
             local inst = Game.Workspace:FindByUniqueId(hit)

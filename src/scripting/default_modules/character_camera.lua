@@ -2,7 +2,7 @@ local InputService = require("src.classes.inputservice")
 local RunService = require("src.classes.runservice")
 local Game = require("src.game")
 local Vector3 = require("src.types.vector3")
-local render = require("render")
+local graphics = require("graphics")
 
 local Camera = {}
 
@@ -77,21 +77,21 @@ RunService.Heartbeat:Connect(function(dt)
     local shiftDown = InputService.IsKeyDown("LeftShift")
     if shiftDown and not lastShift then
         shiftLock = not shiftLock
-        render.getMouseDelta()
+        graphics.getMouseDelta()
     end
     lastShift = shiftDown
 
     if shiftLock or InputService.IsMouseButtonDown("Two") then
-        render.setCursorLocked(true)
+        graphics.setCursorLocked(true)
 
-        local dx, dy = render.getMouseDelta()
+        local dx, dy = graphics.getMouseDelta()
 
         yaw = yaw + dx * mouseSensitivity
         pitch = pitch - dy * mouseSensitivity
 
         pitch = math.max(-pitchLimit, math.min(pitchLimit, pitch))
     else
-        render.setCursorLocked(false)
+        graphics.setCursorLocked(false)
     end
 
     local scroll = InputService.GetMouseScroll()

@@ -2,7 +2,7 @@ local InputService = require("src.classes.inputservice")
 local RunService = require("src.classes.runservice")
 local Game = require("src.game")
 local Vector3 = require("src.types.vector3")
-local render = require("render")
+local graphics = require("graphics")
 
 local minSpeed = 7
 local maxSpeed = 100
@@ -63,10 +63,10 @@ end
 
 RunService.Heartbeat:Connect(function(dt)
     local cam = Game.CurrentCamera
-    local mx, my = render.getMousePos()
+    local mx, my = graphics.getMousePos()
 
     if InputService.IsMouseButtonDown("Two") then
-        render.setCursorLocked(true)
+        graphics.setCursorLocked(true)
 
         if lastMouseX then
             local dx = mx - lastMouseX
@@ -89,7 +89,7 @@ RunService.Heartbeat:Connect(function(dt)
 
         lastMouseX, lastMouseY = mx, my
     else
-        render.setCursorLocked(false)
+        graphics.setCursorLocked(false)
         lastMouseX, lastMouseY = nil, nil
     end
 

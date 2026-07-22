@@ -1,38 +1,38 @@
-local render = require("render")
+local graphics = require("graphics")
 
 local TopBar = {}
 
 function TopBar.draw()
 
-    if render.imguiBeginMainMenuBar() then
+    if graphics.imguiBeginMainMenuBar() then
 
-        if render.imguiBeginMenu("File") then
-            render.imguiMenuItem("New")
-            render.imguiMenuItem("Open")
-            render.imguiMenuItem("Save")
-            render.imguiEndMenu()
+        if graphics.imguiBeginMenu("File") then
+            graphics.imguiMenuItem("New")
+            graphics.imguiMenuItem("Open")
+            graphics.imguiMenuItem("Save")
+            graphics.imguiEndMenu()
         end
 
-        if render.imguiBeginMenu("Edit") then
-            render.imguiMenuItem("Undo")
-            render.imguiMenuItem("Redo")
-            render.imguiEndMenu()
+        if graphics.imguiBeginMenu("Edit") then
+            graphics.imguiMenuItem("Undo")
+            graphics.imguiMenuItem("Redo")
+            graphics.imguiEndMenu()
         end
 
-        if render.imguiBeginMenu("View") then
-            render.imguiMenuItem("Explorer")
-            render.imguiMenuItem("Properties")
-            render.imguiMenuItem("Output")
-            render.imguiEndMenu()
+        if graphics.imguiBeginMenu("View") then
+            graphics.imguiMenuItem("Explorer")
+            graphics.imguiMenuItem("Properties")
+            graphics.imguiMenuItem("Output")
+            graphics.imguiEndMenu()
         end
 
-        if render.imguiBeginMenu("Test") then
-            render.imguiMenuItem("Play")
-            render.imguiMenuItem("Stop")
-            render.imguiEndMenu()
+        if graphics.imguiBeginMenu("Test") then
+            graphics.imguiMenuItem("Play")
+            graphics.imguiMenuItem("Stop")
+            graphics.imguiEndMenu()
         end
 
-        render.imguiEndMainMenuBar()
+        graphics.imguiEndMainMenuBar()
     end
 
 end

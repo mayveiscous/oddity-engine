@@ -4,7 +4,7 @@ local Vector3 = require("src.types.vector3")
 local Color3 = require("src.types.color3")
 
 local Shapes = require("src.render.shapes")
-local render = require("render")
+local graphics = require("graphics")
 
 local Block = Instance:RegisterClass("Block", "Instance")
 
@@ -88,7 +88,7 @@ function Block:EnsureMesh()
     end
 
     local ok, meshId = pcall(function()
-        return render.createMesh(vertexData)
+        return graphics.createMesh(vertexData)
     end)
 
     if ok then

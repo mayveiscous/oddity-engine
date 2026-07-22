@@ -1,6 +1,6 @@
 local Instance = require("src.core.instance")
 local Vector3 = require("src.types.vector3")
-local render = require("render")
+local graphics = require("graphics")
 
 local Workspace = Instance:RegisterClass("Workspace", "Instance")
 
@@ -38,7 +38,7 @@ function Workspace:FindByUniqueId(id)
 end
 
 function Workspace:Raycast(origin, direction)
-    local uniqueId, distance, hx, hy, hz = render.raycastWorld(
+    local uniqueId, distance, hx, hy, hz = graphics.raycastWorld(
         origin.X, origin.Y, origin.Z,
         direction.X, direction.Y, direction.Z
     )

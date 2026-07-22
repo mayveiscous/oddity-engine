@@ -160,7 +160,55 @@ function CharacterPhysics.tryStepUp(characterBlock, axis, delta, colliders)
         end
     end
 
-    CharacterPhysics.resolveAxis(characterBlock, "Y", -(maxStepHeight + 0.1), colliders)
+    local dropY = characterBlock.Position.Y - (maxStepHeight + 0.1)
+    characterBlock.Position = Vector3.new(
+        characterBlock.Position.X,
+        dropY,
+        characterBlock.Position.Z
+    )
+
+    local droppedBox = AABB.fromBlock(characterBlock)
+    local bestY = nil
+
+    for _, collider in ipairs(colliders) do
+        if collider ~= characterBlock then
+            local isWedge = collider:IsA("Block") and collider.Shape == "Wedge"
+            local hit = false
+            local surfaceY = nil
+
+            if isWedge then
+                hit = CharacterPhysics.overlapsWedge(characterBlock, collider)
+                if hit then
+                    surfaceY = Slope.getHeightAt(
+                        collider,
+                        characterBlock.Position.X,
+                        characterBlock.Position.Z
+                    )
+                end
+            else
+                local otherBox = AABB.fromBlock(collider)
+                hit = AABB.overlaps(droppedBox, otherBox)
+                if hit then
+                    surfaceY = otherBox.maxY
+                end
+            end
+
+            if hit and surfaceY then
+                local candidateY = surfaceY + (characterBlock.Size.Y / 2)
+                if not bestY or candidateY > bestY then
+                    bestY = candidateY
+                end
+            end
+        end
+    end
+
+    if bestY then
+        characterBlock.Position = Vector3.new(
+            characterBlock.Position.X,
+            bestY,
+            characterBlock.Position.Z
+        )
+    end
 
     return true
 end

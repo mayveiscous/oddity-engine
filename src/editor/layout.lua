@@ -1,4 +1,4 @@
-local render = require("render")
+local graphics = require("graphics")
 
 local Layout = {}
 
@@ -6,7 +6,7 @@ local explorerHeightRatio = 0.55
 local panelWidth = 300
 
 function Layout.apply()
-    local winW, winH = render.getWindowSize()
+    local winW, winH = graphics.getWindowSize()
 
     local rects = {
         Explorer = {

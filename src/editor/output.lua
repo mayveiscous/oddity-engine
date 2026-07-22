@@ -1,4 +1,4 @@
-local render = require("render")
+local graphics = require("graphics")
 
 local Output = {}
 
@@ -10,13 +10,13 @@ local logs = {
 
 function Output.draw()
 
-    render.imguiBegin("Output")
+    graphics.imguiBegin("Output")
 
     for _, line in ipairs(logs) do
-        render.imguiText(line)
+        graphics.imguiText(line)
     end
 
-    render.imguiEnd()
+    graphics.imguiEnd()
 
 end
 

@@ -1,7 +1,7 @@
 local SelectionService = require("src.classes.selectionservice")
 local Layout = require("src.editor.layout")
 
-local render = require("render")
+local graphics = require("graphics")
 
 local expanded = {}
 
@@ -32,7 +32,7 @@ local function drawNode(instance)
 
     local forceOpen = shouldExpand(instance)
 
-    local open, clicked = render.imguiTreeNodeEx(
+    local open, clicked = graphics.imguiTreeNodeEx(
         label,
         selected,
         forceOpen
@@ -47,17 +47,17 @@ local function drawNode(instance)
             drawNode(child)
         end
 
-        render.imguiTreePop()
+        graphics.imguiTreePop()
     end
 end
 
 local function drawExplorer(workspace)
     local rects = Layout.apply()
-    render.imguiSetNextWindowPos(rects.Explorer.x, rects.Explorer.y)
-    render.imguiSetNextWindowSize(rects.Explorer.w, rects.Explorer.h)
-    render.imguiBegin("Explorer", {"NoMove", "NoResize", "NoCollapse"})
+    graphics.imguiSetNextWindowPos(rects.Explorer.x, rects.Explorer.y)
+    graphics.imguiSetNextWindowSize(rects.Explorer.w, rects.Explorer.h)
+    graphics.imguiBegin("Explorer", {"NoMove", "NoResize", "NoCollapse"})
     drawNode(workspace)
-    render.imguiEnd()
+    graphics.imguiEnd()
 end
 
 return {

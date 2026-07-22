@@ -1,4 +1,4 @@
-local render = require("render")
+local graphics = require("graphics")
 local KeyCodes = require("src.data.keycodes")
 
 local InputService = {}
@@ -8,11 +8,11 @@ function InputService.IsKeyDown(keyName)
     if not code then
         error(("Unknown key '%s"):format(keyName))
     end
-    return render.isKeyDown(code)
+    return graphics.isKeyDown(code)
 end
 
 function InputService.GetMousePos()
-    local x, y = render.getMousePos()
+    local x, y = graphics.getMousePos()
     return x, y
 end
 
@@ -21,11 +21,11 @@ function InputService.IsMouseButtonDown(buttonName)
     if not code then
         error(("Unknown mouse button '%s'"):format(buttonName))
     end
-    return render.isMouseButtonDown(code)
+    return graphics.isMouseButtonDown(code)
 end
 
 function InputService.GetMouseScroll()
-    return render.getMouseScroll()
+    return graphics.getMouseScroll()
 end
 
 return InputService

@@ -1123,6 +1123,67 @@ static int lua_imguiSetNextWindowSize(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiSetStyle(lua_State* L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    lua_getfield(L, 1, "WindowRounding");
+    if (lua_isnumber(L, -1))
+        style.WindowRounding = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+
+    lua_getfield(L, 1, "FrameRounding");
+    if (lua_isnumber(L, -1))
+        style.FrameRounding = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+
+
+    lua_getfield(L, 1, "ItemSpacing");
+    if (lua_istable(L, -1))
+    {
+        lua_rawgeti(L, -1, 1);
+        float x = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+
+        lua_rawgeti(L, -1, 2);
+        float y = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+
+        style.ItemSpacing = ImVec2(x, y);
+    }
+    lua_pop(L, 1);
+
+
+    return 0;
+}
+
+static int lua_imguiSetColor(lua_State* L) {
+    const char* name = luaL_checkstring(L,1);
+
+    float r = luaL_checknumber(L,2);
+    float g = luaL_checknumber(L,3);
+    float b = luaL_checknumber(L,4);
+    float a = luaL_optnumber(L,5,1.0);
+
+    ImGuiCol color;
+
+    if(strcmp(name,"WindowBg")==0)
+        color = ImGuiCol_WindowBg;
+    else if(strcmp(name,"Button")==0)
+        color = ImGuiCol_Button;
+    else if(strcmp(name,"Header")==0)
+        color = ImGuiCol_Header;
+    else
+        return luaL_error(L,"Unknown ImGui color");
+
+    ImGui::GetStyle().Colors[color] =
+        ImVec4(r,g,b,a);
+
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1165,10 +1226,12 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiSetNextWindowPos", lua_imguiSetNextWindowPos},
     {"imguiSetNextWindowSize", lua_imguiSetNextWindowSize},
     {"imguiCollapsingHeader", lua_imguiCollapsingHeader},
+    {"imguiSetStyle", lua_imguiSetStyle},
+    {"imguiSetColor", lua_imguiSetColor},
     {nullptr, nullptr}
 };
 
-extern "C" int luaopen_render(lua_State* L) {
+extern "C" int luaopen_graphics(lua_State* L) {
     luaL_newlib(L, renderFunctions);
     return 1;
 }

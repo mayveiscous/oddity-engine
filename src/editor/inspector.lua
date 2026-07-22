@@ -1,6 +1,6 @@
 local Explorer = require("src.editor.explorer")
 local Layout = require("src.editor.layout")
-local render = require("render")
+local graphics = require("graphics")
 
 local Vector3 = require("src.types.vector3")
 local Vector2 = require("src.types.vector2")
@@ -24,19 +24,19 @@ end
 
 local function drawProperty(name, value)
     if type(value) == "boolean" then
-        local newValue, changed = render.imguiCheckbox(name, value)
+        local newValue, changed = graphics.imguiCheckbox(name, value)
 
         if changed then
             return newValue
         end
     elseif type(value) == "number" then
-        local newValue, changed = render.imguiInputFloat(name, value)
+        local newValue, changed = graphics.imguiInputFloat(name, value)
 
         if changed then
             return newValue
         end
     elseif isVector3(value) then
-        local x, y, z, changed = render.imguiVector3(
+        local x, y, z, changed = graphics.imguiVector3(
             name,
             value.X,
             value.Y,
@@ -47,7 +47,7 @@ local function drawProperty(name, value)
             return Vector3.new(x, y, z)
         end
     elseif isColor3(value) then
-        local r, g, b, changed = render.imguiColor(
+        local r, g, b, changed = graphics.imguiColor(
             name,
             value.R,
             value.G,
@@ -58,7 +58,7 @@ local function drawProperty(name, value)
             return Color3.new(r, g, b)
         end
     else
-        render.imguiText(name .. ": " .. tostring(value))
+        graphics.imguiText(name .. ": " .. tostring(value))
     end
 
     return value
@@ -68,15 +68,15 @@ local function drawInspector()
     local inst = Explorer.getSelected()
 
     local rects = Layout.apply()
-    render.imguiSetNextWindowPos(rects.Inspector.x, rects.Inspector.y)
-    render.imguiSetNextWindowSize(rects.Inspector.w, rects.Inspector.h)
-    render.imguiBegin("Properties")
+    graphics.imguiSetNextWindowPos(rects.Inspector.x, rects.Inspector.y)
+    graphics.imguiSetNextWindowSize(rects.Inspector.w, rects.Inspector.h)
+    graphics.imguiBegin("Properties")
 
     if inst then
         local props = inst:GetProperties()
 
         for category, properties in pairs(props) do
-            if render.imguiCollapsingHeader(category, true) then
+            if graphics.imguiCollapsingHeader(category, true) then
                 for name, value in pairs(properties) do
                     local newValue = drawProperty(name, value)
 
@@ -88,7 +88,7 @@ local function drawInspector()
         end
     end
 
-    render.imguiEnd()
+    graphics.imguiEnd()
 end
 
 return {drawInspector = drawInspector}

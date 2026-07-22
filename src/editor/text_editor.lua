@@ -1,4 +1,4 @@
-local render = require("render")
+local graphics = require("graphics")
 
 local TextEditor = {}
 
@@ -8,14 +8,14 @@ print("Hello World")
 
 function TextEditor.draw()
 
-    render.imguiBegin("Script Editor")
+    graphics.imguiBegin("Script Editor")
 
-    text = render.imguiInputTextMultiline(
+    text = graphics.imguiInputTextMultiline(
         "##editor",
         text
     )
 
-    render.imguiEnd()
+    graphics.imguiEnd()
 
 end
 
