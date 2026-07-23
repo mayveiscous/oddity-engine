@@ -6,6 +6,7 @@ local Vector3 = require("src.types.vector3")
 local AnimUtil = require("src.core.animutil")
 
 local EditorUI = require("src.editor.load")
+local EditorState = require("src.editor.editor_state")
 
 local PhysicsRuntime = require("src.physics.physics_runtime")
 local Gravity = require("src.physics.gravity")
@@ -100,29 +101,32 @@ function RunService:Step()
     RunService.Heartbeat:Fire(dt)
 
     -- physics
-    PhysicsRuntime.Update(dt, characters, forces)
+    if EditorState.isPlaytesting then
+        PhysicsRuntime.Update(dt, characters, forces)
 
-    for _, character in ipairs(characters) do
-        updateBodyMotor(character)
-    end
+        for _, character in ipairs(characters) do
+            updateBodyMotor(character)
+        end
 
-    updateMotors(motors)
+        updateMotors(motors)
 
-    -- apply forces (BodyVelocity-style)
-    for _, force in ipairs(forces) do
-        local parent = force.Parent
-        if parent and parent.Position then
-            local vel = force.Velocity
-            local max = force.MaxForce
+        -- apply forces (BodyVelocity-style)
+        for _, force in ipairs(forces) do
+            local parent = force.Parent
+            if parent and parent.Position then
+                local vel = force.Velocity
+                local max = force.MaxForce
 
-            local pos = parent.Position
-            parent.Position = Vector3.new(
-                pos.X + ((max.X ~= 0) and vel.X or 0) * dt,
-                pos.Y + ((max.Y ~= 0) and vel.Y or 0) * dt,
-                pos.Z + ((max.Z ~= 0) and vel.Z or 0) * dt
+                local pos = parent.Position
+                parent.Position = Vector3.new(
+                    pos.X + ((max.X ~= 0) and vel.X or 0) * dt,
+                    pos.Y + ((max.Y ~= 0) and vel.Y or 0) * dt,
+                    pos.Z + ((max.Z ~= 0) and vel.Z or 0) * dt
             )
+            end
         end
     end
+ 
 
     graphics.beginFrame()
 
@@ -141,6 +145,8 @@ function RunService:Step()
             cam.LookAt.Z
         )
     end
+
+
 
     -- lighting
     if Game.Lighting then

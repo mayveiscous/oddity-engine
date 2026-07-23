@@ -57,6 +57,8 @@ local function drawProperty(name, value)
         if changed then
             return Color3.new(r, g, b)
         end
+    elseif isVector2(value) then
+        -- expose a vector2 thing in imgui?
     else
         graphics.imguiText(name .. ": " .. tostring(value))
     end

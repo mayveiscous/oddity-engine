@@ -1,6 +1,11 @@
 local graphics = require("graphics")
 local AnimationEditor = require("src.editor.animation_editor")
 
+local EditorState = require("src.editor.editor_state")
+local Snapshot = require("src.editor.playtest_snapshot")
+
+local Game = require("src.game")
+
 local TopBar = {}
 
 local currentTool = "Select"
@@ -10,57 +15,23 @@ function TopBar.draw(rects)
     graphics.imguiSetNextWindowPos(rects.x, rects.y)
     graphics.imguiSetNextWindowSize(rects.w, rects.h)
 
-    if graphics.imguiBegin("Top Bar", {"NoMove", "NoResize", "MenuBar"}) then
-        if graphics.imguiBeginMenuBar() then
-            if graphics.imguiBeginMenu("File") then
-                if graphics.imguiMenuItem("New") then
-                    print("New project")
-                end
+    graphics.imguiBegin("Top Bar", {"NoMove", "NoResize", "NoTitleBar"})
 
-                if graphics.imguiMenuItem("Save") then
-                    print("Save project")
-                end
+    local label = EditorState.isPlaytesting and "Stop" or "Play"
 
-                graphics.imguiEndMenu()
+    if graphics.imguiButtonEx(EditorState.isPlaytesting and "Stop" or "Play", false, 70, 24) then
+        if EditorState.isPlaytesting then
+            Snapshot.Restore(Game.Workspace, EditorState.playtestSnapshot)
+            EditorState.StopPlaytest()
+        else
+            local CreateCharacter = require("src.create_character")
+            EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
+            for _, player in pairs(Game.Players.Players) do
+                CreateCharacter.createCharacter(player)
             end
-
-
-            if graphics.imguiBeginMenu("Edit") then
-                graphics.imguiMenuItem("Undo")
-                graphics.imguiMenuItem("Redo")
-
-                if graphics.imguiMenuItem("Animation Editor") then
-                    AnimationEditor.toggle()
-                end
-
-                graphics.imguiEndMenu()
-            end
-
-
-            graphics.imguiEndMenuBar()
+            EditorState.StartPlaytest()
         end
-
-
-        graphics.imguiSeparator()
-
-
-        local tools = {
-            "Select",
-            "Move",
-            "Scale",
-            "Rotate"
-        }
-
-        for _, tool in ipairs(tools) do
-            if graphics.imguiButtonEx(tool, currentTool == tool, 70, 24) then
-                currentTool = tool
-            end
-
-            graphics.imguiSameLine()
-        end
-
     end
-
     graphics.imguiEnd()
 end
 

@@ -205,7 +205,6 @@ function AnimationEditor.draw()
     if not visible then return end
 
     local current = SelectionService.current
-    print(current.ClassName)
     if current and current.ClassName == "Animation" and current ~= selectedAnim then
         selectedAnim = current
         playhead = 0

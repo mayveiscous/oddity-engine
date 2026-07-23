@@ -1,5 +1,6 @@
 local InputService = require("src.classes.inputservice")
 local RunService = require("src.classes.runservice")
+local EditorState = require("src.editor.editor_state")
 local Game = require("src.game")
 local Vector3 = require("src.types.vector3")
 local graphics = require("graphics")
@@ -62,6 +63,7 @@ local function directionFromYawPitch(yawDeg, pitchDeg)
 end
 
 RunService.Heartbeat:Connect(function(dt)
+    if EditorState.isPlaytesting then return end -- in a playtest, don't interfere with character camera controller
     local cam = Game.CurrentCamera
     local mx, my = graphics.getMousePos()
 

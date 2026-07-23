@@ -55,9 +55,9 @@ local function getCharacter(name)
     return characters[name]
 end
 
-for _, player in pairs(Game.Players.Players) do
-    createCharacter(player)
-end
+local CreateCharacter = {
+    createCharacter = createCharacter,
+    getCharacter = getCharacter,
+}
 
-
-return { createCharacter = createCharacter, getCharacter = getCharacter }
+return CreateCharacter

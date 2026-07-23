@@ -5,12 +5,13 @@ local TopBar = require("src.editor.top_bar")
 local AnimationEditor = require("src.editor.animation_editor")
 local Layout = require("src.editor.layout")
 
+local EditorState = require("src.editor.editor_state")
+
 local graphics = require("graphics")
 
-local collapsed = {}
 
 local function draw(workspace)
-    local rects = Layout.apply(collapsed)
+    local rects = Layout.apply(EditorState.collapsed)
 
     Explorer.drawExplorer(workspace, rects.Explorer)
     Inspector.drawInspector(rects.Inspector)
@@ -18,10 +19,10 @@ local function draw(workspace)
     TopBar.draw(rects.TopBar)
     AnimationEditor.draw()
 
-    collapsed.Explorer = graphics.imguiWindowCollapsed("Explorer")
-    collapsed.Inspector = graphics.imguiWindowCollapsed("Inspector")
-    collapsed.Output = graphics.imguiWindowCollapsed("Output")
-    collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
+    EditorState.collapsed.Explorer = graphics.imguiWindowCollapsed("Explorer")
+    EditorState.collapsed.Inspector = graphics.imguiWindowCollapsed("Inspector")
+    EditorState.collapsed.Output = graphics.imguiWindowCollapsed("Output")
+    EditorState.collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
 end
 
 return {
