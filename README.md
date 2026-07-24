@@ -3,7 +3,7 @@
 A Roblox-inspired game engine: a Lua instance/scripting layer on top of a
 custom C++ renderer, with an in-engine editor built on Dear ImGui.
 
-> **Status:** early, active, hobby development. APIs, file formats, and
+> **Status:** early, active development. APIs, file formats, and
 > project structure will change without warning. Not ready for anyone but
 > the author to build a game in yet.
 
