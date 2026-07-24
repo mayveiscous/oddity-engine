@@ -43,12 +43,10 @@ custom C++ renderer, with an in-engine editor built on Dear ImGui.
 ## Tech stack
 
 - **Lua 5.4** for the scripting/instance layer and the editor UI code.
-- **C++** for the renderer — OpenGL via GLAD, windowing/input via GLFW,
-  and the editor's immediate-mode UI via Dear ImGui — compiled into a
+- **C++** for the renderer, *OpenGL* via GLAD, windowing/input via *GLFW*,
+  and the editor's immediate-mode UI via *Dear ImGui* — compiled into a
   native Lua module (`graphics.dll`) that the Lua side calls into for
   drawing, raycasting, and window/input handling.
-- Runs on a custom Lua runtime ("Luna") that loads `main.lua` and the
-  compiled `graphics` module.
 
 
 ## Project layout
@@ -58,7 +56,7 @@ src/
   classes/    -- built-in Instance types (Block, Camera, Weld, etc.)
   classes.lua -- class registry
   core/       -- instance base, signals, camera controller
-  editor/     -- Explorer, Inspector, Output, Animation Editor, top bar
+  editor/     -- Explorer, Inspector, Output, Animation Editor, Top Bar
   physics/    -- AABB collision, gravity, slopes, character physics
   render/     -- C++ renderer, ImGui bindings, shapes
   rig/        -- default character rig
@@ -66,6 +64,12 @@ src/
   types/      -- Vector2, Vector3, Color3, etc.
 main.lua
 ```
+
+## Notes
+
+- *Oddity Engine* is far from complete, many changes will be made and features added.
+- Default modules will be wrapped in LuaScript objects once API is capable.
+- This repository will **not** include *Oddity Runtime* once it begins development.
 
 ## License
 
