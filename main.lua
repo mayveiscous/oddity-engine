@@ -1,5 +1,6 @@
 package.path = package.path .. ";./?.lua;./src/?.lua;"
 
+-- route prints to the editor ui
 local Log = require("src.editor.log")
 local _originalPrint = print
 
@@ -15,16 +16,16 @@ end
 
 require("src.classes")
 
+-- initalize both camera controllers
 require("src.core.camera.camera_controller")
 require("src.scripting.default_modules.character_camera")
 
+--load services
 local runservice = require("src.classes.runservice")
 runservice:Init()
 
---require("src.core.camera.camera_controller")
 require("src.game")
 require("src.create_character")
-require("src.scripting.default_modules.character_camera")
 require("tests.test")
 
 runservice:Run()
