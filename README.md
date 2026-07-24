@@ -69,6 +69,8 @@ main.lua
 
 - *Oddity Engine* is far from complete, many changes will be made and features added.
 - Default modules will be wrapped in LuaScript objects once API is capable.
+- TunaScript support is being reconsidered, and may not make it out of development.
+- All code is implemented by me (mayveiscous) through documentation and use of AI for research *only*
 - This repository will **not** include *Oddity Runtime* once it begins development.
 
 ## License
