@@ -1137,36 +1137,51 @@ static int lua_imguiSetNextWindowSize(lua_State* L) {
 
 static int lua_imguiSetStyle(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
-
     ImGuiStyle& style = ImGui::GetStyle();
 
-    lua_getfield(L, 1, "WindowRounding");
-    if (lua_isnumber(L, -1))
-        style.WindowRounding = lua_tonumber(L, -1);
-    lua_pop(L, 1);
-
-
-    lua_getfield(L, 1, "FrameRounding");
-    if (lua_isnumber(L, -1))
-        style.FrameRounding = lua_tonumber(L, -1);
-    lua_pop(L, 1);
-
-
-    lua_getfield(L, 1, "ItemSpacing");
-    if (lua_istable(L, -1))
-    {
-        lua_rawgeti(L, -1, 1);
-        float x = lua_tonumber(L, -1);
+    auto getFloat = [&](const char* field, float& out) {
+        lua_getfield(L, 1, field);
+        if (lua_isnumber(L, -1))
+            out = (float)lua_tonumber(L, -1);
         lua_pop(L, 1);
+    };
 
-        lua_rawgeti(L, -1, 2);
-        float y = lua_tonumber(L, -1);
+    auto getVec2 = [&](const char* field, ImVec2& out) {
+        lua_getfield(L, 1, field);
+        if (lua_istable(L, -1)) {
+            lua_rawgeti(L, -1, 1);
+            float x = (float)lua_tonumber(L, -1);
+            lua_pop(L, 1);
+
+            lua_rawgeti(L, -1, 2);
+            float y = (float)lua_tonumber(L, -1);
+            lua_pop(L, 1);
+
+            out = ImVec2(x, y);
+        }
         lua_pop(L, 1);
+    };
 
-        style.ItemSpacing = ImVec2(x, y);
-    }
-    lua_pop(L, 1);
+    getFloat("WindowRounding", style.WindowRounding);
+    getFloat("ChildRounding", style.ChildRounding);
+    getFloat("FrameRounding", style.FrameRounding);
+    getFloat("PopupRounding", style.PopupRounding);
+    getFloat("ScrollbarRounding", style.ScrollbarRounding);
+    getFloat("GrabRounding", style.GrabRounding);
+    getFloat("TabRounding", style.TabRounding);
 
+    getFloat("WindowBorderSize", style.WindowBorderSize);
+    getFloat("FrameBorderSize", style.FrameBorderSize);
+    getFloat("PopupBorderSize", style.PopupBorderSize);
+
+    getFloat("ScrollbarSize", style.ScrollbarSize);
+    getFloat("GrabMinSize", style.GrabMinSize);
+    getFloat("IndentSpacing", style.IndentSpacing);
+
+    getVec2("WindowPadding", style.WindowPadding);
+    getVec2("FramePadding", style.FramePadding);
+    getVec2("ItemSpacing", style.ItemSpacing);
+    getVec2("ItemInnerSpacing", style.ItemInnerSpacing);
 
     return 0;
 }

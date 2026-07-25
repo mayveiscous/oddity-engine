@@ -5,12 +5,18 @@ local TopBar = require("src.editor.top_bar")
 local AnimationEditor = require("src.editor.animation_editor")
 local Layout = require("src.editor.layout")
 local InputService = require "src.classes.inputservice"
+local Theme = require "src.editor.theme"
 
 local EditorState = require("src.editor.editor_state")
 
 local graphics = require("graphics")
+local hasApplied = false
 
 local function draw(workspace)
+    if not hasApplied then
+        Theme.apply()
+    end
+    
     local rects = Layout.apply(EditorState.collapsed)
 
     Explorer.drawExplorer(workspace, rects.Explorer)
