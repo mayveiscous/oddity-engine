@@ -5,6 +5,10 @@ local Game = require("src.game")
 local Vector3 = require("src.types.vector3")
 local graphics = require("graphics")
 
+local debug = require "ignore/lua/debug"
+
+local hasPrint = false
+
 local minSpeed = 7
 local maxSpeed = 100
 local acceleration = 60
@@ -26,9 +30,11 @@ local startDy = cam.LookAt.Y - cam.Position.Y
 local startDz = cam.LookAt.Z - cam.Position.Z
 
 local yaw = math.deg(math.atan(startDz, startDx))
+local o_yaw = yaw
 local pitch = math.deg(math.asin(
     startDy / math.sqrt(startDx*startDx + startDy*startDy + startDz*startDz)
 ))
+local o_pitch = pitch
 
 local function normalize(v)
     local len = math.sqrt(v.X^2 + v.Y^2 + v.Z^2)
@@ -63,7 +69,10 @@ local function directionFromYawPitch(yawDeg, pitchDeg)
 end
 
 RunService.Heartbeat:Connect(function(dt)
-    if EditorState.isPlaytesting then return end -- in a playtest, don't interfere with character camera controller
+    if EditorState.isPlaytesting then
+        return
+    end -- in a playtest, don't interfere with character camera controller
+
     local cam = Game.CurrentCamera
     local mx, my = graphics.getMousePos()
 

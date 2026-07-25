@@ -24,7 +24,7 @@ Camera.Properties = {
 
 Camera.Defaults = function()
     return {
-        Position = Vector3.new(0, 0, 3),
+        Position = Vector3.new(10, 4, 10),
         LookAt = Vector3.new(0, 0, 0),
     }
 end

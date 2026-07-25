@@ -44,6 +44,11 @@ function Camera.Attach(character)
     subject = character
 end
 
+function Camera.Detach()
+    subject = nil
+    smoothedY = nil
+end
+
 function Camera.GetForward()
     return directionFromYawPitch(yaw, 0)
 end
@@ -62,18 +67,24 @@ math.clamp = function(min, max, value)
     return value
 end
 
+local wasPlaytesting = false
+
 RunService.Heartbeat:Connect(function(dt)
     -- this flag is only until i rewrite this inside of a LuaScript/TunaScript object
     -- as those wont connect to the engine at all
     -- and therefore, wont interfere
     -- once rewritten, this will be a production module.
-    if not EditorState.isPlaytesting or not subject then return end
 
-    local shiftDown = InputService.IsKeyDown("LeftShift")
-    if shiftDown and not lastShift then
-        shiftLock = not shiftLock
+    local pt = EditorState.isPlaytesting
+
+    if not pt and wasPlaytesting then
+        subject = nil
+        smoothedY = nil
     end
-    lastShift = shiftDown
+
+    wasPlaytesting = pt
+
+    if not pt or not subject then return end
 
     local cam = Game.CurrentCamera
 

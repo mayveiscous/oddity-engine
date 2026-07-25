@@ -1,3 +1,10 @@
+local Game = require "src.game"
+local task = require "task"
+
+local Vector3 = require "src/types/vector3"
+
+local debug = require "ignore/lua/debug"
+
 local Snapshot = {}
 
 function Snapshot.Capture(workspace)
@@ -17,6 +24,20 @@ function Snapshot.Capture(workspace)
         end
         state[obj.UniqueId] = captured
     end
+
+    state.cameraReturnTo = {
+        Position = Vector3.new(
+            Game.CurrentCamera.Position.X,
+            Game.CurrentCamera.Position.Y,
+            Game.CurrentCamera.Position.Z
+        ),
+        LookAt = Vector3.new(
+            Game.CurrentCamera.LookAt.X,
+            Game.CurrentCamera.LookAt.Y,
+            Game.CurrentCamera.LookAt.Z
+        ),
+    }
+
     return state
 end
 
@@ -30,6 +51,13 @@ function Snapshot.Restore(workspace, state)
         else
             obj:Destroy()
         end
+    end
+
+    if state.cameraReturnTo then
+        print("Loading state as: ")
+        print(state.cameraReturnTo.Position, state.cameraReturnTo.LookAt)
+        Game.CurrentCamera.Position = state.cameraReturnTo.Position
+        Game.CurrentCamera.LookAt = state.cameraReturnTo.LookAt
     end
 end
 

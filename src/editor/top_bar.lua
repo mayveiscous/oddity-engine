@@ -4,6 +4,7 @@ local AnimationEditor = require("src.editor.animation_editor")
 local EditorState = require("src.editor.editor_state")
 local Snapshot = require("src.editor.playtest_snapshot")
 
+
 local Game = require("src.game")
 
 local TopBar = {}

@@ -15,6 +15,7 @@ Block.PropertyTypes = {
     Color = "Color3",
     Transparency = "number",
     Anchored = "boolean",
+    Locked = "boolean",
     CanCollide = "boolean",
     Shape = "string",
     Material = "string",

@@ -4,8 +4,6 @@ local DefaultRig = require("src.rig.default_rig")
 local Vector3 = require("src.types.vector3")
 local Color3 = require("src.types.color3")
 
-local RunService = require("src.classes.runservice")
-
 local char_cam = require("src.scripting.default_modules.character_camera")
 local char_controller = require("src.scripting.default_modules.character_controller")
 local anim_controller = require("src.scripting.default_modules.animation_controller")
