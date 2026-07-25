@@ -14,17 +14,15 @@ function print(...)
 end
 
 require("src.classes")
-
+require("src.editor.selection")
 require("src.core.camera.camera_controller")
 require("src.scripting.default_modules.character_camera")
 
 local runservice = require("src.classes.runservice")
 runservice:Init()
 
---require("src.core.camera.camera_controller")
 require("src.game")
 require("src.create_character")
-require("src.scripting.default_modules.character_camera")
 require("tests.test")
 
 runservice:Run()

@@ -7,6 +7,7 @@ local AnimUtil = require("src.core.animutil")
 
 local EditorUI = require("src.editor.load")
 local EditorState = require("src.editor.editor_state")
+local Highlighter = require("src.editor.highlighter")
 
 local PhysicsRuntime = require("src.physics.physics_runtime")
 local Gravity = require("src.physics.gravity")
@@ -127,7 +128,6 @@ function RunService:Step()
         end
     end
  
-
     graphics.beginFrame()
 
     -- draw ui
@@ -145,8 +145,6 @@ function RunService:Step()
             cam.LookAt.Z
         )
     end
-
-
 
     -- lighting
     if Game.Lighting then
@@ -175,6 +173,9 @@ function RunService:Step()
             end
         end
     end
+
+    -- highlight selected obj
+    Highlighter.draw()
 
     -- graphics opaque
     for _, obj in ipairs(opaque) do

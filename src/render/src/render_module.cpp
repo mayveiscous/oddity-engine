@@ -1286,6 +1286,23 @@ static int lua_imguiButtonEx(lua_State* L) {
     return 1;
 }
 
+static int lua_screenPointToRay(lua_State* L) {
+    float mx = (float)luaL_checknumber(L, 1);
+    float my = (float)luaL_checknumber(L, 2);
+
+    glm::vec3 dir = screenToWorldRay(mx, my);
+
+    lua_pushnumber(L, g_cameraPos.x);
+    lua_pushnumber(L, g_cameraPos.y);
+    lua_pushnumber(L, g_cameraPos.z);
+
+    lua_pushnumber(L, dir.x);
+    lua_pushnumber(L, dir.y);
+    lua_pushnumber(L, dir.z);
+
+    return 6;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1337,6 +1354,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiSetStyle", lua_imguiSetStyle},
     {"imguiSetColor", lua_imguiSetColor},
     {"imguiWindowCollapsed", lua_imguiWindowCollapsed},
+    {"screenPointToRay", lua_screenPointToRay},
     {nullptr, nullptr}
 };
 
