@@ -54,8 +54,6 @@ function Snapshot.Restore(workspace, state)
     end
 
     if state.cameraReturnTo then
-        print("Loading state as: ")
-        print(state.cameraReturnTo.Position, state.cameraReturnTo.LookAt)
         Game.CurrentCamera.Position = state.cameraReturnTo.Position
         Game.CurrentCamera.LookAt = state.cameraReturnTo.LookAt
     end

@@ -5,37 +5,45 @@ local SelectionService = require("src.classes.selectionservice")
 local Gizmo = require("src.editor.gizmo")
 local graphics = require("graphics")
 
+local wasMouseDown = false
+
 RunService.Heartbeat:Connect(function(dt)
     if graphics.imguiWantsMouse() then
+        wasMouseDown = false
         return 
     end
 
     local x, y = InputService.GetMousePos()
+    local mouseDown = InputService.IsMouseButtonDown("One")
 
-    if InputService.IsMouseButtonDown("One") then
-        if not Gizmo.dragging then
+    if mouseDown then
+        if Gizmo.dragging then
+            Gizmo.updateDrag(x, y)
+        elseif Gizmo.freeDragging then
+            Gizmo.updateFreeDrag(x, y)
+        elseif not wasMouseDown then
             local hit = graphics.raycast(x, y)
 
             if hit and Gizmo.tryBeginDrag(hit, x, y) then
-                return
-            end
-
-            if hit then
-                local inst = Game.Workspace:FindByUniqueId(hit)
-                if inst then
-                    if inst.Locked then
-                        SelectionService.Clear()
-                        return
-                    end
+                -- axis drag started
+            elseif hit then
+            local inst = Game.Workspace:FindByUniqueId(hit)
+            if inst then
+                if inst.Locked then
+                    SelectionService.Clear()
+                else
                     SelectionService.Select(inst)
+                    Gizmo.tryBeginFreeDrag(x, y)
                 end
-            else
-                SelectionService.Clear()
             end
         else
-            Gizmo.updateDrag(x, y)
+                SelectionService.Clear()
+            end
         end
     else
         Gizmo.endDrag()
+        Gizmo.endFreeDrag()
     end
+
+    wasMouseDown = mouseDown
 end)

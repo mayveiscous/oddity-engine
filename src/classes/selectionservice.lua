@@ -6,7 +6,6 @@ SelectionService._selected = {}
 function SelectionService.Select(inst)
     SelectionService._selected = { inst }
     SelectionService.current = inst
-    print(("Selected: %s"):format(inst.Name))
 end
 
 function SelectionService.Add(inst)
@@ -15,7 +14,6 @@ function SelectionService.Add(inst)
     end
     table.insert(SelectionService._selected, inst)
     SelectionService.current = SelectionService._selected[1]
-    print(("Selected: %s (+%d more)"):format(inst.Name, #SelectionService._selected - 1))
 end
 
 function SelectionService.Toggle(inst)

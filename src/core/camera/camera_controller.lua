@@ -7,8 +7,6 @@ local graphics = require("graphics")
 
 local debug = require "ignore/lua/debug"
 
-local hasPrint = false
-
 local minSpeed = 7
 local maxSpeed = 100
 local acceleration = 60

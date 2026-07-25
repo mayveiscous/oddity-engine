@@ -13,7 +13,7 @@ function Highlighter.draw()
         graphics.drawMesh(
             selected._meshId,
             selected.Position.X, selected.Position.Y, selected.Position.Z,
-            selected.Size.X * 1.05, selected.Size.Y * 1.05, selected.Size.Z * 1.05,
+            selected.Size.X * 1.02, selected.Size.Y * 1.02, selected.Size.Z * 1.02,
             1, 0.8, 0,
             selected.Rotation.X, selected.Rotation.Y, selected.Rotation.Z,
             1,

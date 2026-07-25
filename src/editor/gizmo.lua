@@ -1,12 +1,25 @@
 local SelectionService = require("src.classes.selectionservice")
 local Vector3 = require("src.types.vector3")
 
+local Game = require("src.game")
+
 local graphics = require("graphics")
 
 local Gizmo = {}
+Gizmo.freeDragging = false
+
+local freeDragStartObjPos = nil
+local freeDragPlaneNormal = nil
 
 local axisLength = 2
-local axisThickness = 0.15
+local axisGap = 1
+local axisThickness = 0.75
+
+local snapThreshold = 0.5
+local snapReleaseThreshold = 1.2
+local snapEnabled = true
+
+local currentSnapTarget = nil
 
 local axes = {
     { id = "gizmo_move_x", dir = Vector3.new(1, 0, 0), color = {1, 0.2, 0.2} },
@@ -14,8 +27,108 @@ local axes = {
     { id = "gizmo_move_z", dir = Vector3.new(0, 0, 1), color = {0.2, 0.4, 1} },
 }
 
+local freeSnapTargets = { X = nil, Y = nil, Z = nil }
+
+local function axisKey(axis)
+    if axis.dir.X ~= 0 then return "X"
+    elseif axis.dir.Y ~= 0 then return "Y"
+    else return "Z" end
+end
+
 local function dot(a, b)
     return a.X * b.X + a.Y * b.Y + a.Z * b.Z
+end
+
+local function normalize(v)
+    local len = math.sqrt(v.X^2 + v.Y^2 + v.Z^2)
+    if len == 0 then 
+        return Vector3.new(0, 0, 0) 
+    end
+
+    return Vector3.new(
+        v.X / len,
+        v.Y / len,
+        v.Z / len
+    )
+end
+
+local function getFaces(pos, size, axis)
+    local half
+    if axis.dir.X ~= 0 then half = size.X / 2
+    elseif axis.dir.Y ~= 0 then half = size.Y / 2
+    else half = size.Z / 2 end
+
+    local center = pos.X * axis.dir.X + pos.Y * axis.dir.Y + pos.Z * axis.dir.Z
+    return center - half, center + half, center
+end
+
+local function findSnap(inst, axis, rawCenter)
+    local half
+    if axis.dir.X ~= 0 then half = inst.Size.X / 2
+    elseif axis.dir.Y ~= 0 then half = inst.Size.Y / 2
+    else half = inst.Size.Z / 2 end
+
+    if currentSnapTarget then
+        if math.abs(currentSnapTarget - rawCenter) < snapReleaseThreshold then
+            return currentSnapTarget
+        end
+    end
+
+    local best = nil
+    local bestDelta = snapThreshold
+
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj ~= inst and obj.Position and obj.Size then
+            local oMin, oMax, oCenter = getFaces(obj.Position, obj.Size, axis)
+            local candidates = { oMax - half, oMin + half, oMin - half, oMax + half, oCenter }
+
+            for _, cand in ipairs(candidates) do
+                local delta = math.abs(cand - rawCenter)
+                if delta < bestDelta then
+                    bestDelta = delta
+                    best = cand
+                end
+            end
+        end
+    end
+
+    currentSnapTarget = best
+    return best
+end
+
+local function findSnapFree(inst, axis, rawCenter)
+    local half
+    if axis.dir.X ~= 0 then half = inst.Size.X / 2
+    elseif axis.dir.Y ~= 0 then half = inst.Size.Y / 2
+    else half = inst.Size.Z / 2 end
+
+    local key = axisKey(axis)
+    local current = freeSnapTargets[key]
+
+    if current and math.abs(current - rawCenter) < snapReleaseThreshold then
+        return current
+    end
+
+    local best = nil
+    local bestDelta = snapThreshold
+
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj ~= inst and obj.Position and obj.Size then
+            local oMin, oMax, oCenter = getFaces(obj.Position, obj.Size, axis)
+            local candidates = { oMax - half, oMin + half, oMin - half, oMax + half, oCenter }
+
+            for _, cand in ipairs(candidates) do
+                local delta = math.abs(cand - rawCenter)
+                if delta < bestDelta then
+                    bestDelta = delta
+                    best = cand
+                end
+            end
+        end
+    end
+
+    freeSnapTargets[key] = best
+    return best
 end
 
 function Gizmo.closestPointOnAxis(axis, mx, my)
@@ -34,20 +147,26 @@ function Gizmo.closestPointOnAxis(axis, mx, my)
     local e = dot(axisDir, w)
 
     local denom = a * c - b * b
-    if math.abs(denom) < 1e-7 then
-        return 0
+    if math.abs(denom) < 0.005 then
+        return nil
     end
 
-    return (b * d - a * e) / denom
+    return (a * e - b * d) / denom
 end
-
 
 function Gizmo.draw(blockMeshId)
     local inst = SelectionService.current
     if not inst or not inst.Position then return end
 
     for _, axis in ipairs(axes) do
-        local center = inst.Position + axis.dir * (axisLength / 2)
+        local halfSize = 0
+        if axis.dir.X ~= 0 then halfSize = inst.Size.X / 2
+        elseif axis.dir.Y ~= 0 then halfSize = inst.Size.Y / 2
+        else halfSize = inst.Size.Z / 2 end
+
+        local offset = halfSize + axisGap + (axisLength / 2)
+        local center = inst.Position + axis.dir * offset
+
         local sx = (axis.dir.X ~= 0) and axisLength or axisThickness
         local sy = (axis.dir.Y ~= 0) and axisLength or axisThickness
         local sz = (axis.dir.Z ~= 0) and axisLength or axisThickness
@@ -79,13 +198,81 @@ end
 function Gizmo.updateDrag(mx, my)
     local axis = Gizmo.dragging
     local current = Gizmo.closestPointOnAxis(axis, mx, my)
-    local delta = current - Gizmo.dragStartOffset
+    if current == nil then return end
 
-    SelectionService.current.Position = Gizmo.dragStartPos + axis.dir * delta
+    local delta = current - Gizmo.dragStartOffset
+    local rawPos = Gizmo.dragStartPos + axis.dir * delta
+
+    if snapEnabled then
+        local inst = SelectionService.current
+        local rawCenter = rawPos.X * axis.dir.X + rawPos.Y * axis.dir.Y + rawPos.Z * axis.dir.Z
+        local snapped = findSnap(inst, axis, rawCenter)
+
+        if snapped then
+            local correction = snapped - rawCenter
+            rawPos = rawPos + axis.dir * correction
+        end
+    end
+
+    SelectionService.current.Position = rawPos
 end
 
 function Gizmo.endDrag()
     Gizmo.dragging = nil
+end
+
+function Gizmo.tryBeginFreeDrag(mx, my)
+    local inst = SelectionService.current
+    if not inst then return false end
+
+    freeSnapTargets = { X = nil, Y = nil, Z = nil }
+
+    local ox, oy, oz, dx, dy, dz = graphics.screenPointToRay(mx, my)
+    local rayOrigin = Vector3.new(ox, oy, oz)
+    local rayDir = Vector3.new(dx, dy, dz)
+
+    freeDragPlaneNormal = normalize(rayDir)
+    freeDragStartObjPos = inst.Position
+    Gizmo.freeDragging = true
+    Gizmo.freeDragStartHit = Gizmo.rayPlaneHit(rayOrigin, rayDir, inst.Position, freeDragPlaneNormal)
+    return true
+end
+
+function Gizmo.rayPlaneHit(rayOrigin, rayDir, planePoint, planeNormal)
+    local denom = dot(rayDir, planeNormal)
+    if math.abs(denom) < 1e-6 then return planePoint end
+    local t = dot(planePoint - rayOrigin, planeNormal) / denom
+    return rayOrigin + rayDir * t
+end
+
+function Gizmo.updateFreeDrag(mx, my)
+    local ox, oy, oz, dx, dy, dz = graphics.screenPointToRay(mx, my)
+    local rayOrigin = Vector3.new(ox, oy, oz)
+    local rayDir = Vector3.new(dx, dy, dz)
+
+    local hit = Gizmo.rayPlaneHit(rayOrigin, rayDir, freeDragStartObjPos, freeDragPlaneNormal)
+    local delta = hit - Gizmo.freeDragStartHit
+
+    local rawPos = freeDragStartObjPos + delta
+    local inst = SelectionService.current
+
+    if snapEnabled then
+        for _, axis in ipairs(axes) do
+            local rawCenter = rawPos.X * axis.dir.X + rawPos.Y * axis.dir.Y + rawPos.Z * axis.dir.Z
+            local snapped = findSnapFree(inst, axis, rawCenter)
+            if snapped then
+                local correction = snapped - rawCenter
+                rawPos = rawPos + axis.dir * correction
+            end
+        end
+    end
+
+    SelectionService.current.Position = rawPos
+end
+
+function Gizmo.endFreeDrag()
+    Gizmo.freeDragging = false
+    freeSnapTargets = { X = nil, Y = nil, Z = nil }
 end
 
 return Gizmo

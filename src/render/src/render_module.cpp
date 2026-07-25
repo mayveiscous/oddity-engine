@@ -608,6 +608,8 @@ static int lua_beginFrame(lua_State* L) {
         return 0;
     }
 
+    renderObjects.clear();
+
     glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -664,7 +666,6 @@ static int lua_endFrame(lua_State* L) {
         luaL_error(L, "render.endFrame() called before render.init()");
         return 0;
     }
-    renderObjects.clear();
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -767,6 +768,10 @@ static int lua_raycast(lua_State* L) {
     RenderObject* closest = nullptr;
 
     for (auto& obj : renderObjects) {
+        if (obj.uniqueId.rfind("gizmo_highlight", 0)==0) {
+            continue;
+        }
+        
         glm::vec3 half = obj.scale * 0.5f;
 
         glm::vec3 min = obj.position - half;

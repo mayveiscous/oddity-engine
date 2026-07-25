@@ -24,6 +24,8 @@ require("src.scripting.default_modules.character_camera")
 local runservice = require("src.classes.runservice")
 runservice:Init()
 
+require("src.editor.selection")
+
 require("src.game")
 require("src.create_character")
 require("tests.test")
