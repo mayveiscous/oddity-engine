@@ -5,7 +5,7 @@ local Game = require "src.game"
 local Vector3 = require "src.types.vector3"
 local graphics = require "graphics"
 
-local debug = require "ignore/lua/debug"
+local debug = require "debug"
 
 local minSpeed = 7
 local maxSpeed = 100

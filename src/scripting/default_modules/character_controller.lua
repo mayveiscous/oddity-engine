@@ -3,7 +3,7 @@ local RunService = require "src.classes.runservice"
 local Vector3 = require "src.types.vector3"
 local CharacterCamera = require "src.scripting.default_modules.character_camera"
 local EditorState = require "src.editor.editor_state"
-local PhysicsEngine = require "src.physics.rewrite.core.engine"
+local PhysicsEngine = require "src.physics.core.engine"
 
 local animation_controller = require "src.scripting.default_modules.animation_controller"
 

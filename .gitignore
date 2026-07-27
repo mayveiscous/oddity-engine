@@ -1,20 +1,29 @@
+# scripts
 *.ps1
 
+# builds
 *.exe
 *.dll
 
-*.ini
-
-*.c
-*.h
-
+# TODO list
 TODO.*
 
-ignore/
-tests/
+# ide & ignores
+.ignore/
+.tests/
 .vscode/
+.plans/
+.assets/
 
+# imgui
 src/render/imgui
 src/render/include
 src/render/build
 src/render/src/main.cpp
+
+# imgui
+*.ini
+
+# c -> imgui
+*.c
+*.h

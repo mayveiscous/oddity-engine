@@ -1,4 +1,4 @@
-local Signal = require "src.core.signal"
+local Signal = require "signal"
 local task = require "task"
 local graphics = require "graphics"
 
@@ -10,8 +10,8 @@ local EditorState = require "src.editor.editor_state"
 local Highlighter = require "src.editor.highlighter"
 
 -- local PhysicsRuntime = require "src.physics.physics_runtime"
-local PhysicsEngine = require "src.physics.rewrite.core.engine"
-local PhysicsObject = require "src.physics.rewrite.core.physics_object"
+local PhysicsEngine = require "src.physics.core.engine"
+local PhysicsObject = require "src.physics.core.physics_object"
 
 local Game = require "src.game"
 

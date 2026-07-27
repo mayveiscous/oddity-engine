@@ -3,7 +3,7 @@ local task = require "task"
 
 local Vector3 = require "src/types/vector3"
 
-local debug = require "ignore/lua/debug"
+local debug = require "debug"
 
 local Snapshot = {}
 

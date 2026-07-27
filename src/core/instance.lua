@@ -1,4 +1,4 @@
-local Signal = require "src.core.signal"
+local Signal = require "signal"
 
 local Instance = {}
 local ClassRegistry = {}

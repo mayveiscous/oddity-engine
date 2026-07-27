@@ -28,6 +28,6 @@ require "src.editor.selection"
 
 require "src.game"
 require "src.create_character"
-require "tests.test"
+dofile("./.tests/test.lua")
 
 runservice:Run()

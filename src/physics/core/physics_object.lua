@@ -1,5 +1,5 @@
 local Vector3 = require "src.types.vector3"
-local AABB = require "src.physics.rewrite.colliders.aabb"
+local AABB = require "src.physics.colliders.aabb"
 
 local PhysicsObject = {}
 PhysicsObject.__index = PhysicsObject
