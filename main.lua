@@ -28,6 +28,8 @@ require "src.editor.selection"
 
 require "src.game"
 require "src.create_character"
+
+-- the . in the name messes up everything :/
 dofile("./.tests/test.lua")
 
 runservice:Run()
