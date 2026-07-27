@@ -1,7 +1,7 @@
-local Instance = require("src.core.instance")
-local task = require("task")
-local ScriptRunner = require("src.scripting.script_runner")
-local requireInstance = require("src.scripting.instance_require")
+local Instance = require "src.core.instance"
+local task = require "task"
+local ScriptRunner = require "src.scripting.script_runner"
+local requireInstance = require "src.scripting.instance_require"
 
 local LuaScript = Instance:RegisterClass("LuaScript", "Instance")
 

@@ -1,6 +1,6 @@
-local Instance = require("src.core.instance")
-local Vector3 = require("src.types.vector3")
-local graphics = require("graphics")
+local Instance = require "src.core.instance"
+local Vector3 = require "src.types.vector3"
+local graphics = require "graphics"
 
 local Workspace = Instance:RegisterClass("Workspace", "Instance")
 
@@ -49,7 +49,7 @@ function Workspace:Raycast(origin, direction)
         return nil
     end
 
-    local Vector3 = require("src.types.vector3")
+    local Vector3 = require "src.types.vector3"
     local inst = self:FindByUniqueId(uniqueId)
 
     return {

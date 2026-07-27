@@ -1,9 +1,11 @@
-local InputService = require("src.classes.inputservice")
-local RunService = require("src.classes.runservice")
-local Vector3 = require("src.types.vector3")
-local CharacterCamera = require("src.scripting.default_modules.character_camera")
+local InputService = require "src.classes.inputservice"
+local RunService = require "src.classes.runservice"
+local Vector3 = require "src.types.vector3"
+local CharacterCamera = require "src.scripting.default_modules.character_camera"
+local EditorState = require "src.editor.editor_state"
+local PhysicsEngine = require "src.physics.rewrite.core.engine"
 
-local animation_controller = require("src.scripting.default_modules.animation_controller")
+local animation_controller = require "src.scripting.default_modules.animation_controller"
 
 local ControllerModule = {}
 
@@ -25,10 +27,15 @@ local function cross(a, b)
 end
 
 RunService.Heartbeat:Connect(function(dt)
+    if not EditorState.isPlaytesting then return end
     if not subject then return end
 
     local controller = subject.Controller
     if not controller then return end
+
+    local hitbox = subject.RootPart
+    local physObj = PhysicsEngine.GetObjectForInstance(hitbox)
+    if not physObj then return end
 
     local camForward = CharacterCamera.GetForward()
     local forward = Vector3.new(camForward.X, 0, camForward.Z).Unit
@@ -40,7 +47,7 @@ RunService.Heartbeat:Connect(function(dt)
     if InputService.IsKeyDown("D") then moveDir = moveDir + right end
     if InputService.IsKeyDown("A") then moveDir = moveDir - right end
 
-    local isMoving = moveDir.Magnitude > 0 and controller.Grounded
+    local isMoving = moveDir.Magnitude > 0 and physObj.Grounded
 
     if isMoving then
         animation_controller.Play("Walk")
@@ -52,7 +59,6 @@ RunService.Heartbeat:Connect(function(dt)
         moveDir = moveDir.Unit
     end
 
-    local hitbox = subject.RootPart
     if CharacterCamera.IsShiftLocked() then
         local correctedYaw = 90 - CharacterCamera.GetYaw()
         hitbox.Rotation = Vector3.new(hitbox.Rotation.X, correctedYaw, hitbox.Rotation.Z)
@@ -66,22 +72,22 @@ RunService.Heartbeat:Connect(function(dt)
         hitbox.Rotation = Vector3.new(hitbox.Rotation.X, newYaw, hitbox.Rotation.Z)
     end
 
-    controller.MoveDirection = moveDir 
+    controller.MoveDirection = moveDir
 
-    local currentVel = controller.Velocity
-    local acceleration = 40 -- units/sec^2, tune to taste
+    local currentVel = physObj.m_velocity
+    local acceleration = 40
 
     local desiredVel = Vector3.new(moveDir.X * controller.WalkSpeed, 0, moveDir.Z * controller.WalkSpeed)
     local currentHoriz = Vector3.new(currentVel.X, 0, currentVel.Z)
     local newHoriz = currentHoriz:Lerp(desiredVel, math.min(acceleration * dt, 1))
 
-    controller.Velocity = Vector3.new(newHoriz.X, currentVel.Y, newHoriz.Z)
+    physObj.m_velocity = Vector3.new(newHoriz.X, currentVel.Y, newHoriz.Z)
 
-    if controller.Grounded and InputService.IsKeyDown("Space") then
-        controller.Velocity = Vector3.new(
-            controller.Velocity.X,
+    if physObj.Grounded and InputService.IsKeyDown("Space") then
+        physObj.m_velocity = Vector3.new(
+            physObj.m_velocity.X,
             controller.JumpPower,
-            controller.Velocity.Z
+            physObj.m_velocity.Z
         )
         animation_controller.Play("Jump")
     end

@@ -1,5 +1,5 @@
-local Instance = require("src.core.instance")
-local AnimUtil = require("src.core.animutil")
+local Instance = require "src.core.instance"
+local AnimUtil = require "src.core.animutil"
 
 local AnimationPlayer = Instance:RegisterClass("AnimationPlayer", "Instance")
 

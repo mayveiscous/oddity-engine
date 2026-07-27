@@ -1,7 +1,7 @@
 local Signal = {}
 Signal.__index = Signal
 
-local task = require("task")
+local task = require "task"
 
 function Signal.new()
     return setmetatable({

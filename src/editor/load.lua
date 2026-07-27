@@ -1,15 +1,15 @@
-local Explorer = require("src.editor.explorer")
-local Inspector = require("src.editor.inspector")
-local Output = require("src.editor.output")
-local TopBar = require("src.editor.top_bar")
-local AnimationEditor = require("src.editor.animation_editor")
-local Layout = require("src.editor.layout")
+local Explorer = require "src.editor.explorer"
+local Inspector = require "src.editor.inspector"
+local Output = require "src.editor.output"
+local TopBar = require "src.editor.top_bar"
+local AnimationEditor = require "src.editor.animation_editor"
+local Layout = require "src.editor.layout"
 local InputService = require "src.classes.inputservice"
 local Theme = require "src.editor.theme"
 
-local EditorState = require("src.editor.editor_state")
+local EditorState = require "src.editor.editor_state"
 
-local graphics = require("graphics")
+local graphics = require "graphics"
 local hasApplied = false
 
 local function draw(workspace)

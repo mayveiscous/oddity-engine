@@ -1,12 +1,12 @@
-local Instance = require("src.core.instance")
-local Vector3 = require("src.types.vector3")
+local Instance = require "src.core.instance"
+local Vector3 = require "src.types.vector3"
 
-local Camera = require("src.classes.camera")
-local Lighting = require("src.classes.lighting")
-local Players = require("src.classes.players")
-local Player = require("src.classes.player")
-local Workspace = require("src.classes.workspace")
-local Sky = require("src.classes.sky")
+local Camera = require "src.classes.camera"
+local Lighting = require "src.classes.lighting"
+local Players = require "src.classes.players"
+local Player = require "src.classes.player"
+local Workspace = require "src.classes.workspace"
+local Sky = require "src.classes.sky"
 
 local Game = {}
 Game.Workspace = Instance.new("Workspace")
@@ -24,10 +24,10 @@ Game.Players.Players["mayveiscous"] = Instance.new("Player")
 
 function Game:GetService(name)
     if name == "RunService" then
-        local rs = require("src.classes.runservice")
+        local rs = require "src.classes.runservice"
         return rs
     elseif name == "InputService" then
-        local is = require("src.classes.inputservice")
+        local is = require "src.classes.inputservice"
         return is
     end
 

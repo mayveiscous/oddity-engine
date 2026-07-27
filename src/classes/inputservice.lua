@@ -1,5 +1,5 @@
-local graphics = require("graphics")
-local KeyCodes = require("src.data.keycodes")
+local graphics = require "graphics"
+local KeyCodes = require "src.data.keycodes"
 
 local InputService = {}
 

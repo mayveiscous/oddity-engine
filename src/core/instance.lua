@@ -1,4 +1,4 @@
-local Signal = require("src.core.signal")
+local Signal = require "src.core.signal"
 
 local Instance = {}
 local ClassRegistry = {}
@@ -62,7 +62,7 @@ local function buildMeta(classTable)
 
             local expectedType = classTable.PropertyTypes and classTable.PropertyTypes[k]
             if expectedType and v ~= nil then
-                local TypeCheck = require("src.core.typecheck")
+                local TypeCheck = require "src.core.typecheck"
                 local actType = TypeCheck.typeName(v)
                 if actType ~= expectedType then 
                     error(("'%s' expects %s, got %s"):format(k, expectedType, actType), 2)
@@ -73,7 +73,7 @@ local function buildMeta(classTable)
             state[k] = v
 
             if isVector3(v) then
-                local Vector3 = require("src.types.vector3")
+                local Vector3 = require "src.types.vector3"
                 Vector3._bind(v, t, k)
             end
 

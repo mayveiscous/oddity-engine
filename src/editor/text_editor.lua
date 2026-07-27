@@ -1,4 +1,4 @@
-local graphics = require("graphics")
+local graphics = require "graphics"
 
 local TextEditor = {}
 

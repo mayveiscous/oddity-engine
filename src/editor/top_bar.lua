@@ -1,16 +1,44 @@
-local graphics = require("graphics")
-local AnimationEditor = require("src.editor.animation_editor")
+local graphics = require "graphics"
+local AnimationEditor = require "src.editor.animation_editor"
 
-local EditorState = require("src.editor.editor_state")
-local Snapshot = require("src.editor.playtest_snapshot")
+local EditorState = require "src.editor.editor_state"
+local Snapshot = require "src.editor.playtest_snapshot"
 
+local PhysicsEngine = require "src.physics.rewrite.core.engine"
+local PhysicsObject = require "src.physics.rewrite.core.physics_object"
 
-local Game = require("src.game")
+local Game = require "src.game"
 
 local TopBar = {}
 
 local currentTool = "Select"
 local playing = false
+
+local function beginPlaytestPhysics()
+    PhysicsEngine.Clear()
+
+    local characters = {}
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj:IsA("Character") then
+            table.insert(characters, obj)
+        end
+    end
+
+    local function isNonRootCharacterBlock(obj)
+        for _, character in ipairs(characters) do
+            if obj ~= character.RootPart and obj:IsDescendantOf(character) then
+                return true
+            end
+        end
+        return false
+    end
+
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj:IsA("Block") and obj.Anchored == false and not isNonRootCharacterBlock(obj) then
+            PhysicsEngine.AddObject(PhysicsObject.fromPart(obj))
+        end
+    end
+end
 
 function TopBar.draw(rects)
     graphics.imguiSetNextWindowPos(rects.x, rects.y)
@@ -25,11 +53,14 @@ function TopBar.draw(rects)
             Snapshot.Restore(Game.Workspace, EditorState.playtestSnapshot)
             EditorState.StopPlaytest()
         else
-            local CreateCharacter = require("src.create_character")
+            local CreateCharacter = require "src.create_character"
             EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
+
             for _, player in pairs(Game.Players.Players) do
                 CreateCharacter.createCharacter(player)
             end
+
+            beginPlaytestPhysics()
             EditorState.StartPlaytest()
         end
     end

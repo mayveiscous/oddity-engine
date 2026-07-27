@@ -1,13 +1,18 @@
-local Game = require("src.game")
-local RunService = require("src.classes.runservice")
-local InputService = require("src.classes.inputservice")
-local SelectionService = require("src.classes.selectionservice")
-local Gizmo = require("src.editor.gizmo")
-local graphics = require("graphics")
+local Game = require "src.game"
+local RunService = require "src.classes.runservice"
+local InputService = require "src.classes.inputservice"
+local SelectionService = require "src.classes.selectionservice"
+local EditorState = require "src.editor.editor_state"
+local Gizmo = require "src.editor.gizmo"
+local graphics = require "graphics"
 
 local wasMouseDown = false
 
 RunService.Heartbeat:Connect(function(dt)
+    if EditorState.isPlaytesting then
+        return 
+    end
+    
     if graphics.imguiWantsMouse() then
         wasMouseDown = false
         return 

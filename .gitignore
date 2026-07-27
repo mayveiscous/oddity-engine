@@ -1,7 +1,14 @@
 *.ps1
+
 *.exe
 *.dll
+
 *.ini
+
+*.c
+*.h
+
+TODO.*
 
 ignore/
 tests/
@@ -10,5 +17,4 @@ tests/
 src/render/imgui
 src/render/include
 src/render/build
-src/render/src/glad.c
 src/render/src/main.cpp

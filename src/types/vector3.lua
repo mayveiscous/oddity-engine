@@ -105,11 +105,23 @@ function Vector3.zero()
     return self
 end
 
+function Vector3:Dot(other)
+    return self.X * other.X + self.Y * other.Y + self.Z * other.Z
+end
+
 function Vector3:Lerp(goal, alpha)
     return Vector3.new(
         self.X + (goal.X - self.X) * alpha,
         self.Y + (goal.Y - self.Y) * alpha,
         self.Z + (goal.Z - self.Z) * alpha
+    )
+end
+
+function Vector3.Max(a, b)
+    return Vector3.new(
+        math.max(a.X, b.X),
+        math.max(a.Y, b.Y),
+        math.max(a.Z, b.Z)
     )
 end
 

@@ -1,11 +1,11 @@
-local task = require("task")
-local Log = require("src.editor.log")
+local task = require "task"
+local Log = require "src.editor.log"
 
 local ScriptRunner = {}
 
 local function buildEnv(self)
-    local scriptapi = require("src.scripting.scriptapi")
-    local requireInstance = require("src.scripting.instance_require")
+    local scriptapi = require "src.scripting.scriptapi"
+    local requireInstance = require "src.scripting.instance_require"
 
     local custom = scriptapi.build(self)
     custom.script = self

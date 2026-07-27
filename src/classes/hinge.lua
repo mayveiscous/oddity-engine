@@ -1,5 +1,5 @@
-local Instance = require("src.core.instance")
-local Vector3 = require("src.types.vector3")
+local Instance = require "src.core.instance"
+local Vector3 = require "src.types.vector3"
 
 local Hinge = Instance:RegisterClass("Hinge", "Instance")
 

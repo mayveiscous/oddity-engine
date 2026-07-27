@@ -13,7 +13,7 @@ local function requireInstance(moduleScript)
         return cached
     end
     
-    local ScriptRunner = require("src.scripting.script_runner")
+    local ScriptRunner = require "src.scripting.script_runner"
 
     local result = ScriptRunner.RunSync(moduleScript)
     moduleCache[moduleScript.UniqueId] = result

@@ -1,9 +1,9 @@
-local graphics = require("graphics")
-local Instance = require("src.core.instance")
-local Vector3 = require("src.types.vector3")
-local Game = require("src.game")
-local Log = require("src.editor.log")
-local SelectionService = require("src.classes.selectionservice")
+local graphics = require "graphics"
+local Instance = require "src.core.instance"
+local Vector3 = require "src.types.vector3"
+local Game = require "src.game"
+local Log = require "src.editor.log"
+local SelectionService = require "src.classes.selectionservice"
 
 local AnimationEditor = {}
 

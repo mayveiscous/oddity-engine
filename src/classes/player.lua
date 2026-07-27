@@ -1,4 +1,4 @@
-local Instance = require("src.core.instance")
+local Instance = require "src.core.instance"
 
 local Player = Instance:RegisterClass("Player", "Instance")
 

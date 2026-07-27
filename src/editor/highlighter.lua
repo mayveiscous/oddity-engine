@@ -1,12 +1,13 @@
-local EditorState = require("src.editor.editor_state")
-local SelectionService = require("src.classes.selectionservice")
-local Gizmo = require("src.editor.gizmo")
+local EditorState = require "src.editor.editor_state"
+local SelectionService = require "src.classes.selectionservice"
+local Gizmo = require "src.editor.gizmo"
 
-local graphics = require("graphics")
+local graphics = require "graphics"
 
 local Highlighter = {}
 
 function Highlighter.draw()
+    if EditorState.isPlaytesting then return end
     local selected = SelectionService.current
 
     if selected and selected._meshId then

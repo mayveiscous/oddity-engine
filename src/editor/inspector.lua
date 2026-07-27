@@ -1,10 +1,10 @@
-local Explorer = require("src.editor.explorer")
-local Layout = require("src.editor.layout")
-local graphics = require("graphics")
+local Explorer = require "src.editor.explorer"
+local Layout = require "src.editor.layout"
+local graphics = require "graphics"
 
-local Vector3 = require("src.types.vector3")
-local Vector2 = require("src.types.vector2")
-local Color3 = require("src.types.color3")
+local Vector3 = require "src.types.vector3"
+local Vector2 = require "src.types.vector2"
+local Color3 = require "src.types.color3"
 
 local function isVector3(v)
     return type(v) == "table" and v._state and v._state._isVector3

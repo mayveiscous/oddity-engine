@@ -1,11 +1,11 @@
-local Instance = require("src.core.instance")
-local Game = require("src.game")
-local task = require("task")
+local Instance = require "src.core.instance"
+local Game = require "src.game"
+local task = require "task"
 
-local ScriptRunner = require("src.scripting.script_runner")
-local requireInstance = require("src.scripting.instance_require")
+local ScriptRunner = require "src.scripting.script_runner"
+local requireInstance = require "src.scripting.instance_require"
 
-local scrapi = require("src.scripting.scriptapi")
+local scrapi = require "src.scripting.scriptapi"
 
 local TunaScript = Instance:RegisterClass("TunaScript", "Instance")
 

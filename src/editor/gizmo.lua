@@ -1,9 +1,9 @@
-local SelectionService = require("src.classes.selectionservice")
-local Vector3 = require("src.types.vector3")
+local SelectionService = require "src.classes.selectionservice"
+local Vector3 = require "src.types.vector3"
 
-local Game = require("src.game")
+local Game = require "src.game"
 
-local graphics = require("graphics")
+local graphics = require "graphics"
 
 local Gizmo = {}
 Gizmo.freeDragging = false

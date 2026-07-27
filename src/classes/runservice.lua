@@ -1,18 +1,19 @@
-local Signal = require("src.core.signal")
-local task = require("task")
-local graphics = require("graphics")
+local Signal = require "src.core.signal"
+local task = require "task"
+local graphics = require "graphics"
 
-local Vector3 = require("src.types.vector3")
-local AnimUtil = require("src.core.animutil")
+local Vector3 = require "src.types.vector3"
+local AnimUtil = require "src.core.animutil"
 
-local EditorUI = require("src.editor.load")
-local EditorState = require("src.editor.editor_state")
-local Highlighter = require("src.editor.highlighter")
+local EditorUI = require"src.editor.load"
+local EditorState = require "src.editor.editor_state"
+local Highlighter = require "src.editor.highlighter"
 
-local PhysicsRuntime = require("src.physics.physics_runtime")
-local Gravity = require("src.physics.gravity")
+-- local PhysicsRuntime = require "src.physics.physics_runtime"
+local PhysicsEngine = require "src.physics.rewrite.core.engine"
+local PhysicsObject = require "src.physics.rewrite.core.physics_object"
 
-local Game = require("src.game")
+local Game = require "src.game"
 
 local RunService = {}
 
@@ -103,7 +104,14 @@ function RunService:Step()
 
     -- physics
     if EditorState.isPlaytesting then
-        PhysicsRuntime.Update(dt, characters, forces)
+            local colliders = {}
+        for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+            if obj.CanCollide and obj.Anchored then
+                table.insert(colliders, obj)
+            end
+        end
+
+        PhysicsEngine.Simulate(dt, colliders)
 
         for _, character in ipairs(characters) do
             updateBodyMotor(character)

@@ -1,7 +1,7 @@
-local SelectionService = require("src.classes.selectionservice")
-local Layout = require("src.editor.layout")
+local SelectionService = require "src.classes.selectionservice"
+local Layout = require "src.editor.layout"
 
-local graphics = require("graphics")
+local graphics = require "graphics"
 
 local expanded = {}
 

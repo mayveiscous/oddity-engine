@@ -1,10 +1,10 @@
-local Instance = require("src.core.instance")
+local Instance = require "src.core.instance"
 
-local Vector3 = require("src.types.vector3")
+local Vector3 = require "src.types.vector3"
 
-local RunService = require("src.classes.runservice")
+local RunService = require "src.classes.runservice"
 
-local animGet = require("src.scripting.default_modules.animGet")
+local animGet = require "src.scripting.default_modules.animGet"
 local AnimationController = {}
 
 local subject = nil

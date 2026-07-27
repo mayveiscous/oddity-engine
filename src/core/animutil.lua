@@ -1,4 +1,4 @@
-local Vector3 = require("src.types.vector3")
+local Vector3 = require "src.types.vector3"
 
 local function lerp(a, b, t)
     return a + (b - a) * t
