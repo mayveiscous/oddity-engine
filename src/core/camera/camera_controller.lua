@@ -102,7 +102,6 @@ RunService.Heartbeat:Connect(function(dt)
         lastMouseX, lastMouseY = nil, nil
     end
 
-
     local forward = normalize(Vector3.new(
         cam.LookAt.X - cam.Position.X,
         cam.LookAt.Y - cam.Position.Y,
@@ -114,14 +113,12 @@ RunService.Heartbeat:Connect(function(dt)
         Vector3.new(0, 1, 0)
     ))
 
-
     local move = Vector3.new(0, 0, 0)
 
     if InputService.IsKeyDown("W") then move = move + forward end
     if InputService.IsKeyDown("S") then move = move - forward end
     if InputService.IsKeyDown("D") then move = move + right end
     if InputService.IsKeyDown("A") then move = move - right end
-
 
     if move.Magnitude > 0 then
         currentSpeed = math.min(
@@ -135,13 +132,11 @@ RunService.Heartbeat:Connect(function(dt)
         )
     end
 
-
     local finalSpeed = currentSpeed
 
     if InputService.IsKeyDown("LeftShift") then
         finalSpeed = finalSpeed / shiftMultiplier
     end
-
 
     local velocity = move * finalSpeed * dt
 

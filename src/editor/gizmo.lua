@@ -2,6 +2,7 @@ local SelectionService = require "src.classes.selectionservice"
 local Vector3 = require "src.types.vector3"
 
 local Game = require "src.game"
+local PhysicsEngine = require "src.physics.core.engine"
 
 local graphics = require "graphics"
 
@@ -15,8 +16,8 @@ local axisLength = 2
 local axisGap = 1
 local axisThickness = 0.75
 
-local snapThreshold = 0.5
-local snapReleaseThreshold = 1.2
+local snapThreshold = 0.35
+local snapReleaseThreshold = 1
 local snapEnabled = true
 
 local currentSnapTarget = nil
@@ -28,6 +29,22 @@ local axes = {
 }
 
 local freeSnapTargets = { X = nil, Y = nil, Z = nil }
+
+-- Keeps a live PhysicsObject (if the selected instance is one) in sync with
+-- gizmo-driven position changes, so physics doesn't overwrite the edit next step.
+local function syncPhysics(inst, pos)
+    local physObj = PhysicsEngine.GetObjectForInstance(inst)
+    if not physObj then return end
+
+    physObj.m_position = pos
+    physObj.m_velocity = Vector3.new(0, 0, 0)
+
+    if physObj.collider.Type == "AABB" then
+        physObj.collider:Recenter(pos)
+    elseif physObj.collider.m_center then
+        physObj.collider.m_center = pos
+    end
+end
 
 local function axisKey(axis)
     if axis.dir.X ~= 0 then return "X"
@@ -200,11 +217,11 @@ function Gizmo.updateDrag(mx, my)
     local current = Gizmo.closestPointOnAxis(axis, mx, my)
     if current == nil then return end
 
+    local inst = SelectionService.current
     local delta = current - Gizmo.dragStartOffset
     local rawPos = Gizmo.dragStartPos + axis.dir * delta
 
     if snapEnabled then
-        local inst = SelectionService.current
         local rawCenter = rawPos.X * axis.dir.X + rawPos.Y * axis.dir.Y + rawPos.Z * axis.dir.Z
         local snapped = findSnap(inst, axis, rawCenter)
 
@@ -215,6 +232,7 @@ function Gizmo.updateDrag(mx, my)
     end
 
     SelectionService.current.Position = rawPos
+    syncPhysics(inst, rawPos)
 end
 
 function Gizmo.endDrag()
@@ -268,6 +286,7 @@ function Gizmo.updateFreeDrag(mx, my)
     end
 
     SelectionService.current.Position = rawPos
+    syncPhysics(inst, rawPos)
 end
 
 function Gizmo.endFreeDrag()

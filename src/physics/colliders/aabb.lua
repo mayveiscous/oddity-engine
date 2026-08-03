@@ -7,7 +7,14 @@ function AABB.new(min, max)
     local self = setmetatable({}, AABB)
     self.min = min
     self.max = max
+    self.half = (max - min) / 2
+    self.Type = "AABB"
     return self
+end
+
+function AABB:Recenter(center)
+    self.min = center - self.half
+    self.max = center + self.half
 end
 
 function AABB.fromBlock(block)
@@ -41,20 +48,37 @@ function AABB:Intersect(other)
 end
 
 function AABB:IntersectSphere(sphere)
-    local closest = self:ClosestPoint(sphere.m_center)
-    local diff = sphere.m_center - closest
-    local dist = diff.Magnitude
+    local closest = Vector3.new(
+        math.max(self.min.X, math.min(sphere.m_center.X, self.max.X)),
+        math.max(self.min.Y, math.min(sphere.m_center.Y, self.max.Y)),
+        math.max(self.min.Z, math.min(sphere.m_center.Z, self.max.Z))
+    )
 
-    if dist >= sphere.m_radius then
-        return { Intersects = false }
+    local delta = sphere.m_center - closest
+    local distance = delta.Magnitude
+
+    local intersects = distance < sphere.m_radius
+
+    if not intersects then
+        return {
+            Intersects = false,
+            Distance = 0,
+            Normal = Vector3.zero()
+        }
     end
 
-    local normal = (dist > 1e-6) and (diff / dist) or Vector3.new(0, 1, 0)
+    local normal
+
+    if distance > 0 then
+        normal = delta / distance
+    else
+        normal = Vector3.new(0, 1, 0)
+    end
 
     return {
         Intersects = true,
-        Normal = normal,
-        Distance = dist - sphere.m_radius
+        Distance = distance - sphere.m_radius,
+        Normal = normal
     }
 end
 

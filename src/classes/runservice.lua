@@ -104,9 +104,18 @@ function RunService:Step()
 
     -- physics
     if EditorState.isPlaytesting then
-            local colliders = {}
+        local function isNonRootCharacterBlock(obj)
+            for _, character in ipairs(characters) do
+                if character.RootPart and obj ~= character.RootPart and obj:IsDescendantOf(character) then
+                    return true
+                end
+            end
+            return false
+        end
+
+        local colliders = {}
         for _, obj in ipairs(Game.Workspace:GetDescendants()) do
-            if obj.CanCollide and obj.Anchored then
+            if obj.CanCollide and not isNonRootCharacterBlock(obj) then
                 table.insert(colliders, obj)
             end
         end

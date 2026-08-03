@@ -7,6 +7,7 @@ function Plane.new(normal, distance)
     local self = setmetatable({}, Plane)
     self.m_normal = normal
     self.m_distance = distance
+    self.Type = "Plane"
     return self
 end
 

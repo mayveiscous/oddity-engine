@@ -26,10 +26,10 @@ runservice:Init()
 
 require "src.editor.selection"
 
+require "src.create-runtime.baseplate"
 require "src.game"
-require "src.create_character"
 
 -- the . in the name messes up everything :/
-dofile("./.tests/test.lua")
+dofile("./.ignore/.tests/test.lua")
 
 runservice:Run()

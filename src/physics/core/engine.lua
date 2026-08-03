@@ -1,6 +1,9 @@
 local Vector3 = require "src.types.vector3"
 local AABB = require "src.physics.colliders.aabb"
 
+local CollisionType = require "src.physics.core.resolve_collision_type"
+local PhysicsObject = require "src.physics.core.physics_object"
+
 local PhysicsEngine = {}
 PhysicsEngine.registered = {}
 PhysicsEngine.byInstance = {}
@@ -20,7 +23,8 @@ local function applyWorldCollision(obj, colliders)
 
         for _, block in ipairs(colliders) do
             if block ~= obj.instance then
-                local result = obj:GetAABB():Overlap(AABB.fromBlock(block))
+                local blockCollider = block.collider or AABB.fromBlock(block)
+                local result = CollisionType.Test(obj.collider, blockCollider)
 
                 if result.Intersects then
                     hadCollision = true
@@ -28,18 +32,19 @@ local function applyWorldCollision(obj, colliders)
                     local penetration = -result.Distance
 
                     if penetration > slop then
-                        obj.m_position =
-                            obj.m_position +
-                            result.Normal * (penetration - slop)
+                        obj.m_position = obj.m_position + result.Normal * (penetration - slop)
+
+                        if obj.collider.Type == "AABB" then
+                            obj.collider:Recenter(obj.m_position)
+                        elseif obj.collider.m_center then
+                            obj.collider.m_center = obj.m_position
+                        end
                     end
 
-                    -- Remove velocity into the surface
                     local vn = obj.m_velocity:Dot(result.Normal)
 
                     if vn < 0 then
-                        obj.m_velocity =
-                            obj.m_velocity -
-                            result.Normal * vn
+                        obj.m_velocity = obj.m_velocity - result.Normal * vn
                     end
 
                     if result.Normal.Y > 0.7 then
@@ -96,15 +101,15 @@ function PhysicsEngine:HandleCollisions()
     for i = 1, #objs - 1 do
         for j = i + 1, #objs do
             local a, b = objs[i], objs[j]
-            local result = a:GetAABB():Intersect(b:GetAABB())
+            local result = CollisionType.Test(a.collider, b.collider)
 
             if result.Intersects then
                 local delta = b.m_position - a.m_position
                 local dist = delta.Magnitude
-                local normal = (dist > 1e-6) and (delta / dist) or Vector3.new(0, 1, 0)
+                local normal = result.Normal
 
                 local penetration = -result.Distance
-                local correction = normal * (penetration / 2)
+                local correction = (normal * (penetration / 2)) / 2
                 a.m_position = a.m_position - correction
                 b.m_position = b.m_position + correction
 
@@ -120,8 +125,13 @@ function PhysicsEngine:HandleCollisions()
 end
 
 local function simulateObject(obj, colliders, subDt)
+    local wasGrounded = obj.Grounded
     obj.Grounded = false
-    obj.m_velocity = obj.m_velocity - Vector3.new(0, PhysicsEngine.Gravity * subDt, 0)
+
+    if not wasGrounded then
+        obj.m_velocity = obj.m_velocity - Vector3.new(0, PhysicsEngine.Gravity * subDt, 0)
+    end
+
     obj:Integrate(subDt)
     applyWorldCollision(obj, colliders)
 
@@ -143,6 +153,11 @@ function PhysicsEngine.Simulate(dt, colliders)
 
     for _ = 1, steps do
         for _, obj in pairs(PhysicsEngine.registered) do
+            if obj.collider.Type == "AABB" then
+                obj.collider:Recenter(obj.m_position)
+            else
+                obj.collider.m_center = obj.m_position
+            end
             simulateObject(obj, colliders, subDt)
         end
         PhysicsEngine:HandleCollisions()
@@ -151,6 +166,10 @@ function PhysicsEngine.Simulate(dt, colliders)
     for _, obj in pairs(PhysicsEngine.registered) do
         obj:SyncToInstance()
     end
+end
+
+function PhysicsObject.fromPart(part)
+    return PhysicsObject.new(part.Position, Vector3.new(0, 0, 0), AABB.fromBlock(part), part)
 end
 
 return PhysicsEngine

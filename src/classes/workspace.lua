@@ -43,8 +43,6 @@ function Workspace:Raycast(origin, direction)
         direction.X, direction.Y, direction.Z
     )
 
-    print(uniqueId, distance, hx, hy, hz)
-
     if not uniqueId then
         return nil
     end

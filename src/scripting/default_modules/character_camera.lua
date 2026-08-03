@@ -10,7 +10,7 @@ local Camera = {}
 local subject = nil
 
 local distance = 8
-local height = 1
+local height = 0.5
 
 local mouseSensitivity = 0.12
 local pitchLimit = 80
@@ -27,7 +27,7 @@ local shiftLock = false
 local lastShift = false
 
 local smoothedY = nil
-local heightFollowRate = 3
+local heightFollowRate = 8
 
 local function directionFromYawPitch(yawDeg, pitchDeg)
     local yawRad = math.rad(yawDeg)
@@ -74,7 +74,6 @@ RunService.Heartbeat:Connect(function(dt)
     -- as those wont connect to the engine at all
     -- and therefore, wont interfere
     -- once rewritten, this will be a production module.
-
     local pt = EditorState.isPlaytesting
 
     if not pt and wasPlaytesting then

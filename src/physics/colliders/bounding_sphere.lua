@@ -1,31 +1,66 @@
-local Vector3 = require "src/types/vector3"
+local Vector3 = require "src.types.vector3"
 
-local BoundingSphere = {}
-BoundingSphere.__index = BoundingSphere
+local PhysicsObject = {}
+PhysicsObject.__index = PhysicsObject
 
-function BoundingSphere.new(position, radius)
-    local self = setmetatable({}, BoundingSphere)
+local currentId = 0
 
-    self.m_center = position
-    self.m_radius = radius
+local function nextId()
+    currentId = currentId + 1
+    return currentId
+end
+
+function PhysicsObject.new(pos, vel, collider, instance)
+    local self = setmetatable({}, PhysicsObject)
+
+    self._id = nextId()
+
+    self.m_position = pos
+    self.m_velocity = vel
+
+    self.collider = collider
+    self.instance = instance
+
+    self.Type = "Sphere"
+
+    self.Grounded = false
 
     return self
 end
 
-function BoundingSphere:Intersect(other)
-    local radDist = self.m_radius + other.m_radius
-    local centDistance = (self.m_center - other.m_center).Magnitude
-
-    local intersects = false
-
-    if centDistance < radDist then
-        intersects = true
-    end
-
-    return {
-        Intersects = intersects,
-        Distance = (centDistance - radDist)
-    }
+function PhysicsObject.fromPart(part, collider)
+    return PhysicsObject.new(
+        part.Position,
+        Vector3.zero(),
+        collider,
+        part
+    )
 end
 
-return BoundingSphere
+function PhysicsObject:GetCollider()
+    return self.collider
+end
+
+function PhysicsObject:SetPosition(position)
+    self.m_position = position
+
+    if self.collider then
+        if self.collider.m_center then
+            self.collider.m_center = position
+        end
+    end
+end
+
+function PhysicsObject:Integrate(dt)
+    self:SetPosition(
+        self.m_position + self.m_velocity * dt
+    )
+end
+
+function PhysicsObject:SyncToInstance()
+    if self.instance then
+        self.instance.Position = self.m_position
+    end
+end
+
+return PhysicsObject

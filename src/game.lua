@@ -24,11 +24,9 @@ Game.Players.Players["mayveiscous"] = Instance.new("Player")
 
 function Game:GetService(name)
     if name == "RunService" then
-        local rs = require "src.classes.runservice"
-        return rs
+        return require "src.classes.runservice"
     elseif name == "InputService" then
-        local is = require "src.classes.inputservice"
-        return is
+        return require "src.classes.inputservice"
     end
 
     if name == "Workspace" then
@@ -37,6 +35,10 @@ function Game:GetService(name)
 
     if name == "Players" then
         return Game.Players
+    end
+
+    if name == "Lighting" then
+        return Game.Lighting
     end
 
     error(("Service '%s' does not exist."):format(name), 2)

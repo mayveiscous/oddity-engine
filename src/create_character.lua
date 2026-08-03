@@ -4,40 +4,16 @@ local DefaultRig = require "src.rig.default_rig"
 local Vector3 = require "src.types.vector3"
 local Color3 = require "src.types.color3"
 
+local Baseplate = require "src.create-runtime.baseplate"
+
 local char_cam = require "src.scripting.default_modules.character_camera"
 local char_controller = require "src.scripting.default_modules.character_controller"
 local anim_controller = require "src.scripting.default_modules.animation_controller"
 
-local ground = Instance.new("Block")
-ground.Name = "Ground"
-ground.Parent = Game.Workspace
-ground.Locked = true
-ground.Anchored = true
-ground.Position = Vector3.new(0, 0, 0)
-ground.Size = Vector3.new(100, 1, 100)
-ground.Color = Color3.new(0.4, 0.16, 0.16)
-
-local spawn = Instance.new("Spawn")
-spawn.Name = "SpawnPoint"
-spawn.Parent = Game.Workspace
-spawn.Position = Vector3.new(0, 0.5, 0)
-spawn.Size = Vector3.new(4, 1, 4)
-spawn.Color = Color3.new(0.2, 0.6, 0.9)
-spawn.Transparency = 0.5
-
 local characters = {}
 
-local function getSpawnPoint()
-    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
-        if obj:IsA("Spawn") and obj.Enabled then
-            return obj.Position
-        end
-    end
-    return Vector3.new(0, 0, 0)
-end
-
 local function createCharacter(player)
-    local spawnPos = getSpawnPoint()
+    local spawnPos = Baseplate.getSpawnPoint()
     local ch = DefaultRig.Create(Game.Workspace, spawnPos, player.Name)
 
     player.Character = ch

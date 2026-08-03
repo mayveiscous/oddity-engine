@@ -50,7 +50,7 @@ function Range.new(min, max)
     return self
 end
 
-function Range.contains(n)
+function Range:contains(n)
     local state = rawget(self, "_state")
 
     if n <= state.Max and n >= state.Min then
