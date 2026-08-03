@@ -64,6 +64,7 @@ function TopBar.draw(rects)
             EditorState.StartPlaytest()
         end
     end
+
     graphics.imguiEnd()
 end
 

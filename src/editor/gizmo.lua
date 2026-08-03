@@ -30,8 +30,6 @@ local axes = {
 
 local freeSnapTargets = { X = nil, Y = nil, Z = nil }
 
--- Keeps a live PhysicsObject (if the selected instance is one) in sync with
--- gizmo-driven position changes, so physics doesn't overwrite the edit next step.
 local function syncPhysics(inst, pos)
     local physObj = PhysicsEngine.GetObjectForInstance(inst)
     if not physObj then return end

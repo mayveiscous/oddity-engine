@@ -11,6 +11,7 @@ return {
         Two = 50,
         Three = 51,
         Four = 52,
+        Enter = 257,
     },
     MouseButtons = {
         One = 0,

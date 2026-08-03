@@ -939,12 +939,14 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
 
     bool open = ImGui::TreeNodeEx(label, flags);
 
-    bool clicked = ImGui::IsItemClicked();
+    bool clicked = ImGui::IsItemClicked(ImGuiMouseButton_Left);
+    bool rightClicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
 
     lua_pushboolean(L, open);
     lua_pushboolean(L, clicked);
+    lua_pushboolean(L, rightClicked);
 
-    return 2;
+    return 3;
 }
 
 static int lua_imguiTreePop(lua_State* L) {
