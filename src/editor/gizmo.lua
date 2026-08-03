@@ -56,6 +56,14 @@ local function dot(a, b)
     return a.X * b.X + a.Y * b.Y + a.Z * b.Z
 end
 
+local function cross(a, b)
+    return Vector3.new(
+        a.Y * b.Z - a.Z * b.Y,
+        a.Z * b.X - a.X * b.Z,
+        a.X * b.Y - a.Y * b.X
+    )
+end
+
 local function normalize(v)
     local len = math.sqrt(v.X^2 + v.Y^2 + v.Z^2)
     if len == 0 then 
@@ -153,22 +161,19 @@ function Gizmo.closestPointOnAxis(axis, mx, my)
 
     local rayOrigin = Vector3.new(ox, oy, oz)
     local rayDir = Vector3.new(dx, dy, dz)
-    local objectPos = SelectionService.current.Position
-    local axisDir = axis.dir
 
-    local w = rayOrigin - objectPos
-    local a = dot(rayDir, rayDir)
-    local b = dot(rayDir, axisDir)
-    local c = dot(axisDir, axisDir)
-    local d = dot(rayDir, w)
-    local e = dot(axisDir, w)
+    local planeNormal = Gizmo.dragPlaneNormal
+    local planePoint = Gizmo.dragStartPos
 
-    local denom = a * c - b * b
-    if math.abs(denom) < 0.005 then
+    local denom = dot(rayDir, planeNormal)
+    if math.abs(denom) < 1e-5 then
         return nil
     end
 
-    return (a * e - b * d) / denom
+    local t = dot(planePoint - rayOrigin, planeNormal) / denom
+    local hit = rayOrigin + rayDir * t
+
+    return dot(hit, axis.dir)
 end
 
 function Gizmo.draw(blockMeshId)
@@ -205,6 +210,28 @@ function Gizmo.tryBeginDrag(hitId, mx, my)
         if axis.id == hitId then
             Gizmo.dragging = axis
             Gizmo.dragStartPos = SelectionService.current.Position
+
+            local ox, oy, oz, dx, dy, dz = graphics.screenPointToRay(mx, my)
+            local rayDir = normalize(Vector3.new(dx, dy, dz))
+
+            -- Plane that contains the drag axis and faces the camera as
+            -- squarely as possible, fixed for the whole drag. Stable
+            -- ray-vs-plane intersection instead of near-parallel line math.
+            local sideways = cross(rayDir, axis.dir)
+            local sidewaysLen = math.sqrt(sideways.X^2 + sideways.Y^2 + sideways.Z^2)
+
+            local planeNormal
+            if sidewaysLen < 1e-4 then
+                -- Looking almost straight down the axis itself - genuinely
+                -- ambiguous (like any 3D tool), fall back to a fixed helper
+                -- axis so dragging still does something reasonable.
+                local fallback = (math.abs(axis.dir.Y) < 0.9) and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
+                planeNormal = normalize(cross(axis.dir, cross(fallback, axis.dir)))
+            else
+                planeNormal = normalize(cross(axis.dir, sideways))
+            end
+
+            Gizmo.dragPlaneNormal = planeNormal
             Gizmo.dragStartOffset = Gizmo.closestPointOnAxis(axis, mx, my)
             return true
         end
