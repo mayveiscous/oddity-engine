@@ -7,6 +7,7 @@ return {
         Space = 32,
         Esc = 256,
         LeftShift = 340,
+        LeftControl = 341,
         One = 49,
         Two = 50,
         Three = 51,
