@@ -2,8 +2,8 @@ local Game = require "src.game"
 local RunService = require "src.classes.runservice"
 local InputService = require "src.classes.inputservice"
 local SelectionService = require "src.classes.selectionservice"
-local EditorState = require "src.editor.editor_state"
-local Gizmo = require "src.editor.gizmo"
+local EditorState = require "src.editor.state.layout"
+local Gizmo = require "src.editor.state.gizmo"
 local graphics = require "graphics"
 
 local wasMouseDown = false

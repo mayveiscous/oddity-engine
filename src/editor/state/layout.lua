@@ -6,6 +6,7 @@ local explorerHeightRatio = 0.55
 local panelWidth = 300
 local outputHeight = 250
 local topBarHeight = 100
+local documentBarHeight = 35
 local collapsedMargin = 20
 
 function Layout.apply(collapsed)
@@ -13,11 +14,12 @@ function Layout.apply(collapsed)
 
     local topOffset = collapsed.TopBar and collapsedMargin or topBarHeight
 
-    local editorHeight = winH - topOffset
+    local editorStartY = topOffset + documentBarHeight
+
+    local editorHeight = winH - editorStartY
     local editorWidth = winW - panelWidth
 
     local explorerHeight
-    local inspectorHeight
 
     if collapsed.Explorer then
         explorerHeight = collapsedMargin
@@ -25,7 +27,7 @@ function Layout.apply(collapsed)
         explorerHeight = editorHeight * explorerHeightRatio
     end
 
-    inspectorHeight = editorHeight - explorerHeight
+    local inspectorHeight = editorHeight - explorerHeight
 
     return {
         TopBar = {
@@ -35,16 +37,30 @@ function Layout.apply(collapsed)
             h = topBarHeight,
         },
 
+        DocumentTabs = {
+            x = 0,
+            y = topOffset,
+            w = editorWidth,
+            h = documentBarHeight,
+        },
+
+        TextEditor = {
+            x = 0,
+            y = editorStartY,
+            w = editorWidth,
+            h = editorHeight - outputHeight,
+        },
+
         Explorer = {
             x = winW - panelWidth,
-            y = topOffset,
+            y = editorStartY,
             w = panelWidth,
             h = explorerHeight,
         },
 
         Inspector = {
             x = winW - panelWidth,
-            y = topOffset + explorerHeight,
+            y = editorStartY + explorerHeight,
             w = panelWidth,
             h = inspectorHeight,
         },

@@ -6,8 +6,8 @@ local Vector3 = require "src.types.vector3"
 local AnimUtil = require "src.core.animutil"
 
 local EditorUI = require"src.editor.load"
-local EditorState = require "src.editor.editor_state"
-local Highlighter = require "src.editor.highlighter"
+local EditorState = require "src.editor.state.layout"
+local Highlighter = require "src.editor.state.highlighter"
 
 -- local PhysicsRuntime = require "src.physics.physics_runtime"
 local PhysicsEngine = require "src.physics.core.engine"
@@ -73,19 +73,25 @@ function RunService:Step()
     -- collection
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("PointLight") and obj.Enabled then
+            if obj.Parent and obj.Parent.Position ~= nil then
+                obj.Position = obj.Parent.Position
+            end
+
             graphics.addPointLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B
             )
-
         elseif obj:IsA("SpotLight") and obj.Enabled then
+            if obj.Parent and obj.Parent.Position ~= nil then
+               obj.Position = obj.Parent.Position
+            end
+            
             graphics.addSpotLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Direction.X, obj.Direction.Y, obj.Direction.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B,
                 obj.InnerAngle, obj.OuterAngle
             )
-
         elseif obj:IsA("Motor") then
             if obj.Name ~= "BodyMotor" then
                 table.insert(motors, obj)

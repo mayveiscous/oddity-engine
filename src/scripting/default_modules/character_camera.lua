@@ -1,7 +1,7 @@
 local InputService = require "src.classes.inputservice"
 local RunService = require "src.classes.runservice"
 local Game = require "src.game"
-local EditorState = require "src.editor.editor_state"
+local EditorState = require "src.editor.state.layout"
 local Vector3 = require "src.types.vector3"
 local graphics = require "graphics"
 

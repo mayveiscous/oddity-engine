@@ -1,10 +1,12 @@
-local EditorState = require "src.editor.editor_state"
+local EditorState = require "src.editor.state.layout"
 local SelectionService = require "src.classes.selectionservice"
-local Gizmo = require "src.editor.gizmo"
+local Gizmo = require "src.editor.state.gizmo"
 
 local graphics = require "graphics"
 
 local Highlighter = {}
+
+local outlineThickness = 1.03
 
 function Highlighter.draw()
     if EditorState.isPlaytesting then return end
@@ -14,7 +16,7 @@ function Highlighter.draw()
         graphics.drawMesh(
             selected._meshId,
             selected.Position.X, selected.Position.Y, selected.Position.Z,
-            selected.Size.X * 1.02, selected.Size.Y * 1.02, selected.Size.Z * 1.02,
+            selected.Size.X * outlineThickness, selected.Size.Y * outlineThickness, selected.Size.Z * outlineThickness,
             1, 0.8, 0,
             selected.Rotation.X, selected.Rotation.Y, selected.Rotation.Z,
             1,

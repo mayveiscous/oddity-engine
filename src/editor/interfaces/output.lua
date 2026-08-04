@@ -1,5 +1,5 @@
 local graphics = require "graphics"
-local Log = require "src.editor.log"
+local Log = require "src.editor.state.log"
 
 local Output = {}
 

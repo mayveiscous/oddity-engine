@@ -1,5 +1,5 @@
 local task = require "task"
-local Log = require "src.editor.log"
+local Log = require "src.editor.state.log"
 
 local ScriptRunner = {}
 

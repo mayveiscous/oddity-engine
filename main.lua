@@ -1,7 +1,7 @@
 package.path = package.path .. ";./?.lua;./src/?.lua;"
 
 -- route prints to the editor ui
-local Log = require "src.editor.log"
+local Log = require "src.editor.state.log"
 local _originalPrint = print
 
 function print(...)
@@ -24,7 +24,7 @@ require "src.scripting.default_modules.character_camera"
 local runservice = require "src.classes.runservice"
 runservice:Init()
 
-require "src.editor.selection"
+require "src.editor.state.selection"
 
 require "src.create-runtime.baseplate"
 require "src.game"

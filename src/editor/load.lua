@@ -1,13 +1,14 @@
-local Explorer = require "src.editor.explorer"
-local Inspector = require "src.editor.inspector"
-local Output = require "src.editor.output"
-local TopBar = require "src.editor.top_bar"
-local AnimationEditor = require "src.editor.animation_editor"
-local Layout = require "src.editor.layout"
+local Explorer = require "src.editor.interfaces.explorer"
+local Inspector = require "src.editor.interfaces.inspector"
+local Output = require "src.editor.interfaces.output"
+local TopBar = require "src.editor.interfaces.top_bar"
+local AnimationEditor = require "src.editor.interfaces.animation_editor"
+local Layout = require "src.editor.state.layout"
 local InputService = require "src.classes.inputservice"
-local Theme = require "src.editor.theme"
+local TextEditor = require "src.editor.interfaces.text_editor"
+local Theme = require "src.editor.interfaces.theme"
 
-local EditorState = require "src.editor.editor_state"
+local EditorState = require "src.editor.state"
 
 local graphics = require "graphics"
 local hasApplied = false
@@ -24,6 +25,7 @@ local function draw(workspace)
     Output.draw(rects.Output)
     TopBar.draw(rects.TopBar)
     AnimationEditor.draw()
+    TextEditor.draw(rects)
 
     EditorState.collapsed.Explorer = graphics.imguiWindowCollapsed("Explorer")
     EditorState.collapsed.Inspector = graphics.imguiWindowCollapsed("Inspector")

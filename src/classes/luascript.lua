@@ -3,6 +3,9 @@ local task = require "task"
 local ScriptRunner = require "src.scripting.script_runner"
 local requireInstance = require "src.scripting.instance_require"
 
+local EditorState = require "src.editor.state.layout"
+local TextEditor = require "src.editor.interfaces.text_editor"
+
 local LuaScript = Instance:RegisterClass("LuaScript", "Instance")
 
 LuaScript.PropertyTypes = {
@@ -27,12 +30,14 @@ LuaScript.Properties = {
 function LuaScript:Init()
     self.AncestryChanged:Connect(function()
         -- should i add checks for things like storage services and stuff
-        if self.Parent then
+        if self.Parent and EditorState.isPlaytesting then
             self:_start()
         else
             self:_stop()
         end
     end)
+
+    TextEditor.openScript(self.Name, self.Source)
 end
 
 function LuaScript:_start()

@@ -1,8 +1,8 @@
 local graphics = require "graphics"
-local AnimationEditor = require "src.editor.animation_editor"
+local AnimationEditor = require "src.editor.interfaces.animation_editor"
 
-local EditorState = require "src.editor.editor_state"
-local Snapshot = require "src.editor.playtest_snapshot"
+local EditorState = require "src.editor.state.layout"
+local Snapshot = require "src.editor.state.playtest_snapshot"
 
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"

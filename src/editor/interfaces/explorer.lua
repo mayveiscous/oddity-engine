@@ -1,6 +1,6 @@
 local SelectionService = require "src.classes.selectionservice"
-local Layout = require "src.editor.layout"
-local InsertObject = require "src.editor.insert_object"
+local Layout = require "src.editor.state.layout"
+local InsertObject = require "src.editor.interfaces.insert_object"
 local InputService = require "src.classes.inputservice"
 
 local graphics = require "graphics"

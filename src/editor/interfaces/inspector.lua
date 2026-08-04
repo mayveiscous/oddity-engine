@@ -1,5 +1,5 @@
-local Explorer = require "src.editor.explorer"
-local Layout = require "src.editor.layout"
+local Explorer = require "src.editor.interfaces.explorer"
+local Layout = require "src.editor.state.layout"
 local graphics = require "graphics"
 
 local Vector3 = require "src.types.vector3"
@@ -76,7 +76,7 @@ local function drawInspector(rects)
     if inst then
         local props = inst:GetProperties()
 
-        for category, properties in pairs(props) do
+        for category, properties in pairs(props) do 
             if graphics.imguiCollapsingHeader(category, true) then
                 for name, value in pairs(properties) do
                     local newValue = drawProperty(name, value)

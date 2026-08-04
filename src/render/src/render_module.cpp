@@ -1325,6 +1325,11 @@ static int lua_screenPointToRay(lua_State* L) {
     return 6;
 }
 
+int lua_imguiNewLine(lua_State* L) {
+    ImGui::NewLine();
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1376,6 +1381,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiSetStyle", lua_imguiSetStyle},
     {"imguiSetColor", lua_imguiSetColor},
     {"imguiWindowCollapsed", lua_imguiWindowCollapsed},
+    {"imguiNewLine", lua_imguiNewLine},
     {"screenPointToRay", lua_screenPointToRay},
     {nullptr, nullptr}
 };
