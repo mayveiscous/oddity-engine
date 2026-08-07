@@ -6,7 +6,7 @@ local Vector3 = require "src.types.vector3"
 local AnimUtil = require "src.core.animutil"
 
 local EditorUI = require"src.editor.load"
-local EditorState = require "src.editor.state.layout"
+local EditorState = require "src.editor.state"
 local Highlighter = require "src.editor.state.highlighter"
 
 -- local PhysicsRuntime = require "src.physics.physics_runtime"

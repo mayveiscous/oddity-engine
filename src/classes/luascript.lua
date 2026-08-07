@@ -3,7 +3,7 @@ local task = require "task"
 local ScriptRunner = require "src.scripting.script_runner"
 local requireInstance = require "src.scripting.instance_require"
 
-local EditorState = require "src.editor.state.layout"
+local EditorState = require "src.editor.state"
 local TextEditor = require "src.editor.interfaces.text_editor"
 
 local LuaScript = Instance:RegisterClass("LuaScript", "Instance")

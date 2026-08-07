@@ -1,4 +1,4 @@
-local EditorState = require "src.editor.state.layout"
+local EditorState = require "src.editor.state"
 local SelectionService = require "src.classes.selectionservice"
 local Gizmo = require "src.editor.state.gizmo"
 
