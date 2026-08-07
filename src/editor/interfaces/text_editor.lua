@@ -1,6 +1,6 @@
-local graphics = require "graphics"
 local EditorState = require "src.editor.state"
 local Tabs = require "src.editor.state.tabs"
+local ui = require "src.core.ui"
 
 local TextEditor = {}
 
@@ -24,14 +24,14 @@ local function drawTabs()
     for i, tab in ipairs(Tabs.list()) do
         local selected = i == Tabs.getActiveIndex()
 
-        if graphics.imguiButton((selected and "[ " or "") .. tab.name .. (selected and " ]" or "")) then
+        if ui.button((selected and "[ " or "") .. tab.name .. (selected and " ]" or "")) then
             Tabs.setActiveIndex(i)
         end
 
-        graphics.imguiSameLine()
+        ui.sameLine()
     end
 
-    graphics.imguiNewLine()
+    ui.newLine()
 end
 
 local function drawContent()
@@ -42,13 +42,13 @@ local function drawContent()
     end
 
     if tab.type == "scene" then
-        graphics.imguiText("Scene Editor")
+        ui.text("Scene Editor")
         return
     end
 
     if tab.type == "script" then
         local content = Tabs.getScriptContent(tab.script)
-        local changed, newText = graphics.imguiInputTextMultiline("##editor", content, 10000)
+        local changed, newText = ui.inputTextMultiline("##editor", content, 10000)
 
         if changed then
             Tabs.setScriptContent(tab.script, newText)
@@ -63,14 +63,14 @@ end
 function TextEditor.draw(rects)
     local tabRect = rects.DocumentTabs
 
-    graphics.imguiSetNextWindowPos(tabRect.x, tabRect.y)
-    graphics.imguiSetNextWindowSize(tabRect.w, tabRect.h)
+    ui.setNextWindowPos(tabRect.x, tabRect.y)
+    ui.setNextWindowSize(tabRect.w, tabRect.h)
 
-    graphics.imguiBegin("Document Tabs", {"NoTitleBar", "NoScrollBar", "NoMove"})
+    ui.beginWindow("Document Tabs", {"NoTitleBar", "NoScrollBar", "NoMove"})
 
     drawTabs()
 
-    graphics.imguiEnd()
+    ui.endWindow()
 
     local tab = Tabs.getActive()
 
@@ -84,14 +84,14 @@ function TextEditor.draw(rects)
 
     local editorRect = rects.TextEditor
 
-    graphics.imguiSetNextWindowPos(editorRect.x, editorRect.y)
-    graphics.imguiSetNextWindowSize(editorRect.w, editorRect.h)
+    ui.setNextWindowPos(editorRect.x, editorRect.y)
+    ui.setNextWindowSize(editorRect.w, editorRect.h)
 
-    graphics.imguiBegin("Text Editor")
+    ui.beginWindow("Text Editor")
 
     drawContent()
 
-    graphics.imguiEnd()
+    ui.endWindow()
 end
 
 return TextEditor

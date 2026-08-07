@@ -1,5 +1,5 @@
-local graphics = require "graphics"
 local Log = require "src.editor.state.log"
+local ui = require "src.core.ui"
 
 local Output = {}
 
@@ -10,22 +10,22 @@ local prefixes = {
 }
 
 function Output.draw(rects)
-    graphics.imguiSetNextWindowPos(rects.x, rects.y)
-    graphics.imguiSetNextWindowSize(rects.w, rects.h)
-    graphics.imguiBegin("Output", {"NoMove"})
+    ui.setNextWindowPos(rects.x, rects.y)
+    ui.setNextWindowSize(rects.w, rects.h)
+    ui.beginWindow("Output", {"NoMove"})
 
-    if graphics.imguiButton("Clear") then
+    if ui.button("Clear") then
         Log.clear()
     end
 
-    graphics.imguiSeparator()
+    ui.separator()
 
     for _, entry in ipairs(Log.getEntries()) do
         local prefix = prefixes[entry.level] or ""
-        graphics.imguiSelectable(prefix .. entry.message)
+        ui.selectable(prefix .. entry.message)
     end
 
-    graphics.imguiEnd()
+    ui.endWindow()
 end
 
 return Output

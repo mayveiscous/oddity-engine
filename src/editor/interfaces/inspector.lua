@@ -1,6 +1,5 @@
 local Explorer = require "src.editor.interfaces.explorer"
-local Layout = require "src.editor.state.layout"
-local graphics = require "graphics"
+local ui = require "src.core.ui"
 
 local Vector3 = require "src.types.vector3"
 local Vector2 = require "src.types.vector2"
@@ -24,60 +23,55 @@ end
 
 local function drawProperty(name, value)
     if type(value) == "boolean" then
-        local newValue, changed = graphics.imguiCheckbox(name, value)
+        local newValue, changed = ui.checkbox(name, value)
 
         if changed then
             return newValue
         end
+
     elseif type(value) == "number" then
-        local newValue, changed = graphics.imguiInputFloat(name, value)
+        local newValue, changed = ui.inputFloat(name, value)
 
         if changed then
             return newValue
         end
+
     elseif isVector3(value) then
-        local x, y, z, changed = graphics.imguiVector3(
-            name,
-            value.X,
-            value.Y,
-            value.Z
-        )
+        local x, y, z, changed = ui.vector3(name, value.X, value.Y, value.Z)
 
         if changed then
             return Vector3.new(x, y, z)
         end
+
     elseif isColor3(value) then
-        local r, g, b, changed = graphics.imguiColor(
-            name,
-            value.R,
-            value.G,
-            value.B
-        )
+        local r, g, b, changed = ui.color(name, value.R, value.G, value.B)
 
         if changed then
             return Color3.new(r, g, b)
         end
+
     elseif isVector2(value) then
         -- expose a vector2 thing in imgui?
+
     else
-        graphics.imguiText(name .. ": " .. tostring(value))
+        ui.text(name .. ": " .. tostring(value))
     end
 
     return value
 end
 
 local function drawInspector(rects)
-    graphics.imguiSetNextWindowPos(rects.x, rects.y)
-    graphics.imguiSetNextWindowSize(rects.w, rects.h)
-    graphics.imguiBegin("Properties", {"NoMove"})
+    ui.setNextWindowPos(rects.x, rects.y)
+    ui.setNextWindowSize(rects.w, rects.h)
+    ui.beginWindow("Properties", {"NoMove"})
 
     local inst = Explorer.getSelected()
 
     if inst then
         local props = inst:GetProperties()
 
-        for category, properties in pairs(props) do 
-            if graphics.imguiCollapsingHeader(category, true) then
+        for category, properties in pairs(props) do
+            if ui.collapsingHeader(category, true) then
                 for name, value in pairs(properties) do
                     local newValue = drawProperty(name, value)
 
@@ -89,7 +83,7 @@ local function drawInspector(rects)
         end
     end
 
-    graphics.imguiEnd()
+    ui.endWindow()
 end
 
 return {drawInspector = drawInspector}

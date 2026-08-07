@@ -2,12 +2,12 @@ local SelectionService = require "src.classes.selectionservice"
 local Layout = require "src.editor.state.layout"
 local InsertObject = require "src.editor.interfaces.insert_object"
 local InputService = require "src.classes.inputservice"
-
-local graphics = require "graphics"
+local ui = require "src.core.ui"
 
 local expanded = {}
 
 local panelForId = nil
+local panelMode = nil
 local insertSearch = ""
 local renameBuffer = ""
 
@@ -40,25 +40,33 @@ end
 
 local function ownsSelection(instance)
     local sel = SelectionService.current
-    if not sel then return false end
-    if sel == instance then return true end
+
+    if not sel then
+        return false
+    end
+
+    if sel == instance then
+        return true
+    end
 
     for _, ancestor in ipairs(sel:GetAncestors()) do
-        if ancestor == instance then return true end
+        if ancestor == instance then
+            return true
+        end
     end
 
     return false
 end
 
 local function drawInsertPanel(instance)
-    local newText = graphics.imguiInputText("##insert_search_" .. instance.UniqueId, insertSearch)
+    local newText = ui.inputText("##insert_search_" .. instance.UniqueId, insertSearch)
     insertSearch = newText
 
     local query = insertSearch:lower()
 
     for _, entry in ipairs(InsertObject.Catalog) do
         if query == "" or entry.label:lower():find(query, 1, true) then
-            local hit = graphics.imguiSelectable(
+            local hit = ui.selectable(
                 entry.label .. "##insert_item_" .. instance.UniqueId .. "_" .. entry.label
             )
 
@@ -69,17 +77,16 @@ local function drawInsertPanel(instance)
         end
     end
 
-    graphics.imguiSeparator()
+    ui.separator()
 end
 
 local function drawContextPanel(instance)
-    if graphics.imguiSelectable("Rename##ctx_rename_" .. instance.UniqueId) then
+    if ui.selectable("Rename##ctx_rename_" .. instance.UniqueId) then
         renameBuffer = instance.Name
         panelMode = "rename"
-        -- panelForId stays the same, just switching what's shown for it
     end
 
-    if graphics.imguiSelectable("Delete##ctx_delete_" .. instance.UniqueId) then
+    if ui.selectable("Delete##ctx_delete_" .. instance.UniqueId) then
         local ownedSelection = ownsSelection(instance)
 
         instance:Destroy()
@@ -91,36 +98,35 @@ local function drawContextPanel(instance)
         closePanel()
     end
 
-    graphics.imguiSeparator()
+    ui.separator()
 end
 
 local function drawRenamePanel(instance)
-    renameBuffer = graphics.imguiInputText("##rename_" .. instance.UniqueId, renameBuffer)
+    renameBuffer = ui.inputText("##rename_" .. instance.UniqueId, renameBuffer)
 
     if InputService.IsKeyDown("Enter") then
         if renameBuffer ~= "" then
             instance.Name = renameBuffer
         end
+
         closePanel()
     elseif InputService.IsKeyDown("Esc") then
         closePanel()
     end
 
-    graphics.imguiSeparator()
+    ui.separator()
 end
 
 local function drawNode(instance)
     local label = instance.Name .. " (" .. instance.ClassName .. ")"
-
     local selected = SelectionService.current == instance
-
     local forceOpen = shouldExpand(instance)
 
     if forceOpen then
         expanded[instance.UniqueId] = true
     end
 
-    local open, clicked, rightClicked = graphics.imguiTreeNodeEx(
+    local open, clicked, rightClicked = ui.treeNodeEx(
         label,
         selected,
         expanded[instance.UniqueId] == true
@@ -143,9 +149,9 @@ local function drawNode(instance)
         end
     end
 
-    graphics.imguiSameLine()
+    ui.sameLine()
 
-    if graphics.imguiSmallButton("+##insert_toggle_" .. instance.UniqueId) then
+    if ui.smallButton("+##insert_toggle_" .. instance.UniqueId) then
         if panelForId == instance.UniqueId and panelMode == "insert" then
             closePanel()
         else
@@ -170,19 +176,19 @@ local function drawNode(instance)
             drawNode(child)
         end
 
-        graphics.imguiTreePop()
+        ui.treePop()
     end
 end
 
 local function drawExplorer(workspace, rect)
-    graphics.imguiSetNextWindowPos(rect.x, rect.y)
-    graphics.imguiSetNextWindowSize(rect.w, rect.h)
+    ui.setNextWindowPos(rect.x, rect.y)
+    ui.setNextWindowSize(rect.w, rect.h)
 
-    graphics.imguiBegin("Explorer", {"NoMove"})
+    ui.beginWindow("Explorer", {"NoMove"})
 
     drawNode(workspace)
 
-    graphics.imguiEnd()
+    ui.endWindow()
 end
 
 return {

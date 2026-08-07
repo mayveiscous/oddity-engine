@@ -4,7 +4,7 @@ local Layout = {}
 
 local explorerHeightRatio = 0.55
 local panelWidth = 300
-local outputHeight = 250
+local outputHeight = 225
 local topBarHeight = 100
 local documentBarHeight = 35
 local collapsedMargin = 20

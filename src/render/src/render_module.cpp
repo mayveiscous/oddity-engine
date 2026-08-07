@@ -914,6 +914,26 @@ static int lua_imguiEnd(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiBeginChild(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+
+    float width = (float)luaL_optnumber(L, 2, 0.0);
+    float height = (float)luaL_optnumber(L, 3, 0.0);
+    bool border = lua_toboolean(L, 4);
+
+    bool visible = ImGui::BeginChild(id, ImVec2(width, height), border);
+
+    lua_pushboolean(L, visible);
+
+    return 1;
+}
+
+static int lua_imguiEndChild(lua_State* L) {
+    ImGui::EndChild();
+
+    return 0;
+}
+
 static int lua_imguiInputTextMultiline(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
     const char* text = luaL_checkstring(L, 2);
@@ -1367,6 +1387,204 @@ int lua_imguiNewLine(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiBeginTabBar(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+
+    bool open = ImGui::BeginTabBar(id);
+
+    lua_pushboolean(L, open);
+
+    return 1;
+}
+
+static int lua_imguiEndTabBar(lua_State* L) {
+    ImGui::EndTabBar();
+
+    return 0;
+}
+
+static int lua_imguiBeginTabItem(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    bool open = ImGui::BeginTabItem(label);
+
+    lua_pushboolean(L, open);
+
+    return 1;
+}
+
+static int lua_imguiEndTabItem(lua_State* L) {
+    ImGui::EndTabItem();
+
+    return 0;
+}
+
+static int lua_imguiTextColored(lua_State* L) {
+    float r = (float)luaL_checknumber(L, 1);
+    float g = (float)luaL_checknumber(L, 2);
+    float b = (float)luaL_checknumber(L, 3);
+    float a = (float)luaL_optnumber(L, 4, 1.0);
+
+    const char* text = luaL_checkstring(L, 5);
+
+    ImGui::TextColored(ImVec4(r, g, b, a), "%s", text);
+
+    return 0;
+}
+
+static int lua_imguiPushStyleColor(lua_State* L) {
+    const char* name = luaL_checkstring(L, 1);
+
+    float r = (float)luaL_checknumber(L, 2);
+    float g = (float)luaL_checknumber(L, 3);
+    float b = (float)luaL_checknumber(L, 4);
+    float a = (float)luaL_optnumber(L, 5, 1.0);
+
+    ImGuiCol color;
+
+    if (strcmp(name, "WindowBg") == 0)
+        color = ImGuiCol_WindowBg;
+    else if (strcmp(name, "ChildBg") == 0)
+        color = ImGuiCol_ChildBg;
+    else if (strcmp(name, "Button") == 0)
+        color = ImGuiCol_Button;
+    else if (strcmp(name, "ButtonHovered") == 0)
+        color = ImGuiCol_ButtonHovered;
+    else if (strcmp(name, "ButtonActive") == 0)
+        color = ImGuiCol_ButtonActive;
+    else if (strcmp(name, "Header") == 0)
+        color = ImGuiCol_Header;
+    else if (strcmp(name, "HeaderHovered") == 0)
+        color = ImGuiCol_HeaderHovered;
+    else if (strcmp(name, "HeaderActive") == 0)
+        color = ImGuiCol_HeaderActive;
+    else if (strcmp(name, "Text") == 0)
+        color = ImGuiCol_Text;
+    else
+        return luaL_error(L, "Unknown ImGui color");
+
+    ImGui::PushStyleColor(color, ImVec4(r, g, b, a));
+
+    return 0;
+}
+
+static int lua_imguiPopStyleColor(lua_State* L) {
+    int count = (int)luaL_optinteger(L, 1, 1);
+
+    ImGui::PopStyleColor(count);
+
+    return 0;
+}
+
+static int lua_imguiSliderFloat(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    float value = (float)luaL_checknumber(L, 2);
+    float min = (float)luaL_checknumber(L, 3);
+    float max = (float)luaL_checknumber(L, 4);
+
+    bool changed = ImGui::SliderFloat(label, &value, min, max);
+
+    lua_pushnumber(L, value);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
+static int lua_imguiCombo(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    int current = (int)luaL_checkinteger(L, 2);
+
+    luaL_checktype(L, 3, LUA_TTABLE);
+
+    int count = (int)lua_rawlen(L, 3);
+
+    std::vector<const char*> items;
+    items.reserve(count);
+
+    for (int i = 1; i <= count; i++) {
+        lua_rawgeti(L, 3, i);
+        items.push_back(luaL_checkstring(L, -1));
+        lua_pop(L, 1);
+    }
+
+    bool changed = ImGui::Combo(
+        label,
+        &current,
+        items.data(),
+        count
+    );
+
+    lua_pushinteger(L, current);
+    lua_pushboolean(L, changed);
+
+    return 2;
+}
+
+static int lua_imguiDummy(lua_State* L) {
+    float width = (float)luaL_checknumber(L, 1);
+    float height = (float)luaL_checknumber(L, 2);
+
+    ImGui::Dummy(ImVec2(width, height));
+
+    return 0;
+}
+
+static int lua_imguiSetCursorPosX(lua_State* L) {
+    float x = (float)luaL_checknumber(L, 1);
+
+    ImGui::SetCursorPosX(x);
+
+    return 0;
+}
+
+static int lua_imguiBeginGroup(lua_State* L) {
+    ImGui::BeginGroup();
+
+    return 0;
+}
+
+static int lua_imguiEndGroup(lua_State* L) {
+    ImGui::EndGroup();
+
+    return 0;
+}
+
+static int lua_imguiBeginMainMenuBar(lua_State* L) {
+    lua_pushboolean(L, ImGui::BeginMainMenuBar());
+
+    return 1;
+}
+
+static int lua_imguiEndMainMenuBar(lua_State* L) {
+    ImGui::EndMainMenuBar();
+
+    return 0;
+}
+
+static int lua_imguiBeginMenu(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    lua_pushboolean(L, ImGui::BeginMenu(label));
+
+    return 1;
+}
+
+static int lua_imguiEndMenu(lua_State* L) {
+    ImGui::EndMenu();
+
+    return 0;
+}
+
+static int lua_imguiMenuItem(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    bool clicked = ImGui::MenuItem(label);
+
+    lua_pushboolean(L, clicked);
+
+    return 1;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1421,6 +1639,26 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiWindowCollapsed", lua_imguiWindowCollapsed},
     {"imguiNewLine", lua_imguiNewLine},
     {"screenPointToRay", lua_screenPointToRay},
+    {"imguiBeginChild", lua_imguiBeginChild},
+    {"imguiEndChild", lua_imguiEndChild},
+    {"imguiBeginTabBar", lua_imguiBeginTabBar},
+    {"imguiEndTabBar", lua_imguiEndTabBar},
+    {"imguiBeginTabItem", lua_imguiBeginTabItem},
+    {"imguiEndTabItem", lua_imguiEndTabItem},
+    {"imguiTextColored", lua_imguiTextColored},
+    {"imguiPushStyleColor", lua_imguiPushStyleColor},
+    {"imguiPopStyleColor", lua_imguiPopStyleColor},
+    {"imguiSliderFloat", lua_imguiSliderFloat},
+    {"imguiCombo", lua_imguiCombo},
+    {"imguiDummy", lua_imguiDummy},
+    {"imguiSetCursorPosX", lua_imguiSetCursorPosX},
+    {"imguiBeginGroup", lua_imguiBeginGroup},
+    {"imguiEndGroup", lua_imguiEndGroup},
+    {"imguiBeginMainMenuBar", lua_imguiBeginMainMenuBar},
+    {"imguiEndMainMenuBar", lua_imguiEndMainMenuBar},
+    {"imguiBeginMenu", lua_imguiBeginMenu},
+    {"imguiEndMenu", lua_imguiEndMenu},
+    {"imguiMenuItem", lua_imguiMenuItem},
     {nullptr, nullptr}
 };
 
