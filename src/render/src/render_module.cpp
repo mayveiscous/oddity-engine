@@ -910,6 +910,39 @@ static int lua_imguiEnd(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiInputTextMultiline(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    int maxLength = luaL_checkinteger(L, 3);
+
+    if (maxLength < 1) {
+        return luaL_error(L, "maxLength must be greater than 0");
+    }
+
+    std::vector<char> buffer(maxLength + 1);
+
+    size_t textLength = strlen(text);
+
+    if (textLength > (size_t)maxLength) {
+        textLength = maxLength;
+    }
+
+    memcpy(buffer.data(), text, textLength);
+    buffer[textLength] = '\0';
+
+    bool changed = ImGui::InputTextMultiline(
+        label,
+        buffer.data(),
+        buffer.size(),
+        ImVec2(-FLT_MIN, -FLT_MIN)
+    );
+
+    lua_pushboolean(L, changed);
+    lua_pushstring(L, buffer.data());
+
+    return 2;
+}
+
 static int lua_imguiTreeNode(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
     bool selected = lua_toboolean(L, 2);
@@ -1366,6 +1399,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiSeparator", lua_imguiSeparator},
     {"imguiInputInt", lua_imguiInputInt},
     {"imguiInputFloat", lua_imguiInputFloat},
+    {"imguiInputTextMultiline", lua_imguiInputTextMultiline},
     {"imguiInputText", lua_imguiInputText},
     {"imguiVector3", lua_imguiVector3},
     {"imguiColor", lua_imguiColor},

@@ -112,15 +112,21 @@ end
 local function drawNode(instance)
     local label = instance.Name .. " (" .. instance.ClassName .. ")"
 
-    local selected = (SelectionService.current == instance)
+    local selected = SelectionService.current == instance
 
     local forceOpen = shouldExpand(instance)
+
+    if forceOpen then
+        expanded[instance.UniqueId] = true
+    end
 
     local open, clicked, rightClicked = graphics.imguiTreeNodeEx(
         label,
         selected,
-        forceOpen
+        expanded[instance.UniqueId] == true
     )
+
+    expanded[instance.UniqueId] = open
 
     if clicked then
         SelectionService.Select(instance)
@@ -138,6 +144,7 @@ local function drawNode(instance)
     end
 
     graphics.imguiSameLine()
+
     if graphics.imguiSmallButton("+##insert_toggle_" .. instance.UniqueId) then
         if panelForId == instance.UniqueId and panelMode == "insert" then
             closePanel()

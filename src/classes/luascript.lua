@@ -29,15 +29,23 @@ LuaScript.Properties = {
 
 function LuaScript:Init()
     self.AncestryChanged:Connect(function()
-        -- should i add checks for things like storage services and stuff
-        if self.Parent and EditorState.isPlaytesting then
-            self:_start()
+        if self.Parent then
+            if EditorState.isPlaytesting then
+                self:_start()
+            else
+                self:_stop()
+            end
         else
             self:_stop()
+            TextEditor.closeScript(self)
         end
     end)
 
-    TextEditor.openScript(self.Name, self.Source)
+    TextEditor.openScript(self)
+
+    self:OnPropertyChanged("Name"):Connect(function()
+        TextEditor.updateScript(self)
+    end)
 end
 
 function LuaScript:_start()

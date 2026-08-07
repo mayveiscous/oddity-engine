@@ -7,7 +7,7 @@ local SelectionService = require "src.classes.selectionservice"
 
 local AnimationEditor = {}
 
-local visible = true
+local visible = false
 local selectedAnim = nil
 local playhead = 0
 local playing = false

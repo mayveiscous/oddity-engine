@@ -13,36 +13,48 @@ local activeTab = 1
 
 local scriptContents = {}
 
-function TextEditor.openScript(path, content)
+function TextEditor.openScript(script)
     for i, tab in ipairs(tabs) do
-        if tab.path == path then
+        if tab.type == "script" and tab.script == script then
             activeTab = i
             return
         end
     end
 
     table.insert(tabs, {
-        name = path:match("[^/]+$") or path,
-        path = path,
+        name = script.Name,
         type = "script",
+        script = script,
     })
 
-    scriptContents[path] = content or ""
+    scriptContents[script] = script.Source or ""
 
     activeTab = #tabs
 end
 
-function TextEditor.closeTab(index)
-    if #tabs <= 1 then
-        return
+function TextEditor.closeScript(script)
+    for i, tab in ipairs(tabs) do
+        if tab.type == "script" and tab.script == script then
+            scriptContents[script] = nil
+            table.remove(tabs, i)
+
+            if activeTab > #tabs then
+                activeTab = #tabs
+            elseif activeTab < 1 then
+                activeTab = 1
+            end
+
+            return
+        end
     end
+end
 
-    table.remove(tabs, index)
-
-    if activeTab > #tabs then
-        activeTab = #tabs
-    elseif activeTab < 1 then
-        activeTab = 1
+function TextEditor.updateScript(script)
+    for i, tab in ipairs(tabs) do
+        if tab.type == "script" and tab.script == script then
+            tab.name = script.Name
+            return
+        end
     end
 end
 
@@ -89,12 +101,12 @@ local function drawContent()
     end
 
     if tab.type == "script" then
-        local content = scriptContents[tab.path] or ""
-
+        local content = scriptContents[tab.script] or ""
         local changed, newText = graphics.imguiInputTextMultiline("##editor", content, 10000)
 
         if changed then
-            scriptContents[tab.path] = newText
+            scriptContents[tab.script] = newText
+            tab.script.Source = newText
         end
     end
 end
@@ -105,7 +117,7 @@ function TextEditor.draw(rects)
     graphics.imguiSetNextWindowPos(tabRect.x, tabRect.y)
     graphics.imguiSetNextWindowSize(tabRect.w, tabRect.h)
 
-    graphics.imguiBegin("Document Tabs")
+    graphics.imguiBegin("Document Tabs", {"NoTitleBar", "NoScrollBar", "NoMove"})
 
     drawTabs()
 

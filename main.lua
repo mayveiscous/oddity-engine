@@ -29,7 +29,7 @@ require "src.editor.state.selection"
 require "src.create-runtime.baseplate"
 require "src.game"
 
--- the . in the name messes up everything :/
-dofile("./.ignore/.tests/test.lua")
+-- the . in the folder names mess up require path resolving :/
+-- dofile("./.ignore/.tests/test.lua")
 
 runservice:Run()

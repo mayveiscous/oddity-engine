@@ -7,10 +7,17 @@ local InsertObject = {}
 
 local nameCounters = {}
 
-local function nextName(base)
-    local count = (nameCounters[base] or 0) + 1
-    nameCounters[base] = count
-    if count == 1 then return base end
+local function nextName(parent, base)
+    if not parent:FindFirstChild(base) then
+        return base
+    end
+
+    local count = 2
+
+    while parent:FindFirstChild(base .. tostring(count)) do
+        count = count + 1
+    end
+
     return base .. tostring(count)
 end
 
@@ -44,9 +51,9 @@ function InsertObject.CreateEntry(entry, parent)
     parent = parent or Game.Workspace
 
     local inst = Instance.new(entry.className)
+    inst.Name = nextName(parent, entry.label)
     inst.Parent = parent
-    inst.Name = nextName(entry.label)
-
+    
     if entry.shape then
         inst.Shape = entry.shape
     end

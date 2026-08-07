@@ -296,7 +296,7 @@ function Instance:IsA(className)
     return false
 end
 
-function Instance:OnExactChange(propName)
+function Instance:OnPropertyChanged(propName)
     local filtered = Signal.new()
 
     self.Changed:Connect(function(k, v)
