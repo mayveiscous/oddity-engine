@@ -14,6 +14,14 @@ local TopBar = {}
 local currentTool = "Select"
 local playing = false
 
+local function beginPlaytestScripts()
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj:IsA("LuaScript") then
+            obj:_start()
+        end
+    end
+end
+
 local function beginPlaytestPhysics()
     PhysicsEngine.Clear()
 
@@ -61,6 +69,7 @@ function TopBar.draw(rects)
             end
 
             beginPlaytestPhysics()
+            beginPlaytestScripts()
             EditorState.StartPlaytest()
         end
     end

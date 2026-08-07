@@ -4,7 +4,7 @@ function api.build(self)
     return {
         script = self,
         task = require "task",
-        require = require "scr.scripting.require_instance",
+        require = require "src.scripting.instance_require",
         Instance = require "src.core.instance",
 
         Vector3 = require "src.types.vector3",
