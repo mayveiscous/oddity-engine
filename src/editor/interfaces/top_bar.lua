@@ -1,4 +1,4 @@
-local graphics = require "graphics"
+local ui = require "src.core.ui"
 local AnimationEditor = require "src.editor.interfaces.animation_editor"
 local TextEditor = require "src.editor.interfaces.text_editor"
 
@@ -14,7 +14,6 @@ local Game = require "src.game"
 
 local TopBar = {}
 
-local currentTool = "Select"
 local playing = false
 
 local function beginPlaytestScripts()
@@ -37,6 +36,7 @@ local function beginPlaytestPhysics()
     PhysicsEngine.Clear()
 
     local characters = {}
+
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("Character") then
             table.insert(characters, obj)
@@ -49,6 +49,7 @@ local function beginPlaytestPhysics()
                 return true
             end
         end
+
         return false
     end
 
@@ -59,35 +60,91 @@ local function beginPlaytestPhysics()
     end
 end
 
-function TopBar.draw(rects)
-    graphics.imguiSetNextWindowPos(rects.x, rects.y)
-    graphics.imguiSetNextWindowSize(rects.w, rects.h)
+local function beginPlaytest()
+    local CreateCharacter = require "src.create_character"
 
-    graphics.imguiBegin("Top Bar", {"NoMove", "NoResize", "NoTitleBar"})
+    EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
 
-    local label = EditorState.isPlaytesting and "Stop" or "Play"
-
-    if graphics.imguiButtonEx(EditorState.isPlaytesting and "Stop" or "Play", false, 70, 24) then
-        if EditorState.isPlaytesting then
-            stopPlaytestScripts()
-            Snapshot.Restore(Game.Workspace, EditorState.playtestSnapshot)
-            TextEditor.discardPendingEdits()
-            EditorState.StopPlaytest()
-        else
-            local CreateCharacter = require "src.create_character"
-            EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
-
-            for _, player in pairs(Game.Players.Players) do
-                CreateCharacter.createCharacter(player)
-            end
-            beginPlaytestPhysics()
-            beginPlaytestScripts()
-            Tabs.setActiveIndex(Tabs.getSceneIndex())
-            EditorState.StartPlaytest()
-        end
+    for _, player in pairs(Game.Players.Players) do
+        CreateCharacter.createCharacter(player)
     end
 
-    graphics.imguiEnd()
+    beginPlaytestPhysics()
+    beginPlaytestScripts()
+
+    Tabs.setActiveIndex(Tabs.getSceneIndex())
+    EditorState.StartPlaytest()
+end
+
+local function stopPlaytest()
+    stopPlaytestScripts()
+
+    Snapshot.Restore(Game.Workspace, EditorState.playtestSnapshot)
+
+    TextEditor.discardPendingEdits()
+
+    EditorState.StopPlaytest()
+end
+
+local function drawPlayButton()
+    local isPlaying = EditorState.isPlaytesting
+
+    if isPlaying then
+        if ui.buttonEx("Stop", false, 70, 28) then
+            stopPlaytest()
+        end
+    else
+        if ui.buttonEx("Play", false, 70, 28) then
+            beginPlaytest()
+        end
+    end
+end
+
+local function drawToolButton(name)
+    local selected = EditorState.CurrentTool == name
+
+    if ui.buttonEx(name, selected, 70, 28) then
+        EditorState.CurrentTool = name
+    end
+end
+
+local function drawToolbar()
+    drawPlayButton()
+
+    ui.sameLine()
+
+    drawToolButton("Select")
+
+    ui.sameLine()
+
+    drawToolButton("Move")
+
+    ui.sameLine()
+
+    drawToolButton("Scale")
+
+    ui.sameLine()
+
+    drawToolButton("Rotate")
+
+    ui.sameLine()
+
+    ui.separator()
+
+    ui.sameLine()
+
+    ui.text(EditorState.isPlaytesting and "PLAYING" or "EDITING")
+end
+
+function TopBar.draw(rects)
+    ui.setNextWindowPos(rects.x, rects.y)
+    ui.setNextWindowSize(rects.w, rects.h)
+
+    ui.beginWindow("Top Bar", {"NoMove", "NoResize", "NoTitleBar"})
+
+    drawToolbar()
+
+    ui.endWindow()
 end
 
 return TopBar

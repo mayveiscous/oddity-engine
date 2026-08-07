@@ -17,6 +17,16 @@ local function draw(workspace)
     if not hasApplied then
         Theme.apply()
     end
+
+    if InputService.IsKeyDown("One") then
+        EditorState.CurrentTool = "Select"
+    elseif InputService.IsKeyDown("Two") then
+        EditorState.CurrentTool = "Move"
+    elseif InputService.IsKeyDown("Three") then
+        EditorState.CurrentTool = "Scale"
+    elseif InputService.IsKeyDown("Four") then
+        EditorState.CurrentTool = "Rotate"
+    end
     
     local rects = Layout.apply(EditorState.collapsed)
 
@@ -31,12 +41,6 @@ local function draw(workspace)
     EditorState.collapsed.Inspector = graphics.imguiWindowCollapsed("Inspector")
     EditorState.collapsed.Output = graphics.imguiWindowCollapsed("Output")
     EditorState.collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
-
-    if InputService.IsKeyDown("One") then
-        EditorState.CurrentTool = "Select"
-    elseif InputService.IsKeyDown("Two") then
-        EditorState.CurrentTool = "Move"
-    end
 end
 
 return {
