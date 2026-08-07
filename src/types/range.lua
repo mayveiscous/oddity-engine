@@ -21,7 +21,7 @@ local function buildMeta()
             end
 
             if k == "Max" then
-                state.Max
+                return state.Max
             end
 
             local old = state[k]
@@ -65,6 +65,5 @@ function Range._bind(vec, owner, key)
     state._owner = owner
     state._key = key
 end
-
 
 return Range

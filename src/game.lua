@@ -8,6 +8,10 @@ local Player = require "src.classes.player"
 local Workspace = require "src.classes.workspace"
 local Sky = require "src.classes.sky"
 
+local function createDefaultModules(player)
+    
+end
+
 local Game = {}
 Game.Workspace = Instance.new("Workspace")
 
@@ -21,6 +25,8 @@ Game.Lighting.Sky.Texture = "" -- texture id here
 
 Game.Players = Instance.new("Players")
 Game.Players.Players["mayveiscous"] = Instance.new("Player")
+createDefaultModules(Game.Players.Players["mayveiscous"])
+
 
 function Game:GetService(name)
     if name == "RunService" then

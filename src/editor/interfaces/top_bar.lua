@@ -1,11 +1,14 @@
 local graphics = require "graphics"
 local AnimationEditor = require "src.editor.interfaces.animation_editor"
+local TextEditor = require "src.editor.interfaces.text_editor"
 
 local EditorState = require "src.editor.state"
 local Snapshot = require "src.editor.state.playtest_snapshot"
 
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
+
+local Tabs = require "src.editor.state.tabs"
 
 local Game = require "src.game"
 
@@ -18,6 +21,14 @@ local function beginPlaytestScripts()
     for _, obj in ipairs(Game.Workspace:GetDescendants()) do
         if obj:IsA("LuaScript") then
             obj:_start()
+        end
+    end
+end
+
+local function stopPlaytestScripts()
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj:IsA("LuaScript") then
+            obj:_stop()
         end
     end
 end
@@ -58,7 +69,9 @@ function TopBar.draw(rects)
 
     if graphics.imguiButtonEx(EditorState.isPlaytesting and "Stop" or "Play", false, 70, 24) then
         if EditorState.isPlaytesting then
+            stopPlaytestScripts()
             Snapshot.Restore(Game.Workspace, EditorState.playtestSnapshot)
+            TextEditor.discardPendingEdits()
             EditorState.StopPlaytest()
         else
             local CreateCharacter = require "src.create_character"
@@ -67,9 +80,9 @@ function TopBar.draw(rects)
             for _, player in pairs(Game.Players.Players) do
                 CreateCharacter.createCharacter(player)
             end
-
             beginPlaytestPhysics()
             beginPlaytestScripts()
+            Tabs.setActiveIndex(Tabs.getSceneIndex())
             EditorState.StartPlaytest()
         end
     end
@@ -78,3 +91,15 @@ function TopBar.draw(rects)
 end
 
 return TopBar
+
+--[[
+
+local block = Instance.new("Block")
+block.Parent = game.Workspace
+
+while true do
+   block.Position = block.Position + Vector3.new(0, 1, 0)
+   task.wait(1)
+end
+
+]]

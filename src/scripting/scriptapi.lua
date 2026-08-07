@@ -5,11 +5,13 @@ function api.build(self)
         script = self,
         task = require "task",
         require = require "src.scripting.instance_require",
-        Instance = require "src.core.instance",
 
+        Instance = require "src.core.instance",
         Vector3 = require "src.types.vector3",
         Vector2 = require "src.types.vector2",
         Color3 = require "src.types.color3",
+        Range = require "src.types.range",
+        Keyframe = require "src.types.keyframe",
         
         game = require "src.game",
         RunService = require "src.classes.runservice",

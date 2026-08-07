@@ -15,6 +15,10 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+
+#include "stb_image.h"
+
 #define MAX_POINT_LIGHTS 8
 #define MAX_SPOT_LIGHTS 8
 

@@ -1,85 +1,31 @@
 local graphics = require "graphics"
+local EditorState = require "src.editor.state"
+local Tabs = require "src.editor.state.tabs"
 
 local TextEditor = {}
 
-local tabs = {
-    {
-        name = "Scene",
-        type = "scene",
-    }
-}
-
-local activeTab = 1
-
-local scriptContents = {}
-
 function TextEditor.openScript(script)
-    for i, tab in ipairs(tabs) do
-        if tab.type == "script" and tab.script == script then
-            activeTab = i
-            return
-        end
-    end
-
-    table.insert(tabs, {
-        name = script.Name,
-        type = "script",
-        script = script,
-    })
-
-    scriptContents[script] = script.Source or ""
-
-    activeTab = #tabs
+    Tabs.openScript(script)
 end
 
 function TextEditor.closeScript(script)
-    for i, tab in ipairs(tabs) do
-        if tab.type == "script" and tab.script == script then
-            scriptContents[script] = nil
-            table.remove(tabs, i)
-
-            if activeTab > #tabs then
-                activeTab = #tabs
-            elseif activeTab < 1 then
-                activeTab = 1
-            end
-
-            return
-        end
-    end
+    Tabs.closeScript(script)
 end
 
 function TextEditor.updateScript(script)
-    for i, tab in ipairs(tabs) do
-        if tab.type == "script" and tab.script == script then
-            tab.name = script.Name
-            return
-        end
-    end
+    Tabs.updateScript(script)
 end
 
-local function getActiveTab()
-    if #tabs == 0 then
-        return nil
-    end
-
-    if activeTab < 1 then
-        activeTab = 1
-    end
-
-    if activeTab > #tabs then
-        activeTab = #tabs
-    end
-
-    return tabs[activeTab]
+function TextEditor.discardPendingEdits()
+    Tabs.discardPendingEdits()
 end
 
 local function drawTabs()
-    for i, tab in ipairs(tabs) do
-        local selected = i == activeTab
+    for i, tab in ipairs(Tabs.list()) do
+        local selected = i == Tabs.getActiveIndex()
 
         if graphics.imguiButton((selected and "[ " or "") .. tab.name .. (selected and " ]" or "")) then
-            activeTab = i
+            Tabs.setActiveIndex(i)
         end
 
         graphics.imguiSameLine()
@@ -89,7 +35,7 @@ local function drawTabs()
 end
 
 local function drawContent()
-    local tab = getActiveTab()
+    local tab = Tabs.getActive()
 
     if not tab then
         return
@@ -101,12 +47,15 @@ local function drawContent()
     end
 
     if tab.type == "script" then
-        local content = scriptContents[tab.script] or ""
+        local content = Tabs.getScriptContent(tab.script)
         local changed, newText = graphics.imguiInputTextMultiline("##editor", content, 10000)
 
         if changed then
-            scriptContents[tab.script] = newText
-            tab.script.Source = newText
+            Tabs.setScriptContent(tab.script, newText)
+
+            if not EditorState.isPlaytesting then
+                tab.script.Source = newText
+            end
         end
     end
 end
@@ -123,7 +72,7 @@ function TextEditor.draw(rects)
 
     graphics.imguiEnd()
 
-    local tab = getActiveTab()
+    local tab = Tabs.getActive()
 
     if not tab then
         return
