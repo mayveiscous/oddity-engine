@@ -21,7 +21,7 @@ require "src.core.camera.camera_controller"
 require "src.scripting.default_modules.character_camera"
 
 --load services
-local runservice = require "src.classes.runservice"
+local runservice = require "src.classes.services.runservice"
 runservice:Init()
 
 require "src.editor.state.selection"

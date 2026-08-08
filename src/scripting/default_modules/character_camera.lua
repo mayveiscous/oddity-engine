@@ -1,5 +1,5 @@
-local InputService = require "src.classes.inputservice"
-local RunService = require "src.classes.runservice"
+local InputService = require "src.classes.services.inputservice"
+local RunService = require "src.classes.services.runservice"
 local Game = require "src.game"
 local EditorState = require "src.editor.state"
 local Vector3 = require "src.types.vector3"

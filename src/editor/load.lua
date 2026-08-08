@@ -4,7 +4,7 @@ local Output = require "src.editor.interfaces.output"
 local TopBar = require "src.editor.interfaces.top_bar"
 local AnimationEditor = require "src.editor.interfaces.animation_editor"
 local Layout = require "src.editor.state.layout"
-local InputService = require "src.classes.inputservice"
+local InputService = require "src.classes.services.inputservice"
 local TextEditor = require "src.editor.interfaces.text_editor"
 local Theme = require "src.editor.interfaces.theme"
 

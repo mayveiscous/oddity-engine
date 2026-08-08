@@ -1,5 +1,5 @@
-local InputService = require "src.classes.inputservice"
-local RunService = require "src.classes.runservice"
+local InputService = require "src.classes.services.inputservice"
+local RunService = require "src.classes.services.runservice"
 local Vector3 = require "src.types.vector3"
 local CharacterCamera = require "src.scripting.default_modules.character_camera"
 local EditorState = require "src.editor.state"

@@ -1,4 +1,4 @@
-local SelectionService = require "src.classes.selectionservice"
+local SelectionService = require "src.classes.services.selectionservice"
 local Vector3 = require "src.types.vector3"
 
 local Game = require "src.game"

@@ -1,6 +1,6 @@
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
-local SelectionService = require "src.classes.selectionservice"
+local SelectionService = require "src.classes.services.selectionservice"
 local Game = require "src.game"
 
 local InsertObject = {}

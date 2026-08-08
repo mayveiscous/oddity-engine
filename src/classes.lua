@@ -1,36 +1,14 @@
-local classList = {
-    "workspace",
-    "runservice",
-    "inputservice",
-    "selectionservice",
-    "lighting",
-    "players",
+local filesystem = require "filesystem"
 
-    "animation",
-    "animation_player",
-    "audio",
-    "block",
-    "camera",
-    "character",
-    "controller",
-    "folder",
-    "force",
-    "hinge",
-    "luascript",
-    "model",
-    "motor",
-    "player",
-    "point_light",
-    "sky",
-    "spawn",
-    "spot_light",
-    "spring",
-    "tunascript",
-    "weld",
-}
-
-local path = "src.classes"
-
-for _, name in ipairs(classList) do
-    require(path .. "." .. name)
+local function loadDirectory(directory, modulePath)
+    for _, entry in ipairs(filesystem.listDirectory(directory)) do
+        if entry.directory then
+            loadDirectory(directory .. "/" .. entry.name, modulePath .. "." .. entry.name)
+        elseif entry.name:sub(-4) == ".lua" then
+            local name = entry.name:sub(1, -5)
+            require(modulePath .. "." .. name)
+        end
+    end
 end
+
+loadDirectory("src/classes", "src.classes")
