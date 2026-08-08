@@ -14,11 +14,13 @@ local function createDefaultModules(player)
     local characterController = Instance.new("LuaScript")
     characterController.Name = "CharacterController"
     characterController.Source = defaultModuleSources.CharacterController
+    characterController.CoreScript = true
     characterController.Parent = player.Modules
 
     local cameraController = Instance.new("LuaScript")
     cameraController.Name = "CameraController"
     cameraController.Source = defaultModuleSources.CameraController
+    cameraController.CoreScript = true
     cameraController.Parent = player.Modules
 end
 

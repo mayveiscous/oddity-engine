@@ -10,12 +10,14 @@ local LuaScript = Instance:RegisterClass("LuaScript", "Instance")
 
 LuaScript.PropertyTypes = {
     Source = "string",
+    CoreScript = "boolean",
 }
 
 LuaScript.Defaults = function()
     return {
         Source = "",
         _thread = nil,
+        CoreScript = false,
     }
 end
 
@@ -28,8 +30,18 @@ LuaScript.Properties = {
 }
 
 function LuaScript:Init()
+    local hasOpened = false
+
     self.AncestryChanged:Connect(function()
         if self.Parent then
+            if not hasOpened then
+                hasOpened = true
+
+                if not self.CoreScript then
+                    TextEditor.openScript(self)
+                end
+            end
+
             if EditorState.isPlaytesting then
                 self:_start()
             else
@@ -40,8 +52,6 @@ function LuaScript:Init()
             TextEditor.closeScript(self)
         end
     end)
-
-    TextEditor.openScript(self)
 
     self:OnPropertyChanged("Name"):Connect(function()
         TextEditor.updateScript(self)
