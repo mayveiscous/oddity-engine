@@ -155,7 +155,7 @@ function RunService:Step()
     graphics.beginFrame()
 
     -- draw ui
-    EditorUI.draw(Game.Workspace, Game.Players)
+    EditorUI.draw(Game)
 
     -- camera
     if Game.CurrentCamera then

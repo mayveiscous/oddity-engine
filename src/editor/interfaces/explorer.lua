@@ -201,14 +201,18 @@ local function drawNode(instance)
     end
 end
 
-local function drawExplorer(workspace, players, rect)
+local function drawExplorer(game, rect)
     ui.setNextWindowPos(rect.x, rect.y)
     ui.setNextWindowSize(rect.w, rect.h)
 
     ui.beginWindow("Explorer", {"NoMove"})
 
-    drawNode(workspace)
-    drawNode(players)
+    drawNode(game.Workspace)
+    drawNode(game.Lighting)
+    drawNode(game.Players)
+    drawNode(game.ServerScripts)
+    drawNode(game.ServerStorage)
+    drawNode(game.LocalStorage)
 
     if openRenamePopup then
         ui.openPopup("rename_popup")

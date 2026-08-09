@@ -112,6 +112,7 @@ function Instance.new(className)
         _attributes = {},
         Parent = nil,
         _children = {},
+        _tags = {},
     }
     state.ChildAdded = Signal.new()
     state.ChildRemoved = Signal.new()
@@ -306,9 +307,32 @@ function Instance:OnPropertyChanged(propName)
     return filtered
 end
 
+function Instance:AddTag(tag)
+    local state = rawget(self, "_state")
+    if not state._tags[tag] then
+        state._tags[tag] = tag
+    end
+end
+
+function Instance:DeleteTag(tag)
+    local state = rawget(self, "_state")
+
+    if tag == "COREcantDelete" then
+        return
+    end
+
+    if state._tags[tag] then
+        state._tags[tag] = nil
+    end
+end
+
 function Instance:Destroy()
     local state = rawget(self, "_state")
     if state.CanBeDeleted ~= nil and state.CanBeDeleted == false then
+        return
+    end
+
+    if state._tags["COREcantDelete"] then
         return
     end
 

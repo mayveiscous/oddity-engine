@@ -42,7 +42,7 @@ function LuaScript:Init()
                 end
             end
 
-            if EditorState.isPlaytesting then
+            if EditorState.isPlaytesting and not self.Parent.BlockScripts then
                 self:_start()
             else
                 self:_stop()
