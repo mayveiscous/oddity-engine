@@ -85,6 +85,10 @@ uniform vec4 objectColor;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 
+uniform vec3 viewPos;
+uniform float specularStrength;
+uniform float shininess;
+
 uniform int numPointLights;
 uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
 uniform vec3 pointLightColor[MAX_POINT_LIGHTS];
@@ -104,12 +108,18 @@ uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
 
 void main() {
     vec3 norm = normalize(Normal);
+    vec3 viewDir = normalize(viewPos - FragPos);
     vec3 ambient = 0.15 * lightColor;
 
     float dirDiff = max(dot(norm, -lightDir), 0.0);
     vec3 dirDiffuse = dirDiff * lightColor;
 
+    vec3 dirHalfway = normalize(-lightDir + viewDir);
+    float dirSpec = pow(max(dot(norm, dirHalfway), 0.0), shininess);
+    vec3 dirSpecular = specularStrength * dirSpec * lightColor;
+
     vec3 pointDiffuse = vec3(0.0);
+    vec3 pointSpecular = vec3(0.0);
     for (int i = 0; i < numPointLights; i++) {
         vec3 toLight = pointLightPos[i] - FragPos;
         float dist = length(toLight);
@@ -117,9 +127,14 @@ void main() {
         float diff = max(dot(norm, dir), 0.0);
         float atten = 1.0 / (pointLightConstant[i] + pointLightLinear[i] * dist + pointLightQuadratic[i] * dist * dist);
         pointDiffuse += diff * pointLightColor[i] * atten;
+
+        vec3 halfway = normalize(dir + viewDir);
+        float spec = pow(max(dot(norm, halfway), 0.0), shininess);
+        pointSpecular += specularStrength * spec * pointLightColor[i] * atten;
     }
 
     vec3 spotDiffuse = vec3(0.0);
+    vec3 spotSpecular = vec3(0.0);
     for (int i = 0; i < numSpotLights; i++) {
         vec3 toSpot = spotLightPos[i] - FragPos;
         float spotDist = length(toSpot);
@@ -132,15 +147,22 @@ void main() {
         float spotDiff = max(dot(norm, spotDirToFrag), 0.0);
         float spotAttenuation = 1.0 / (spotLightConstant[i] + spotLightLinear[i] * spotDist + spotLightQuadratic[i] * spotDist * spotDist);
         spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
+
+        vec3 spotHalfway = normalize(spotDirToFrag + viewDir);
+        float spotSpec = pow(max(dot(norm, spotHalfway), 0.0), shininess);
+        spotSpecular += specularStrength * spotSpec * spotLightColor[i] * spotAttenuation * spotIntensity;
     }
 
-    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * objectColor.rgb;
+    vec3 specular = dirSpecular + pointSpecular + spotSpecular;
+    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * objectColor.rgb + specular;
     FragColor = vec4(result, objectColor.a);
 }
 )";
 
 static GLint g_colorLoc = -1;
 static GLint g_lightDirLoc = -1, g_lightColorLoc = -1;
+static GLint g_viewPosLoc = -1;
+static GLint g_specStrengthLoc = -1, g_shininessLoc = -1;
 
 // point light array uniform locations
 static GLint g_numPointLightsLoc = -1;
@@ -352,6 +374,10 @@ static int lua_init(lua_State* L) {
     g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
     g_lightDirLoc = glGetUniformLocation(g_shaderProgram, "lightDir");
     g_lightColorLoc = glGetUniformLocation(g_shaderProgram, "lightColor");
+
+    g_viewPosLoc = glGetUniformLocation(g_shaderProgram, "viewPos");
+    g_specStrengthLoc = glGetUniformLocation(g_shaderProgram, "specularStrength");
+    g_shininessLoc = glGetUniformLocation(g_shaderProgram, "shininess");
 
     g_numPointLightsLoc = glGetUniformLocation(g_shaderProgram, "numPointLights");
     g_pointPosLoc = glGetUniformLocation(g_shaderProgram, "pointLightPos");
@@ -571,7 +597,9 @@ static int lua_drawMesh(lua_State* L) {
     float ry = (float)luaL_optnumber(L, 12, 0.0);
     float rz = (float)luaL_optnumber(L, 13, 0.0);
     float a = (float)luaL_optnumber(L, 14, 1.0);
-    const char* uniqueId = luaL_checkstring(L, 15);
+    float specularStrength = (float)luaL_optnumber(L, 15, 0.5);
+    float shininess = (float)luaL_optnumber(L, 16, 32.0);
+    const char* uniqueId = luaL_checkstring(L, 17);
 
     auto it = meshRegistry.find(meshId);
     if (it == meshRegistry.end()) {
@@ -587,6 +615,8 @@ static int lua_drawMesh(lua_State* L) {
 
     glUniformMatrix4fv(g_modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniform4f(g_colorLoc, r, g, b, a);
+    glUniform1f(g_specStrengthLoc, specularStrength);
+    glUniform1f(g_shininessLoc, shininess);
 
     Mesh& mesh = it->second;
     glBindVertexArray(mesh.vao);
@@ -638,6 +668,7 @@ static int lua_beginFrame(lua_State* L) {
 
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
+    glUniform3f(g_viewPosLoc, g_cameraPos.x, g_cameraPos.y, g_cameraPos.z);
 
     int numPoints = (int)g_pointPositions.size();
     glUniform1i(g_numPointLightsLoc, numPoints);

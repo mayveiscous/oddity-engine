@@ -12,6 +12,8 @@ local Highlighter = require "src.editor.state.highlighter"
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
 
+local Materials = require "src.render.materials"
+
 local Game = require "src.game"
 
 local RunService = {}
@@ -201,6 +203,7 @@ function RunService:Step()
 
     -- graphics opaque
     for _, obj in ipairs(opaque) do
+        local mat = Materials.Get(obj.Material)
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -208,12 +211,14 @@ function RunService:Step()
             obj.Color.R, obj.Color.G, obj.Color.B,
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1,
+            mat.specularStrength, mat.shininess,
             obj.UniqueId
         )
     end
 
     -- graphics transparent
     for _, obj in ipairs(transparent) do
+        local mat = Materials.Get(obj.Material)
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -221,6 +226,7 @@ function RunService:Step()
             obj.Color.R, obj.Color.G, obj.Color.B,
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1 - obj.Transparency,
+            mat.specularStrength, mat.shininess,
             obj.UniqueId
         )
     end

@@ -20,6 +20,7 @@ function Highlighter.draw()
             1, 0.8, 0,
             selected.Rotation.X, selected.Rotation.Y, selected.Rotation.Z,
             1,
+            0, 1,
             "gizmo_highlight"
         )
 

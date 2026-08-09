@@ -198,6 +198,7 @@ function Gizmo.draw(blockMeshId)
             axis.color[1], axis.color[2], axis.color[3],
             0, 0, 0,
             1,
+            0, 1,
             axis.id
         )
     end
