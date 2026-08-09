@@ -1,22 +1,15 @@
 local SelectionService = require "src.classes.services.selectionservice"
-local Layout = require "src.editor.state.layout"
 local InsertObject = require "src.editor.interfaces.insert_object"
 local InputService = require "src.classes.services.inputservice"
 local ui = require "src.core.ui"
 
 local expanded = {}
 
-local panelForId = nil
-local panelMode = nil
 local insertSearch = ""
 local renameBuffer = ""
 
-local function closePanel()
-    panelMode = nil
-    panelForId = nil
-    insertSearch = ""
-    renameBuffer = ""
-end
+local renameInstance = nil
+local openRenamePopup = false
 
 local function shouldExpand(instance)
     local selected = SelectionService.current
@@ -59,34 +52,44 @@ local function ownsSelection(instance)
 end
 
 local function drawInsertPanel(instance)
-    local newText = ui.inputText("##insert_search_" .. instance.UniqueId, insertSearch)
-    insertSearch = newText
+    insertSearch = ui.inputText(
+        "##insert_search_" .. instance.UniqueId,
+        insertSearch
+    )
 
     local query = insertSearch:lower()
 
     for _, entry in ipairs(InsertObject.Catalog) do
         if query == "" or entry.label:lower():find(query, 1, true) then
             local hit = ui.selectable(
-                entry.label .. "##insert_item_" .. instance.UniqueId .. "_" .. entry.label
+                entry.label ..
+                "##insert_item_" ..
+                instance.UniqueId ..
+                "_" ..
+                entry.label
             )
 
             if hit then
                 InsertObject.CreateEntry(entry, instance)
-                closePanel()
+                insertSearch = ""
+                ui.closeCurrentPopup()
             end
         end
     end
-
-    ui.separator()
 end
 
 local function drawContextPanel(instance)
     if ui.selectable("Rename##ctx_rename_" .. instance.UniqueId) then
         renameBuffer = instance.Name
-        panelMode = "rename"
+        renameInstance = instance
+        openRenamePopup = true
+
+        ui.closeCurrentPopup()
     end
 
-    if ui.selectable("Delete##ctx_delete_" .. instance.UniqueId) then
+    if ui.selectable(
+        "Delete##ctx_delete_" .. instance.UniqueId
+    ) then
         local ownedSelection = ownsSelection(instance)
 
         instance:Destroy()
@@ -95,80 +98,98 @@ local function drawContextPanel(instance)
             SelectionService.Clear()
         end
 
-        closePanel()
+        ui.closeCurrentPopup()
     end
-
-    ui.separator()
 end
 
-local function drawRenamePanel(instance)
-    renameBuffer = ui.inputText("##rename_" .. instance.UniqueId, renameBuffer)
+local function drawRenamePanel()
+    local instance = renameInstance
 
-    if InputService.IsKeyDown("Enter") then
+    if not instance then
+        ui.closeCurrentPopup()
+        return
+    end
+
+    renameBuffer = ui.inputText(
+        "##rename",
+        renameBuffer
+    )
+
+    if InputService.IsKeyPressed("Enter") then
         if renameBuffer ~= "" then
             instance.Name = renameBuffer
         end
 
-        closePanel()
-    elseif InputService.IsKeyDown("Esc") then
-        closePanel()
-    end
+        renameBuffer = ""
+        renameInstance = nil
 
-    ui.separator()
+        ui.closeCurrentPopup()
+
+    elseif InputService.IsKeyPressed("Esc") then
+        renameBuffer = ""
+        renameInstance = nil
+
+        ui.closeCurrentPopup()
+    end
 end
 
 local function drawNode(instance)
-    local label = instance.Name .. " (" .. instance.ClassName .. ")"
+    local label = instance.Name .. "###" .. instance.UniqueId
     local selected = SelectionService.current == instance
-    local forceOpen = shouldExpand(instance)
 
-    if forceOpen then
-        expanded[instance.UniqueId] = true
+    local hasChild = #instance:GetChildren() > 0
+
+    local forceOpen = false
+
+    if hasChild then
+        forceOpen = shouldExpand(instance)
+
+        if forceOpen then
+            expanded[instance.UniqueId] = true
+        end
     end
+
+    local fOpen = hasChild and expanded[instance.UniqueId] == true
+    local isLeaf = not hasChild
 
     local open, clicked, rightClicked = ui.treeNodeEx(
         label,
         selected,
-        expanded[instance.UniqueId] == true
+        fOpen,
+        isLeaf
     )
 
-    expanded[instance.UniqueId] = open
+    if not isLeaf then
+        expanded[instance.UniqueId] = open
+    end
 
     if clicked then
         SelectionService.Select(instance)
     end
 
+    local insertId = "insert_popup_" .. instance.UniqueId
+    local contextId = "context_popup_" .. instance.UniqueId
+
     if rightClicked then
         SelectionService.Select(instance)
-
-        if panelForId == instance.UniqueId and panelMode == "context" then
-            closePanel()
-        else
-            panelMode = "context"
-            panelForId = instance.UniqueId
-        end
+        ui.openPopup(contextId)
     end
 
     ui.sameLine()
 
     if ui.smallButton("+##insert_toggle_" .. instance.UniqueId) then
-        if panelForId == instance.UniqueId and panelMode == "insert" then
-            closePanel()
-        else
-            panelMode = "insert"
-            panelForId = instance.UniqueId
-            insertSearch = ""
-        end
+        insertSearch = ""
+        ui.openPopup(insertId)
     end
 
-    if panelForId == instance.UniqueId then
-        if panelMode == "insert" then
-            drawInsertPanel(instance)
-        elseif panelMode == "context" then
-            drawContextPanel(instance)
-        elseif panelMode == "rename" then
-            drawRenamePanel(instance)
-        end
+    if ui.beginPopup(insertId) then
+        drawInsertPanel(instance)
+        ui.endPopup()
+    end
+
+    if ui.beginPopup(contextId) then
+        drawContextPanel(instance)
+        ui.endPopup()
     end
 
     if open then
@@ -180,19 +201,32 @@ local function drawNode(instance)
     end
 end
 
-local function drawExplorer(workspace, rect)
+local function drawExplorer(workspace, players, rect)
     ui.setNextWindowPos(rect.x, rect.y)
     ui.setNextWindowSize(rect.w, rect.h)
 
     ui.beginWindow("Explorer", {"NoMove"})
 
     drawNode(workspace)
+    drawNode(players)
+
+    if openRenamePopup then
+        ui.openPopup("rename_popup")
+        openRenamePopup = false
+    end
+
+    -- Rename popup
+    if ui.beginPopup("rename_popup") then
+        drawRenamePanel()
+        ui.endPopup()
+    end
 
     ui.endWindow()
 end
 
 return {
     drawExplorer = drawExplorer,
+
     getSelected = function()
         return SelectionService.current
     end

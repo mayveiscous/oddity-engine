@@ -984,15 +984,18 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
     bool selected = lua_toboolean(L, 2);
     bool forceOpen = lua_toboolean(L, 3);
+    bool isLeaf = lua_toboolean(L, 4); 
 
-    ImGuiTreeNodeFlags flags =
-        ImGuiTreeNodeFlags_OpenOnArrow;
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
 
     if (selected)
         flags |= ImGuiTreeNodeFlags_Selected;
 
     if (forceOpen)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
+    if (isLeaf)
+        flags |= ImGuiTreeNodeFlags_Leaf;
 
     bool open = ImGui::TreeNodeEx(label, flags);
 
@@ -1005,6 +1008,24 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
 
     return 3;
 }
+
+static int lua_imguiOpenPopup(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+    ImGui::OpenPopup(id);
+    return 0;
+}
+
+static int lua_imguiBeginPopup(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+    lua_pushboolean(L, ImGui::BeginPopup(id));
+    return 1;
+}
+
+static int lua_imguiEndPopup(lua_State* L) {
+    ImGui::EndPopup();
+    return 0;
+}
+
 
 static int lua_imguiTreePop(lua_State* L) {
     ImGui::TreePop();
@@ -1593,6 +1614,11 @@ static int lua_imguiMenuItem(lua_State* L) {
     return 1;
 }
 
+static int lua_imguiCloseCurrentPopup(lua_State* L) {
+    ImGui::CloseCurrentPopup();
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1668,6 +1694,10 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginMenu", lua_imguiBeginMenu},
     {"imguiEndMenu", lua_imguiEndMenu},
     {"imguiMenuItem", lua_imguiMenuItem},
+    {"imguiOpenPopup", lua_imguiOpenPopup},
+    {"imguiBeginPopup", lua_imguiBeginPopup},
+    {"imguiEndPopup", lua_imguiEndPopup},
+    {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
     {nullptr, nullptr}
 };
 

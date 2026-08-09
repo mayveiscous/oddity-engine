@@ -15,13 +15,13 @@ local function createDefaultModules(player)
     characterController.Name = "CharacterController"
     characterController.Source = defaultModuleSources.CharacterController
     characterController.CoreScript = true
-    characterController.Parent = player.Modules
+    characterController.Parent = player:FindFirstChild("Modules")
 
     local cameraController = Instance.new("LuaScript")
     cameraController.Name = "CameraController"
     cameraController.Source = defaultModuleSources.CameraController
     cameraController.CoreScript = true
-    cameraController.Parent = player.Modules
+    cameraController.Parent = player:FindFirstChild("Modules")
 end
 
 local Game = {}
@@ -36,10 +36,16 @@ Game.Lighting.Sky = Instance.new("Sky")
 Game.Lighting.Sky.Texture = "" -- texture id here
 
 Game.Players = Instance.new("Players")
-Game.Players.Players["mayveiscous"] = Instance.new("Player")
-Game.Players.Players["mayveiscous"].Modules = Instance.new("Folder")
-Game.Players.Players["mayveiscous"].Modules.Name = "Modules"
-createDefaultModules(Game.Players.Players["mayveiscous"])
+
+local player = Instance.new("Player")
+player.Name = "mayveiscous"
+player.Parent = Game.Players
+
+local modules = Instance.new("Folder")
+modules.Name = "Modules"
+modules.Parent = player
+
+createDefaultModules(player)
 
 function Game:GetService(name)
     if name == "RunService" then
