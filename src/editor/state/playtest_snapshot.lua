@@ -13,7 +13,7 @@ function Snapshot.Capture(workspace)
         local captured = {}
         for _, properties in pairs(obj:GetProperties()) do
             for name, value in pairs(properties) do
-                if name == "ClassName" then 
+                if name == "ClassName" or name == "Parent" or name == "UniqueId" then 
                     goto continue
                 end
 

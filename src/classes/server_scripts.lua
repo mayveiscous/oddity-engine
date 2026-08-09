@@ -1,19 +1,19 @@
 local Instance = require "src.core.instance"
 
-local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance")
+local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance", {
+    Properties = {
+        CanBeDeleted = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
 
-ServerScripts.PropertyTypes = {
-    CanBeDeleted = "boolean",
-    CanReparent = "boolean",
-    BlockScripts = "boolean",
-}
-
-ServerScripts.Defaults = function() 
-    return {
-        CanBeDeleted = false,
-        CanReparent = false,
-        BlockScripts = false,
-    }
-end
+        CanReparent = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+    },
+})
 
 return ServerScripts

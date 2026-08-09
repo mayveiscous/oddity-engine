@@ -1,44 +1,52 @@
 local Instance = require "src.core.instance"
-
 local Vector3 = require "src.types.vector3"
 
-local Motor = Instance:RegisterClass("Motor", "Instance")
+local Motor = Instance:RegisterClass("Motor", "Instance", {
+    Properties = {
+        Part0 = {
+            type = "Instance",
+            default = nil,
+            category = "Motor",
+        },
 
-Motor.PropertyTypes = {
-    Part0 = "Instance",
-    Part1 = "Instance",
-    C0 = "Vector3",
-    C1 = "Vector3",
-    RestRotation = "Vector3",
-    CurrentRotation = "Vector3",
-}
+        Part1 = {
+            type = "Instance",
+            default = nil,
+            category = "Motor",
+        },
 
-Motor.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        C0 = {
+            type = "Vector3",
+            default = function()
+                return Vector3.zero()
+            end,
+            category = "Motor",
+        },
+
+        C1 = {
+            type = "Vector3",
+            default = function()
+                return Vector3.zero()
+            end,
+            category = "Motor",
+        },
+
+        RestRotation = {
+            type = "Vector3",
+            default = function()
+                return Vector3.zero()
+            end,
+            category = "Motor",
+        },
+
+        CurrentRotation = {
+            type = "Vector3",
+            default = function()
+                return Vector3.zero()
+            end,
+            category = "Motor",
+        },
     },
-
-    Motor = {
-        "Part0",
-        "Part1",
-        "C0",
-        "C1",
-        "RestRotation",
-        "CurrentRotation",
-    },
-}
-
-Motor.Defaults = function()
-    return {
-        Part0 = nil,
-        Part1 = nil,
-        C0 = Vector3.Zero,
-        C1 = Vector3.Zero,
-        RestRotation = Vector3.Zero,
-        CurrentRotation = Vector3.Zero,
-    }
-end
+})
 
 return Motor

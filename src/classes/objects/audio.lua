@@ -1,18 +1,13 @@
 local Instance = require "src.core.instance"
 
-local Audio = Instance:RegisterClass("Audio", "Instance")
-
-Audio.Defaults = function()
-    return {
-        Volume = 1,
-    }
-end
-
-Audio.Properties = {
-    Data = {
-        "Name",
-        "Volume",
-    }
-}
+local Audio = Instance:RegisterClass("Audio", "Instance", {
+    Properties = {
+        Volume = {
+            type = "number",
+            default = 1,
+            category = "Data",
+        },
+    },
+})
 
 return Audio

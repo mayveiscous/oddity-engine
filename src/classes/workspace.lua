@@ -1,40 +1,31 @@
 local Instance = require "src.core.instance"
-local Vector3 = require "src.types.vector3"
+
 local graphics = require "graphics"
 
-local Workspace = Instance:RegisterClass("Workspace", "Instance")
+local Workspace = Instance:RegisterClass("Workspace", "Instance", {
+    Properties = {
+        CanBeDeleted = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
 
-Workspace.PropertyTypes = {
-    CanBeDeleted = "boolean",
-    CanReparent = "boolean",
-}
-
-Workspace.Defaults = function()
-    return {
-        CanBeDeleted = false,
-        CanReparent = false,
-    }
-end
-
-Workspace.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        CanReparent = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
     },
-}
+})
 
 function Workspace:FindByUniqueId(id)
-    local inst = nil
-
     for _, desc in ipairs(self:GetDescendants()) do
         if desc.UniqueId == id then
-            inst = desc
-            break
+            return desc
         end
     end
 
-    return inst
+    return nil
 end
 
 function Workspace:Raycast(origin, direction)
@@ -47,7 +38,6 @@ function Workspace:Raycast(origin, direction)
         return nil
     end
 
-    local Vector3 = require "src.types.vector3"
     local inst = self:FindByUniqueId(uniqueId)
 
     return {

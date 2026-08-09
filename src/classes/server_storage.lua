@@ -1,19 +1,25 @@
 local Instance = require "src.core.instance"
 
-local ServerStorage = Instance:RegisterClass("ServerStorage", "Instance")
+local ServerStorage = Instance:RegisterClass("ServerStorage", "Instance", {
+    Properties = {
+        CanBeDeleted = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
 
-ServerStorage.PropertyTypes = {
-    CanBeDeleted = "boolean",
-    CanReparent = "boolean",
-    BlockScripts = "boolean",
-}
+        CanReparent = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
 
-ServerStorage.Defaults = function() 
-    return {
-        CanBeDeleted = false,
-        CanReparent = false,
-        BlockScripts = true,
-    }
-end
+        BlockScripts = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
+    },
+})
 
 return ServerStorage

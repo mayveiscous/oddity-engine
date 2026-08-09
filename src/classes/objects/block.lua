@@ -6,64 +6,77 @@ local Color3 = require "src.types.color3"
 local Shapes = require "src.render.shapes"
 local graphics = require "graphics"
 
-local Block = Instance:RegisterClass("Block", "Instance")
+local Block = Instance:RegisterClass("Block", "Instance", {
+    Properties = {
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Transform",
+        },
 
-Block.PropertyTypes = {
-    Position = "Vector3",
-    Size = "Vector3",
-    Rotation = "Vector3",
-    Color = "Color3",
-    Transparency = "number",
-    Anchored = "boolean",
-    Locked = "boolean",
-    CanCollide = "boolean",
-    Shape = "string",
-    Material = "string",
-}
+        Size = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(1, 1, 1)
+            end,
+            category = "Transform",
+        },
 
-Block.Defaults = function()
-    return {
-        Position = Vector3.new(0, 0, 0),
-        Rotation = Vector3.new(0, 0, 0),
-        Size = Vector3.new(1, 1, 1),
-        Color = Color3.new(1, 0.5, 0.2),
-        Anchored = false,
-        CanCollide = true,
-        Transparency = 0,
-        Locked = false,
-        Shape = "Block",
-        Material = "Plastic",
-        _meshId = nil,
+        Rotation = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Transform",
+        },
+
+        Color = {
+            type = "Color3",
+            default = function()
+                return Color3.new(1, 0.5, 0.2)
+            end,
+            category = "Appearance",
+        },
+
+        Transparency = {
+            type = "number",
+            default = 0,
+            category = "Appearance",
+        },
+
+        Anchored = {
+            type = "boolean",
+            default = false,
+            category = "Physics",
+        },
+
+        Locked = {
+            type = "boolean",
+            default = false,
+            category = "Physics",
+        },
+
+        CanCollide = {
+            type = "boolean",
+            default = true,
+            category = "Physics",
+        },
+
+        Shape = {
+            type = "string",
+            default = "Block",
+            category = "Appearance",
+        },
+
+        Material = {
+            type = "string",
+            default = "Plastic",
+            category = "Appearance",
+        },
     }
-end
-
-Block.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent"
-    },
-
-    Transform = {
-        "Size",
-        "Position",
-        "Rotation"
-    },
-
-    Appearance = {
-        "Color",
-        "Material"
-    },
-
-    Physics = {
-        "Anchored",
-        "CanCollide",
-    },
-}
-
-function Block:Init()
-    
-end
+})
 
 local meshCache = {}
 
@@ -80,6 +93,7 @@ function Block:EnsureMesh()
     end
 
     local vertexData
+
     if shape == "Wedge" then
         vertexData = Shapes.Wedge
     elseif shape == "Sphere" then

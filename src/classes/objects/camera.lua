@@ -1,33 +1,27 @@
 local Instance = require "src.core.instance"
-local Vector3 = require "src.types.vector3"
 
+local Vector3 = require "src.types.vector3"
 local graphics = require "graphics"
 
-local Camera = Instance:RegisterClass("Camera", "Instance")
+local Camera = Instance:RegisterClass("Camera", "Instance", {
+    Properties = {
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(10, 4, 10)
+            end,
+            category = "Transform",
+        },
 
-Camera.PropertyTypes = {
-    Position = "Vector3",
-    LookAt = "Vector3",
-}
-
-Camera.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        LookAt = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Transform",
+        },
     },
-    Transform = {
-        "Position",
-        "LookAt",
-    }
-}
-
-Camera.Defaults = function()
-    return {
-        Position = Vector3.new(10, 4, 10),
-        LookAt = Vector3.new(0, 0, 0),
-    }
-end
+})
 
 function Camera:ScreenPointToRay(x, y)
     local ox, oy, oz, dx, dy, dz =

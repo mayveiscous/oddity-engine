@@ -1,26 +1,25 @@
 local Instance = require "src.core.instance"
+
 local Vector3 = require "src.types.vector3"
 
-local Spring = Instance:RegisterClass("Spring", "Instance")
+local Spring = Instance:RegisterClass("Spring", "Instance", {
+    Properties = {
+        Force = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Spring",
+        },
 
-Spring.Defaults = function()
-    return {
-        Position = Vector3.new(0, 0, 0),
-        Force = Vector3.new(0, 0, 0),
-    }
-end
-
-Spring.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Spring",
+        },
     },
-
-    Spring = {
-        "Force",
-        "Position",
-    },
-}
+})
 
 return Spring

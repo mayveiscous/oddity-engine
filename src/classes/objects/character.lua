@@ -1,29 +1,19 @@
 local Instance = require "src.core.instance"
 
-local Character = Instance:RegisterClass("Character", "Instance")
+local Character = Instance:RegisterClass("Character", "Instance", {
+    Properties = {
+        Controller = {
+            type = "Instance",
+            default = nil,
+            category = "Character",
+        },
 
-Character.PropertyTypes = {
-    Controller = "Instance",
-    RootPart = "Instance",
-}
-
-Character.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        RootPart = {
+            type = "Instance",
+            default = nil,
+            category = "Character",
+        },
     },
-    Character = {
-        "Controller",
-        "RootPart",
-    }
-}
-
-Character.Defaults = function()
-    return {
-        Controller = nil,
-        RootPart = nil,
-    }
-end
+})
 
 return Character

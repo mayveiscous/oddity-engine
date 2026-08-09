@@ -1,31 +1,28 @@
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 
-local Model = Instance:RegisterClass("Model", "Instance")
+local Model = Instance:RegisterClass("Model", "Instance", {
+    Properties = {
+        RootPart = {
+            type = "Instance",
+            default = nil,
+            category = "Model",
+        },
 
-Model.Defaults = function()
-    return {
-        RootPart = nil,
-        Position = Vector3.new(0, 0, 0),
-        Scale = 1,
-    }
-end
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Transform",
+        },
 
-Model.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Scale = {
+            type = "number",
+            default = 1,
+            category = "Model",
+        },
     },
-
-    Transform = {
-        "Position",
-    },
-
-    Model = {
-        "RootPart",
-        "Scale",
-    },
-}
+})
 
 return Model

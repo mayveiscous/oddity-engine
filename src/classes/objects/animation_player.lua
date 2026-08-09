@@ -1,35 +1,21 @@
 local Instance = require "src.core.instance"
 local AnimUtil = require "src.core.animutil"
 
-local AnimationPlayer = Instance:RegisterClass("AnimationPlayer", "Instance")
+local AnimationPlayer = Instance:RegisterClass("AnimationPlayer", "Instance", {
+    Properties = {
+        Animation = {
+            type = "Instance",
+            default = nil,
+            category = "AnimationPlayer",
+        },
 
-AnimationPlayer.PropertyTypes = {
-    Animation = "Instance",
-    Character = "Instance",
-}
-
-AnimationPlayer.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Character = {
+            type = "Instance",
+            default = nil,
+            category = "AnimationPlayer",
+        },
     },
-
-    AnimationPlayer = {
-        "Animation",
-        "Character",
-    }
-}
-
-AnimationPlayer.Defaults = function()
-    return {
-        Animation = nil,
-        Character = nil,
-        _playhead = 0,
-        _motorsByName = nil,
-        _playing = false,
-    }
-end
+})
 
 function AnimationPlayer:Play()
     if not self.Animation or not self.Character then
@@ -37,6 +23,7 @@ function AnimationPlayer:Play()
     end
 
     self._motorsByName = {}
+
     for _, obj in ipairs(self.Character:GetDescendants()) do
         if obj:IsA("Motor") and obj.Name then
             self._motorsByName[obj.Name] = obj
@@ -70,6 +57,7 @@ function AnimationPlayer:Step(dt)
 
     for motorName, track in pairs(anim.Tracks) do
         local motor = self._motorsByName[motorName]
+
         if motor then
             motor.CurrentRotation = AnimUtil.sampleTrack(track, self._playhead)
         end

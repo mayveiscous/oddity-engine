@@ -1,26 +1,27 @@
 local Instance = require "src.core.instance"
 
-local Animation = Instance:RegisterClass("Animation", "Instance")
+local Animation = Instance:RegisterClass("Animation", "Instance", {
+    Properties = {
+        Length = {
+            type = "number",
+            default = 1.0,
+            category = "Animation",
+        },
 
-Animation.Defaults = function()
-    return {
-        Length = 1.0,
-        Tracks = {},
-        Looped = true,
-    }
-end
+        Tracks = {
+            type = "table",
+            default = function()
+                return {}
+            end,
+            category = "Animation",
+        },
 
-Animation.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Looped = {
+            type = "boolean",
+            default = true,
+            category = "Animation",
+        },
     },
-    Animation = {
-        "Length",
-        "Looped",
-        
-    },
-}
+})
 
 return Animation

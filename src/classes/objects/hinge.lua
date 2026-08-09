@@ -1,29 +1,22 @@
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 
-local Hinge = Instance:RegisterClass("Hinge", "Instance")
+local Hinge = Instance:RegisterClass("Hinge", "Instance", {
+    Properties = {
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Transform",
+        },
 
-Hinge.Defaults = function()
-    return {
-        Position = Vector3.new(0, 0, 0),
-        Enabled = true,
-    }
-end
-
-Hinge.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Enabled = {
+            type = "boolean",
+            default = true,
+            category = "Physics",
+        },
     },
-
-    Transform = {
-        "Position",
-    },
-
-    Physics = {
-        "Enabled",
-    },
-}
+})
 
 return Hinge

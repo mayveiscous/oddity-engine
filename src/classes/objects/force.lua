@@ -1,32 +1,34 @@
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 
-local Force = Instance:RegisterClass("Force", "Instance")
+local Force = Instance:RegisterClass("Force", "Instance", {
+    Properties = {
+        Enabled = {
+            type = "boolean",
+            default = true,
+            category = "Force",
+        },
 
-Force.PropertyTypes = {
-    Velocity = "Vector3",
-    MaxForce = "Vector3",
-}
+        Velocity = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Force",
+        },
 
-Force.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        MaxForce = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(
+                    math.huge,
+                    math.huge,
+                    math.huge
+                )
+            end,
+            category = "Force",
+        },
     },
-
-    Force = {
-        "Velocity",
-        "MaxForce",
-    },
-}
-
-Force.Defaults = function()
-    return {
-        Enabled = true,
-        Velocity = Vector3.new(0, 0, 0),
-        MaxForce = Vector3.new(math.huge, math.huge, math.huge),
-    }
-end
+})
 
 return Force

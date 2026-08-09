@@ -1,33 +1,26 @@
 local Instance = require "src.core.instance"
 local task = require "task"
+
 local ScriptRunner = require "src.scripting.script_runner"
-local requireInstance = require "src.scripting.instance_require"
 
 local EditorState = require "src.editor.state"
 local TextEditor = require "src.editor.interfaces.text_editor"
 
-local LuaScript = Instance:RegisterClass("LuaScript", "Instance")
+local LuaScript = Instance:RegisterClass("LuaScript", "Instance", {
+    Properties = {
+        Source = {
+            type = "string",
+            default = "",
+            category = "Script",
+        },
 
-LuaScript.PropertyTypes = {
-    Source = "string",
-    CoreScript = "boolean",
-}
-
-LuaScript.Defaults = function()
-    return {
-        Source = "",
-        _thread = nil,
-        CoreScript = false,
-    }
-end
-
-LuaScript.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        CoreScript = {
+            type = "boolean",
+            default = false,
+            category = "Script",
+        },
     },
-}
+})
 
 function LuaScript:Init()
     local hasOpened = false

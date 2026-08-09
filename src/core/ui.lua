@@ -30,6 +30,14 @@ function ui.separator()
 graphics.imguiSeparator()
 end
 
+function ui.vector2(label, x, y)
+    return graphics.imguiVector2(label, x, y)
+end
+
+function ui.textDisabled(text)
+    graphics.imguiTextDisabled(text)
+end
+
 function ui.spacing()
 graphics.imguiSpacing()
 end

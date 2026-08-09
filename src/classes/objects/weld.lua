@@ -1,26 +1,23 @@
 local Instance = require "src.core.instance"
+
 local Vector3 = require "src.types.vector3"
 
-local Weld = Instance:RegisterClass("Weld", "Instance")
+local Weld = Instance:RegisterClass("Weld", "Instance", {
+    Properties = {
+        Position = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, 0)
+            end,
+            category = "Weld",
+        },
 
-Weld.Defaults = function()
-    return {
-        Position = Vector3.new(0, 0, 0),
-        Enabled = true,
-    }
-end
-
-Weld.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        Enabled = {
+            type = "boolean",
+            default = true,
+            category = "Weld",
+        },
     },
-
-    Weld = {
-        "Position",
-        "Enabled",
-    },
-}
+})
 
 return Weld

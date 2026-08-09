@@ -1,26 +1,19 @@
 local Instance = require "src.core.instance"
 
-local Players = Instance:RegisterClass("Players", "Instance")
+local Players = Instance:RegisterClass("Players", "Instance", {
+    Properties = {
+        CanBeDeleted = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
 
-Players.PropertyTypes = {
-    CanBeDeleted = "boolean",
-    CanReparent = "boolean",
-}
-
-Players.Properties = {
-    Data = {
-        "Name",
-        "ClassName",
-        "Parent",
+        CanReparent = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
     },
-}
-
-Players.Defaults = function()
-    return {
-        CanBeDeleted = false,
-        CanReparent = false,
-        Players = {},
-    }
-end
+})
 
 return Players

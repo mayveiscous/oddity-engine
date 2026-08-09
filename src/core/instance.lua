@@ -3,31 +3,15 @@ local Signal = require "signal"
 local Instance = {}
 local ClassRegistry = {}
 
-function Instance:RegisterClass(className, parentClassName)
-    local base = parentClassName and ClassRegistry[parentClassName] or nil
-    local class = setmetatable({}, base and { __index = base } or nil)
-    class.__index = class
-    class.__ParentClass = base
-    ClassRegistry[className] = class
-    return class
+local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+
+local function generateId()
+    return string.gsub(template, "[xy]", function(c)
+        local r = math.random(0, 15)
+        local v = c == "x" and r or (r % 4) + 8
+        return string.format("%x", v)
+    end)
 end
-
-local readOnly = {
-    ClassName = true,
-    UniqueId = true,
-
-    _children = true,
-    _attributes = true,
-
-    Changed = true,
-    ChildAdded = true,
-    ChildRemoved = true,
-    AncestryChanged = true,
-    AttributeSet = true,
-}
-
-ClassRegistry["Instance"] = Instance
-Instance.__index = Instance
 
 local function isVector3(v)
     if type(v) ~= "table" then
@@ -37,35 +21,130 @@ local function isVector3(v)
     return s ~= nil and s._isVector3 == true
 end
 
+local function getPropertyDefinition(classTable, propertyName)
+    local class = classTable
+
+    while class do
+        if class.Properties then
+            local definition = class.Properties[propertyName]
+
+            if definition then
+                return definition
+            end
+        end
+
+        class = class.__ParentClass
+    end
+
+    return nil
+end
+
+function Instance:RegisterClass(className, parentClassName, definition)
+    local base = parentClassName and ClassRegistry[parentClassName] or nil
+
+    local class = setmetatable({}, base and { __index = base } or nil)
+
+    class.__index = class
+    class.__ParentClass = base
+
+    definition = definition or {}
+
+    class.Properties = definition.Properties or {}
+
+    if definition.Init then
+        class.Init = definition.Init
+    end
+
+    ClassRegistry[className] = class
+
+    return class
+end
+
+ClassRegistry["Instance"] = Instance
+Instance.__index = Instance
+
+Instance.Properties = {
+    Name = {
+        type = "string",
+        category = "Data",
+    },
+
+    ClassName = {
+        type = "string",
+        ReadOnly = true,
+        category = "Data",
+    },
+
+    Parent = {
+        type = "Instance",
+        category = "Data",
+    },
+
+    UniqueId = {
+        type = "string",
+        ReadOnly = true,
+        category = "Data",
+    },
+
+    CanBeDeleted = {
+        type = "boolean",
+        default = true,
+        category = "Hidden",
+    },
+
+    CanReparent = {
+        type = "boolean",
+        default = true,
+        category = "Hidden",
+    },
+
+    BlockScripts = {
+        type = "boolean",
+        default = false,
+        category = "Hidden",
+    },
+}
+
 local function buildMeta(classTable)
     return {
         __index = function(t, k)
             local state = rawget(t, "_state")
-            local v = state[k]
-            if v ~= nil then
-                return v
+            local value = state[k]
+
+            if value ~= nil then
+                return value
             end
+
             return classTable[k]
         end,
 
         __newindex = function(t, k, v)
             local state = rawget(t, "_state")
 
-            if readOnly[k] then
-                error(("Property '%s' is read-only!"):format(k), 2)
-            end
-
             if k == "Parent" then
                 t:SetParent(v)
                 return
             end
 
-            local expectedType = classTable.PropertyTypes and classTable.PropertyTypes[k]
-            if expectedType and v ~= nil then
-                local TypeCheck = require "src.core.typecheck"
-                local actType = TypeCheck.typeName(v)
-                if actType ~= expectedType then 
-                    error(("'%s' expects %s, got %s"):format(k, expectedType, actType), 2)
+            local definition = getPropertyDefinition(classTable, k)
+
+            if definition then
+                if definition.ReadOnly then
+                    error(("Property '%s' is read-only!"):format(k), 2)
+                end
+
+                -- Type checking
+                if definition.type and v ~= nil then
+                    local TypeCheck = require "src.core.typecheck"
+                    local actualType = TypeCheck.typeName(v)
+
+                    if actualType ~= definition.type then
+                        error(
+                            ("'%s' expects %s, got %s")
+                                :format(k, definition.type, actualType),
+                            2
+                        )
+                    end
                 end
             end
 
@@ -82,25 +161,16 @@ local function buildMeta(classTable)
             end
         end,
 
-        __tostring = function(t) 
+        __tostring = function(t)
             local state = rawget(t, "_state")
             return state.Name or state.ClassName or "Instance"
         end,
     }
 end
 
-local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-
-local function generateId()
-    return string.gsub(template, "[xy]", function(c)
-        local r = math.random(0, 15)
-        local v = c == "x" and r or (r % 4) + 8
-        return string.format("%x", v)
-    end)
-end
-
 function Instance.new(className)
     local classTable = ClassRegistry[className]
+
     if not classTable then
         error(("Unknown class '%s'"):format(className))
     end
@@ -109,11 +179,13 @@ function Instance.new(className)
         ClassName = className,
         Name = className,
         UniqueId = generateId(),
+
         _attributes = {},
         Parent = nil,
         _children = {},
         _tags = {},
     }
+
     state.ChildAdded = Signal.new()
     state.ChildRemoved = Signal.new()
     state.Changed = Signal.new()
@@ -124,16 +196,25 @@ function Instance.new(className)
     rawset(self, "_state", state)
 
     local chain = {}
-    local c = classTable
-    while c do
-        table.insert(chain, 1, c)
-        c = c.__ParentClass
+    local class = classTable
+
+    while class do
+        table.insert(chain, 1, class)
+        class = class.__ParentClass
     end
+
     for _, class in ipairs(chain) do
-        if class.Defaults then
-            local defaults = type(class.Defaults) == "function" and class.Defaults() or class.Defaults
-            for k, v in pairs(defaults) do
-                self[k] = v
+        if class.Properties then
+            for propertyName, definition in pairs(class.Properties) do
+                if definition.default ~= nil then
+                    local value = definition.default
+
+                    if type(value) == "function" then
+                        value = value()
+                    end
+
+                    self[propertyName] = value
+                end
             end
         end
     end
@@ -159,13 +240,18 @@ function Instance:GetProperties()
         class = class.__ParentClass
     end
 
-    for _, propertyGroups in ipairs(categories) do
-        for category, names in pairs(propertyGroups) do
+    for _, propertyDefinitions in ipairs(categories) do
+        for propertyName, definition in pairs(propertyDefinitions) do
+            local category = definition.category or "Data"
+
             properties[category] = properties[category] or {}
 
-            for _, name in ipairs(names) do
-                properties[category][name] = self[name]
-            end
+            properties[category][propertyName] = {
+                value = self[propertyName],
+                type = definition.type,
+                readOnly = definition.ReadOnly == true,
+                order = definition.order or 0,
+            }
         end
     end
 

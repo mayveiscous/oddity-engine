@@ -1650,6 +1650,29 @@ static int lua_imguiCloseCurrentPopup(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiVector2(lua_State* L) {
+    const char* label = luaL_checkstring(L, 1);
+
+    float x = (float)luaL_checknumber(L, 2);
+    float y = (float)luaL_checknumber(L, 3);
+
+    bool changed = ImGui::InputFloat2(label, &x);
+
+    lua_pushnumber(L, x);
+    lua_pushnumber(L, y);
+    lua_pushboolean(L, changed);
+
+    return 3;
+}
+
+static int lua_imguiTextDisabled(lua_State* L) {
+    const char* text = luaL_checkstring(L, 1);
+
+    ImGui::TextDisabled("%s", text);
+
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1729,6 +1752,8 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginPopup", lua_imguiBeginPopup},
     {"imguiEndPopup", lua_imguiEndPopup},
     {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
+    {"imguiVector2", lua_imguiVector2},
+    {"imguiTextDisabled", lua_imguiTextDisabled},
     {nullptr, nullptr}
 };
 
