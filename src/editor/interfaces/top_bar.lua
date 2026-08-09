@@ -65,7 +65,7 @@ local function beginPlaytest()
 
     EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
 
-    for _, player in pairs(Game.Players.Players) do
+    for _, player in pairs(Game.Players) do
         CreateCharacter.createCharacter(player)
     end
 
