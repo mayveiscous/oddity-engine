@@ -7,16 +7,37 @@ local Layout = require "src.editor.state.layout"
 local InputService = require "src.classes.services.inputservice"
 local TextEditor = require "src.editor.interfaces.text_editor"
 local Theme = require "src.editor.interfaces.theme"
+local UndoStack = require "src.editor.state.undo"
+local SelectionService = require "src.classes.services.selectionservice"
 
 local EditorState = require "src.editor.state"
 
 local graphics = require "graphics"
 local hasApplied = false
 
+local function handleShortcuts()
+    local ctrl = InputService.IsKeyDown("LeftControl") or InputService.IsKeyDown("RightControl")
+
+    if ctrl and InputService.IsKeyPressed("Z") then
+        UndoStack.Undo()
+    elseif ctrl and InputService.IsKeyPressed("Y") then
+        UndoStack.Redo()
+    end
+
+    if InputService.IsKeyPressed("Delete") then
+        for _, inst in ipairs(SelectionService.GetAll()) do
+            inst:Destroy()
+        end
+        SelectionService.Clear()
+    end
+end
+
 local function draw(workspace)
     if not hasApplied then
         Theme.apply()
     end
+
+    InputService.Update()
 
     if InputService.IsKeyDown("One") then
         EditorState.CurrentTool = "Select"
@@ -27,7 +48,11 @@ local function draw(workspace)
     elseif InputService.IsKeyDown("Four") then
         EditorState.CurrentTool = "Rotate"
     end
-    
+
+    if not EditorState.isPlaytesting and not graphics.imguiWantsKeyboard() then
+        handleShortcuts()
+    end
+
     local rects = Layout.apply(EditorState.collapsed)
 
     Explorer.drawExplorer(workspace, rects.Explorer)

@@ -20,10 +20,6 @@ function FrogRig.Create(parent, position, name)
     controller.Parent = character
     character.Controller = controller
 
-    --------------------------------------------------------------------
-    -- Sizes
-    --------------------------------------------------------------------
-
     local bodySize = Vector3.new(1.6, 1.0, 1.8)
     local bellySize = Vector3.new(1.2, 0.25, 1.4)
 
@@ -35,10 +31,6 @@ function FrogRig.Create(parent, position, name)
     local frontLegSize = Vector3.new(0.45, 0.55, 0.45)
     local backLegSize = Vector3.new(0.55, 0.75, 0.55)
 
-    --------------------------------------------------------------------
-    -- Hitbox
-    --------------------------------------------------------------------
-
     local totalHeight = backLegSize.Y + bodySize.Y + headSize.Y
 
     local hitbox = Instance.new("Block")
@@ -49,10 +41,6 @@ function FrogRig.Create(parent, position, name)
     hitbox.Position = position + Vector3.new(0, totalHeight / 2, 0)
 
     character.RootPart = hitbox
-
-    --------------------------------------------------------------------
-    -- Body
-    --------------------------------------------------------------------
 
     local body = Instance.new("Block")
     body.Parent = character
@@ -67,10 +55,6 @@ function FrogRig.Create(parent, position, name)
     bodyMotor.Part1 = body
     bodyMotor.C0 = Vector3.new(0, backLegSize.Y, 0)
     bodyMotor.C1 = Vector3.zero()
-
-    --------------------------------------------------------------------
-    -- Helper
-    --------------------------------------------------------------------
 
     local function attach(parentPart, name, size, color, c0, c1)
         local part = Instance.new("Block")
@@ -90,10 +74,6 @@ function FrogRig.Create(parent, position, name)
         return part, motor
     end
 
-    --------------------------------------------------------------------
-    -- Belly
-    --------------------------------------------------------------------
-
     attach(
         body,
         "Belly",
@@ -103,10 +83,6 @@ function FrogRig.Create(parent, position, name)
         Vector3.zero()
     )
 
-    --------------------------------------------------------------------
-    -- Head
-    --------------------------------------------------------------------
-
     local head, neck = attach(
         body,
         "Head",
@@ -115,10 +91,6 @@ function FrogRig.Create(parent, position, name)
         Vector3.new(0, bodySize.Y / 2 - 0.05, 0.35),
         Vector3.new(0, -headSize.Y / 2, 0)
     )
-
-    --------------------------------------------------------------------
-    -- Eyes
-    --------------------------------------------------------------------
 
     local leftEye = Instance.new("Block")
     leftEye.Parent = character
@@ -146,10 +118,6 @@ function FrogRig.Create(parent, position, name)
     rightEyeMotor.C0 = Vector3.new(0.45, headSize.Y / 2 - 0.08, 0.45)
     rightEyeMotor.C1 = Vector3.zero()
 
-    --------------------------------------------------------------------
-    -- Pupils
-    --------------------------------------------------------------------
-
     local leftPupil = Instance.new("Block")
     leftPupil.Parent = character
     leftPupil.Name = "LeftPupil"
@@ -175,10 +143,6 @@ function FrogRig.Create(parent, position, name)
     rightPupilMotor.Part1 = rightPupil
     rightPupilMotor.C0 = Vector3.new(0, 0, eyeSize.Z / 2)
     rightPupilMotor.C1 = Vector3.zero()
-
-    --------------------------------------------------------------------
-    -- Legs
-    --------------------------------------------------------------------
 
     local leftFrontLeg, lf = attach(
         body,
@@ -215,10 +179,6 @@ function FrogRig.Create(parent, position, name)
         Vector3.new(0.55, -bodySize.Y / 2, -0.55),
         Vector3.new(0, backLegSize.Y / 2, 0)
     )
-
-    --------------------------------------------------------------------
-    -- Rest Pose
-    --------------------------------------------------------------------
 
     neck.RestRotation = Vector3.new(-5, 0, 0)
 

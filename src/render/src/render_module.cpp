@@ -1168,6 +1168,14 @@ static int lua_imguiWantsMouse(lua_State* L) {
     return 1;
 }
 
+static int lua_imguiWantsKeyboard(lua_State* L) {
+    bool wantsKeyboard = ImGui::GetIO().WantCaptureKeyboard;
+
+    lua_pushboolean(L, wantsKeyboard);
+
+    return 1;
+}
+
 static int lua_getWindowSize(lua_State* L) {
     if (!g_window) {
         luaL_error(L, "render.getWindowSize() called before render.init()");
@@ -1627,6 +1635,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiColor", lua_imguiColor},
     {"imguiCheckbox", lua_imguiCheckbox},
     {"imguiWantsMouse", lua_imguiWantsMouse},
+    {"imguiWantsKeyboard", lua_imguiWantsKeyboard},
     {"setFullscreen", lua_setFullscreen},
     {"raycast", lua_raycast},
     {"raycastWorld", lua_raycastWorld},

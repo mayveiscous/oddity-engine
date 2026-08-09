@@ -20,7 +20,7 @@ base.Parent = game.Workspace
 local spawn = Instance.new("Spawn")
 spawn.Name = "SpawnPoint"
 spawn.Size = Vector3.new(4, 1, 4)
-spawn.Position = Vector3.new(0, 5, 0)
+spawn.Position = Vector3.new(0, 2.5, 0)
 spawn.Color = Color3.new(100, 100, 150)
 
 spawn.Anchored = true

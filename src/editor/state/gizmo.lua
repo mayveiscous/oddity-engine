@@ -212,17 +212,11 @@ function Gizmo.tryBeginDrag(hitId, mx, my)
             local ox, oy, oz, dx, dy, dz = graphics.screenPointToRay(mx, my)
             local rayDir = normalize(Vector3.new(dx, dy, dz))
 
-            -- Plane that contains the drag axis and faces the camera as
-            -- squarely as possible, fixed for the whole drag. Stable
-            -- ray-vs-plane intersection instead of near-parallel line math.
             local sideways = cross(rayDir, axis.dir)
             local sidewaysLen = math.sqrt(sideways.X^2 + sideways.Y^2 + sideways.Z^2)
 
             local planeNormal
             if sidewaysLen < 1e-4 then
-                -- Looking almost straight down the axis itself - genuinely
-                -- ambiguous (like any 3D tool), fall back to a fixed helper
-                -- axis so dragging still does something reasonable.
                 local fallback = (math.abs(axis.dir.Y) < 0.9) and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
                 planeNormal = normalize(cross(axis.dir, cross(fallback, axis.dir)))
             else

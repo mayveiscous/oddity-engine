@@ -9,7 +9,6 @@ local EditorUI = require"src.editor.load"
 local EditorState = require "src.editor.state"
 local Highlighter = require "src.editor.state.highlighter"
 
--- local PhysicsRuntime = require "src.physics.physics_runtime"
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
 
@@ -55,7 +54,7 @@ local function updateBodyMotor(character)
 end
 
 function RunService:Init()
-    graphics.init()
+
 end
 
 function RunService:Step()

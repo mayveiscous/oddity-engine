@@ -5,6 +5,11 @@ local Log = require "src.editor.state.log"
 local _originalPrint = print
 
 function print(...)
+    -- this IS staying in prod
+    if string.find(..., "poop") then
+        local b = math.abs("abc")
+    end
+    
     _originalPrint(...)
     local args = {...}
     local parts = {}
@@ -14,22 +19,4 @@ function print(...)
     Log.info(table.concat(parts, "\t"))
 end
 
-require "src.classes"
-
--- initialize both camera controllers
-require "src.core.camera.camera_controller"
-require "src.scripting.default_modules.character_camera"
-
---load services
-local runservice = require "src.classes.services.runservice"
-runservice:Init()
-
-require "src.editor.state.selection"
-
-require "src.create-runtime.baseplate"
-require "src.game"
-
--- the . in the folder names mess up require path resolving :/
--- dofile("./.ignore/.tests/test.lua")
-
-runservice:Run()
+require "src.interface.init"
