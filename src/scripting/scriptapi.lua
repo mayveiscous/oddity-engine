@@ -10,7 +10,7 @@ function api.build(self)
         Vector3 = require "src.types.vector3",
         Vector2 = require "src.types.vector2",
         Color3 = require "src.types.color3",
-        Enum = require "src.types.enum"
+        Enum = require "src.types.enum",
         Range = require "src.types.range",
         Keyframe = require "src.types.keyframe",
         

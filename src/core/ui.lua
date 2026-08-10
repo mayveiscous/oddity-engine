@@ -26,6 +26,10 @@ function ui.textColored(r, g, b, a, text)
 graphics.imguiTextColored(r, g, b, a, text)
 end
 
+function ui.textDisabled(text)
+    graphics.imguiTextDisabled(text)
+end
+
 function ui.separator()
 graphics.imguiSeparator()
 end
@@ -36,10 +40,6 @@ end
 
 function ui.setKeyboardFocusHere()
     graphics.imguiSetKeyboardFocusHere()
-end
-
-function ui.textDisabled(text)
-    graphics.imguiTextDisabled(text)
 end
 
 function ui.spacing()
