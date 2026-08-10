@@ -95,10 +95,7 @@ function TextEditor.draw(rects)
     ui.setNextWindowPos(tabRect.x, tabRect.y)
     ui.setNextWindowSize(tabRect.w, tabRect.h)
 
-    ui.beginWindow(
-        "Document Tabs",
-        {"NoTitleBar", "NoScrollBar", "NoMove"}
-    )
+    ui.beginWindow("Document Tabs", {"NoTitleBar", "NoScrollBar", "NoMove"})
 
     drawTabs()
 
@@ -119,7 +116,7 @@ function TextEditor.draw(rects)
     ui.setNextWindowPos(editorRect.x, editorRect.y)
     ui.setNextWindowSize(editorRect.w, editorRect.h)
 
-    ui.beginWindow("Text Editor")
+    ui.beginWindow("Text Editor", {"NoTitleBar", "NoScroll", "NoMove"})
 
     drawContent()
 
