@@ -8,6 +8,12 @@ local LocalStorage = Instance:RegisterClass("LocalStorage", "Instance", {
             category = "Hidden",
         },
 
+        CanRename = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
         CanReparent = {
             type = "boolean",
             default = false,

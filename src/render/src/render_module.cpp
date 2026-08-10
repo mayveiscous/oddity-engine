@@ -1673,6 +1673,12 @@ static int lua_imguiTextDisabled(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiSetKeyboardFocusHere(lua_State* L) {
+    ImGui::SetKeyboardFocusHere();
+
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1754,6 +1760,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
     {"imguiVector2", lua_imguiVector2},
     {"imguiTextDisabled", lua_imguiTextDisabled},
+    {"imguiSetKeyboardFocusHere", lua_imguiSetKeyboardFocusHere},
     {nullptr, nullptr}
 };
 

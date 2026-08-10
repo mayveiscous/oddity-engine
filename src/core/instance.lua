@@ -98,6 +98,12 @@ Instance.Properties = {
         category = "Hidden",
     },
 
+    CanRename = {
+        type = "boolean",
+        default = true,
+        category = "Hidden",
+    },
+
     BlockScripts = {
         type = "boolean",
         default = false,
@@ -126,12 +132,17 @@ local function buildMeta(classTable)
                 return
             end
 
+            if k == "Name" and state.CanRename == false then
+                error(("Instance: %s cannot be renamed!"):format(state.Name), 2)
+            end
+
             local definition = getPropertyDefinition(classTable, k)
 
             if definition then
                 if definition.ReadOnly then
                     error(("Property '%s' is read-only!"):format(k), 2)
                 end
+
 
                 -- Type checking
                 if definition.type and v ~= nil then

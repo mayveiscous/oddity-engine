@@ -34,6 +34,10 @@ function ui.vector2(label, x, y)
     return graphics.imguiVector2(label, x, y)
 end
 
+function ui.setKeyboardFocusHere()
+    graphics.imguiSetKeyboardFocusHere()
+end
+
 function ui.textDisabled(text)
     graphics.imguiTextDisabled(text)
 end

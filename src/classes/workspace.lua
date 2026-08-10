@@ -10,6 +10,12 @@ local Workspace = Instance:RegisterClass("Workspace", "Instance", {
             category = "Hidden",
         },
 
+        CanRename = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
         CanReparent = {
             type = "boolean",
             default = false,

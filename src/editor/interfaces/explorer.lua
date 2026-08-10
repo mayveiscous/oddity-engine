@@ -10,6 +10,7 @@ local renameBuffer = ""
 
 local renameInstance = nil
 local openRenamePopup = false
+local renameFocus = false
 
 local function shouldExpand(instance)
     local selected = SelectionService.current
@@ -82,6 +83,7 @@ local function drawContextPanel(instance)
     if ui.selectable("Rename##ctx_rename_" .. instance.UniqueId) then
         renameBuffer = instance.Name
         renameInstance = instance
+        renameFocus = true
         openRenamePopup = true
 
         ui.closeCurrentPopup()
@@ -108,6 +110,11 @@ local function drawRenamePanel()
     if not instance then
         ui.closeCurrentPopup()
         return
+    end
+
+    if renameFocus then
+        ui.setKeyboardFocusHere()
+        renameFocus = false
     end
 
     renameBuffer = ui.inputText(

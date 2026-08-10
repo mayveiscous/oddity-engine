@@ -14,6 +14,12 @@ local ServerStorage = Instance:RegisterClass("ServerStorage", "Instance", {
             category = "Hidden",
         },
 
+        CanRename = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
         BlockScripts = {
             type = "boolean",
             default = true,

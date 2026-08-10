@@ -37,11 +37,17 @@ local function drawLabel(name)
     ui.setCursorPosX(LABEL_WIDTH)
 end
 
-local function drawProperty(name, value)
+local function drawProperty(name, value, readOnly)
     drawLabel(name)
 
+    if readOnly then
+        ui.textDisabled(tostring(value))
+        return value
+    end
+
     if type(value) == "boolean" then
-        local newValue, changed = ui.checkbox("##" .. name, value)
+        local newValue, changed =
+            ui.checkbox("##" .. name, value)
 
         if changed then
             return newValue
@@ -111,10 +117,11 @@ end
 local function sortedProperties(properties)
     local list = {}
 
-    for name, value in pairs(properties) do
+    for name, definition in pairs(properties) do
         table.insert(list, {
             name = name,
-            value = value,
+            definition = definition,
+            value = definition.value,
         })
     end
 
@@ -150,12 +157,12 @@ local function drawInspector(rects)
         if category ~= "Hidden" then
             if ui.collapsingHeader(category, true) then
                 for _, property in ipairs(sortedProperties(properties)) do
-                    local newValue = drawProperty(
-                        property.name,
-                        property.value
-                    )
+                    local oldValue = property.value
+                    local newValue = drawProperty(property.name, oldValue, property.definition.readOnly)
 
-                    if newValue ~= property.value then
+                    if not property.definition.readOnly
+                        and newValue ~= oldValue then
+
                         inst[property.name] = newValue
                     end
                 end

@@ -8,6 +8,12 @@ local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance", {
             category = "Hidden",
         },
 
+        CanRename = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
         CanReparent = {
             type = "boolean",
             default = false,
