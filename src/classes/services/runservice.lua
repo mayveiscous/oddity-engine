@@ -1,6 +1,6 @@
-local Signal = require "signal"
-local task = require "task"
-local graphics = require "graphics"
+local Signal = require "oddity.signal"
+local task = require "oddity.task"
+local graphics = require "oddity.graphics"
 
 local Vector3 = require "src.types.vector3"
 local AnimUtil = require "src.core.animutil"

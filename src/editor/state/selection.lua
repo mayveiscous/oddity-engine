@@ -4,7 +4,7 @@ local InputService = require "src.classes.services.inputservice"
 local SelectionService = require "src.classes.services.selectionservice"
 local EditorState = require "src.editor.state"
 local Gizmo = require "src.editor.state.gizmo"
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
 local wasMouseDown = false
 

@@ -1,4 +1,4 @@
-local task = require "task"
+local task = require "oddity.task"
 local Log = require "src.editor.state.log"
 
 local ScriptRunner = {}

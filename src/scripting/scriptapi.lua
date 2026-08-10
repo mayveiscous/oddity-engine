@@ -3,7 +3,7 @@ local api = {}
 function api.build(self)
     return {
         script = self,
-        task = require "task",
+        task = require "oddity.task",
         require = require "src.scripting.instance_require",
 
         Instance = require "src.core.instance",

@@ -12,7 +12,7 @@ local SelectionService = require "src.classes.services.selectionservice"
 
 local EditorState = require "src.editor.state"
 
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 local hasApplied = false
 
 local function handleShortcuts()

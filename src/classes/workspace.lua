@@ -1,6 +1,6 @@
 local Instance = require "src.core.instance"
 
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
 local Workspace = Instance:RegisterClass("Workspace", "Instance", {
     Properties = {

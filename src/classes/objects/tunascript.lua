@@ -1,5 +1,5 @@
 local Instance = require "src.core.instance"
-local task = require "task"
+local task = require "oddity.task"
 
 local ScriptRunner = require "src.scripting.script_runner"
 local scrapi = require "src.scripting.scriptapi"

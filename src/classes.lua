@@ -1,4 +1,4 @@
-local filesystem = require "filesystem"
+local filesystem = require "oddity.filesystem"
 
 local function loadDirectory(directory, modulePath)
     for _, entry in ipairs(filesystem.listDirectory(directory)) do

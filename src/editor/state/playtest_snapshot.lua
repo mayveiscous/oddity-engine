@@ -1,9 +1,9 @@
 local Game = require "src.game"
-local task = require "task"
+local task = require "oddity.task"
 
 local Vector3 = require "src/types/vector3"
 
-local debug = require "debug"
+local debug = require "oddity.debug"
 
 local Snapshot = {}
 
@@ -17,7 +17,7 @@ function Snapshot.Capture(workspace)
                     goto continue
                 end
 
-                captured[name] = value
+                captured[name] = value.value
 
                 ::continue::
             end

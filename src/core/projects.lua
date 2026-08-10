@@ -1,4 +1,4 @@
-local filesystem = require "filesystem"
+local filesystem = require "oddity.filesystem"
 
 local Projects = {}
 

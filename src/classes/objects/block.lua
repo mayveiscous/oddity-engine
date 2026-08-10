@@ -4,7 +4,7 @@ local Vector3 = require "src.types.vector3"
 local Color3 = require "src.types.color3"
 
 local Shapes = require "src.render.shapes"
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
 local Block = Instance:RegisterClass("Block", "Instance", {
     Properties = {

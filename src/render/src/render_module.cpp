@@ -1757,7 +1757,7 @@ static const luaL_Reg renderFunctions[] = {
     {nullptr, nullptr}
 };
 
-extern "C" int luaopen_graphics(lua_State* L) {
+extern "C" int luaopen_oddity_graphics(lua_State* L) {
     luaL_newlib(L, renderFunctions);
     return 1;
 }

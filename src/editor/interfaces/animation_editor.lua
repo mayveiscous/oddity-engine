@@ -1,4 +1,4 @@
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 local Game = require "src.game"

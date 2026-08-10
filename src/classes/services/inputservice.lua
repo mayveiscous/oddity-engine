@@ -1,4 +1,4 @@
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 local KeyCodes = require "src.data.keycodes"
 
 local InputService = {}

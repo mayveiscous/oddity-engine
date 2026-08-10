@@ -3,9 +3,9 @@ local RunService = require "src.classes.services.runservice"
 local EditorState = require "src.editor.state"
 local Game = require "src.game"
 local Vector3 = require "src.types.vector3"
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
-local debug = require "debug"
+local debug = require "oddity.debug"
 
 local minSpeed = 7
 local maxSpeed = 100

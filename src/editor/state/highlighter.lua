@@ -2,7 +2,7 @@ local EditorState = require "src.editor.state"
 local SelectionService = require "src.classes.services.selectionservice"
 local Gizmo = require "src.editor.state.gizmo"
 
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
 local Highlighter = {}
 

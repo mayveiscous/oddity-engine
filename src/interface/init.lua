@@ -1,4 +1,4 @@
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 local ProjectSelection = require "src.interface.project_selection"
 
 local function loadProject(project)

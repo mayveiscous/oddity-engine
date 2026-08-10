@@ -4,7 +4,7 @@ local Vector3 = require "src.types.vector3"
 local Game = require "src.game"
 local PhysicsEngine = require "src.physics.core.engine"
 
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 
 local Gizmo = {}
 Gizmo.freeDragging = false

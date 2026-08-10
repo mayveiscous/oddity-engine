@@ -1,5 +1,5 @@
 local ui = require "src.core.ui"
-local graphics = require "graphics"
+local graphics = require "oddity.graphics"
 local Theme = require "src.editor.interfaces.theme"
 local Projects = require "src.core.projects"
 

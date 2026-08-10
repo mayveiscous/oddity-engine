@@ -1,4 +1,4 @@
-local Signal = require "signal"
+local Signal = require "oddity.signal"
 
 local Instance = {}
 local ClassRegistry = {}
