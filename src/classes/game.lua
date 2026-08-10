@@ -1,11 +1,11 @@
 local Instance = require "src.core.instance"
 
-local Players = Instance:RegisterClass("Players", "Instance", {
+local Game = Instance:RegisterClass("Game", "Instance", {
     Properties = {
         CanBeDeleted = {
             type = "boolean",
             default = false,
-            category = "Hidden",
+            category = "Hidden"
         },
 
         CanRename = {
@@ -17,15 +17,9 @@ local Players = Instance:RegisterClass("Players", "Instance", {
         CanReparent = {
             type = "boolean",
             default = false,
-            category = "Hidden",
-        },
-
-        IsCoreService = {
-            type = "boolean",
-            default = true,
-            category = "Hidden",
+            category = "Hidden"
         },
     },
 })
 
-return Players
+return Game

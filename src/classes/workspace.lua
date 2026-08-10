@@ -16,6 +16,12 @@ local Workspace = Instance:RegisterClass("Workspace", "Instance", {
             category = "Hidden",
         },
 
+        IsCoreService = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
+
         CanReparent = {
             type = "boolean",
             default = false,

@@ -1,8 +1,10 @@
+local details = require "src.data.project_details"
+
 local Tabs = {}
 
 local tabs = {
     {
-        name = "Scene",
+        name = details.ProjectName,
         type = "scene",
     }
 }
@@ -20,6 +22,16 @@ function Tabs.getActiveIndex()
 end
 
 function Tabs.setActiveIndex(i)
+    if #tabs == 0 then
+        activeTab = 0
+        return
+    end
+
+    if i == nil then
+        activeTab = 1
+        return
+    end
+
     if i < 1 then
         i = 1
     elseif i > #tabs then

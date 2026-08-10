@@ -25,6 +25,12 @@ local LocalStorage = Instance:RegisterClass("LocalStorage", "Instance", {
             default = true,
             category = "Hidden",
         },
+
+        IsCoreService = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
     },
 })
 

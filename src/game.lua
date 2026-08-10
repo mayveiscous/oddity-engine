@@ -11,6 +11,8 @@ local ServerScripts = require "src.classes.server_scripts"
 local Player = require "src.classes.objects.player"
 local Sky = require "src.classes.objects.sky"
 
+local GameO = require "src.classes.game"
+
 local defaultModuleSources = require "src.data.default_modules"
 
 local function createDefaultModules(player)
@@ -27,42 +29,28 @@ local function createDefaultModules(player)
     cameraController.Parent = player:FindFirstChild("Modules")
 end
 
-local Game = {}
-Game.Workspace = Instance.new("Workspace")
-Game.Workspace:AddTag("COREcantDelete")
+local function createCore(className, parent)
+    local instance = Instance.new(className)
+    instance:AddTag("COREcantDelete")
+    instance.Parent = parent
+    return instance
+end
 
-Game.CurrentCamera = Instance.new("Camera")
-Game.CurrentCamera.Position = Vector3.new(10, 4, 10)
-Game.CurrentCamera.LookAt = Vector3.new(0, 0, 0)
-Game.CurrentCamera:AddTag("COREcantDelete")
+local Game = Instance.new("Game")
 
-Game.Lighting = Instance.new("Lighting")
-Game.Lighting.Sky = Instance.new("Sky")
-Game.Lighting.Sky.Texture = "" -- texture id here
-Game.Lighting:AddTag("COREcantDelete")
+Game.Workspace = createCore("Workspace", Game)
+Game.CurrentCamera = createCore("Camera", Game)
+Game.Lighting = createCore("Lighting", Game)
+Game.Players = createCore("Players", Game)
+Game.LocalStorage = createCore("LocalStorage", Game)
+Game.ServerStorage = createCore("ServerStorage", Game)
+Game.ServerScripts = createCore("ServerScripts", Game)
 
-Game.Players = Instance.new("Players")
-Game.Players:AddTag("COREcantDelete")
-
-Game.LocalStorage = Instance.new("LocalStorage")
-Game.LocalStorage:AddTag("COREcantDelete")
-
-Game.ServerStorage = Instance.new("ServerStorage")
-Game.ServerStorage:AddTag("COREcantDelete")
-
-Game.ServerScripts = Instance.new("ServerScripts")
-Game.ServerScripts:AddTag("COREcantDelete")
+Game.Lighting.Sky = createCore("Sky", Game.Lighting)
 
 local player = Instance.new("Player")
 player.Name = "mayveiscous"
 player.Parent = Game.Players
-player:AddTag("COREcantDelete")
-
-local modules = Instance.new("Folder")
-modules.Name = "Modules"
-modules.Parent = player
-modules:AddTag("COREcantDelete")
-
 createDefaultModules(player)
 
 function Game:GetService(name)

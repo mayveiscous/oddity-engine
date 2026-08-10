@@ -277,9 +277,15 @@ function Instance:SetParent(newParent)
         return
     end
 
+    if state.IsCoreService then
+        goto skipReparentFlag
+    end
+
     if state.CanReparent ~= nil and state.CanReparent == false then
         return
     end
+
+    ::skipReparentFlag::
 
     if oldParent then
         local oldState = rawget(oldParent, "_state")

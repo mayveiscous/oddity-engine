@@ -19,6 +19,12 @@ local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance", {
             default = false,
             category = "Hidden",
         },
+
+        IsCoreService = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
     },
 })
 

@@ -20,12 +20,35 @@ function TextEditor.discardPendingEdits()
     Tabs.discardPendingEdits()
 end
 
+local function closeTab(tab)
+    if tab.type == "script" then
+        Tabs.closeScript(tab.script)
+        return
+    end
+
+    if tab.type == "scene" then
+        Tabs.setActiveIndex(nil)
+    end
+end
+
 local function drawTabs()
     for i, tab in ipairs(Tabs.list()) do
         local selected = i == Tabs.getActiveIndex()
 
-        if ui.button((selected and "[ " or "") .. tab.name .. (selected and " ]" or "")) then
+        local tabLabel =
+            (selected and "[ " or "") ..
+            tab.name ..
+            (selected and " ]" or "") ..
+            "##tab_" .. i
+
+        if ui.button(tabLabel) then
             Tabs.setActiveIndex(i)
+        end
+
+        ui.sameLine(0, 0)
+
+        if ui.smallButton("x##close_tab_" .. i) then
+            closeTab(tab)
         end
 
         ui.sameLine()
@@ -48,7 +71,13 @@ local function drawContent()
 
     if tab.type == "script" then
         local content = Tabs.getScriptContent(tab.script)
-        local changed, newText = ui.inputTextMultiline("##editor", content, 10000)
+
+        local changed, newText =
+            ui.inputTextMultiline(
+                "##editor",
+                content,
+                10000
+            )
 
         if changed then
             Tabs.setScriptContent(tab.script, newText)
@@ -66,7 +95,10 @@ function TextEditor.draw(rects)
     ui.setNextWindowPos(tabRect.x, tabRect.y)
     ui.setNextWindowSize(tabRect.w, tabRect.h)
 
-    ui.beginWindow("Document Tabs", {"NoTitleBar", "NoScrollBar", "NoMove"})
+    ui.beginWindow(
+        "Document Tabs",
+        {"NoTitleBar", "NoScrollBar", "NoMove"}
+    )
 
     drawTabs()
 

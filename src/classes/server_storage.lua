@@ -20,6 +20,12 @@ local ServerStorage = Instance:RegisterClass("ServerStorage", "Instance", {
             category = "Hidden",
         },
 
+        IsCoreService = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
+
         BlockScripts = {
             type = "boolean",
             default = true,
