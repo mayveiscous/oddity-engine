@@ -1,5 +1,8 @@
 local graphics = require "oddity.graphics"
-local KeyCodes = require "src.data.keycodes"
+local Enum = require "src.types.enum"
+
+local KeyCodes = Enum.KeyCodes
+local MouseButtons = Enum.MouseButtons
 
 local InputService = {}
 
@@ -7,7 +10,7 @@ local downThisFrame = {}
 local downLastFrame = {}
 
 function InputService.IsKeyDown(keyName)
-    local code = KeyCodes.Keys[keyName]
+    local code = KeyCodes[keyName]
     if not code then
         error(("Unknown key '%s"):format(keyName))
     end
@@ -17,13 +20,13 @@ end
 function InputService.Update()
     downLastFrame = downThisFrame
     downThisFrame = {}
-    for keyName in pairs(KeyCodes.Keys) do
+    for keyName in pairs(KeyCodes) do
         downThisFrame[keyName] = InputService.IsKeyDown(keyName)
     end
 end
 
 function InputService.IsKeyPressed(keyName)
-    if not KeyCodes.Keys[keyName] then
+    if not KeyCodes[keyName] then
         error(("Unknown key '%s"):format(keyName))
     end
     return downThisFrame[keyName] and not downLastFrame[keyName]
@@ -35,7 +38,7 @@ function InputService.GetMousePos()
 end
 
 function InputService.IsMouseButtonDown(buttonName)
-    local code = KeyCodes.MouseButtons[buttonName]
+    local code = MouseButtons[buttonName]
     if not code then
         error(("Unknown mouse button '%s'"):format(buttonName))
     end

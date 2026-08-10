@@ -12,7 +12,7 @@ local Highlighter = require "src.editor.state.highlighter"
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
 
-local Materials = require "src.render.materials"
+local Enum = require "src.types.enum"
 
 local Game = require "src.game"
 
@@ -203,7 +203,8 @@ function RunService:Step()
 
     -- graphics opaque
     for _, obj in ipairs(opaque) do
-        local mat = Materials.Get(obj.Material)
+        local mat = Enum.Materials[obj.Material]
+        if not mat then mat = Enum.Materials.Plastic end
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -218,7 +219,8 @@ function RunService:Step()
 
     -- graphics transparent
     for _, obj in ipairs(transparent) do
-        local mat = Materials.Get(obj.Material)
+        local mat = Enum.Materials[obj.Material]
+        if not mat then mat = Enum.Materials.Plastic end
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
