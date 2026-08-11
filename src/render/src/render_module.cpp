@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cfloat>
 #include <cstring>
+#include <cctype>
 #include <algorithm>
 
 #include "imgui.h"
@@ -27,6 +28,19 @@ struct Mesh {
     int vertexCount;
 };
 
+struct Texture {
+    GLuint id;
+    int width;
+    int height;
+    int channels;
+    std::string path;
+};
+
+struct Material {
+    int textureId;
+    glm::vec4 baseColor;
+};
+
 struct RenderObject {
     int meshId;
 
@@ -35,12 +49,18 @@ struct RenderObject {
     glm::vec3 rotation;
 
     std::string uniqueId;
+
+    Material material;
 };
 
 static std::vector<RenderObject> renderObjects;
 
 static std::unordered_map<int, Mesh> meshRegistry;
 static int nextMeshId = 1;
+
+static std::unordered_map<int, Texture> textureRegistry;
+static std::unordered_map<std::string, int> texturePathCache;
+static int nextTextureId = 1;
 
 static GLFWwindow* g_window = nullptr;
 static GLuint g_shaderProgram = 0;
@@ -56,6 +76,7 @@ static const char* vertexShaderSource = R"(
 #version 330 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -63,10 +84,12 @@ uniform mat4 projection;
 
 out vec3 FragPos;
 out vec3 Normal;
+out vec2 TexCoord;
 
 void main() {
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
+    TexCoord = aTexCoord;
     gl_Position = projection * view * vec4(FragPos, 1.0);
 }
 )";
@@ -75,19 +98,18 @@ static const char* fragmentShaderSource = R"(
 #version 330 core
 in vec3 FragPos;
 in vec3 Normal;
+in vec2 TexCoord;
 out vec4 FragColor;
 
 #define MAX_POINT_LIGHTS 8
 #define MAX_SPOT_LIGHTS 8
 
 uniform vec4 objectColor;
+uniform sampler2D diffuseTexture;
+uniform bool useTexture;
 
 uniform vec3 lightDir;
 uniform vec3 lightColor;
-
-uniform vec3 viewPos;
-uniform float specularStrength;
-uniform float shininess;
 
 uniform int numPointLights;
 uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
@@ -108,18 +130,12 @@ uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
 
 void main() {
     vec3 norm = normalize(Normal);
-    vec3 viewDir = normalize(viewPos - FragPos);
     vec3 ambient = 0.15 * lightColor;
 
     float dirDiff = max(dot(norm, -lightDir), 0.0);
     vec3 dirDiffuse = dirDiff * lightColor;
 
-    vec3 dirHalfway = normalize(-lightDir + viewDir);
-    float dirSpec = pow(max(dot(norm, dirHalfway), 0.0), shininess);
-    vec3 dirSpecular = specularStrength * dirSpec * lightColor;
-
     vec3 pointDiffuse = vec3(0.0);
-    vec3 pointSpecular = vec3(0.0);
     for (int i = 0; i < numPointLights; i++) {
         vec3 toLight = pointLightPos[i] - FragPos;
         float dist = length(toLight);
@@ -127,14 +143,9 @@ void main() {
         float diff = max(dot(norm, dir), 0.0);
         float atten = 1.0 / (pointLightConstant[i] + pointLightLinear[i] * dist + pointLightQuadratic[i] * dist * dist);
         pointDiffuse += diff * pointLightColor[i] * atten;
-
-        vec3 halfway = normalize(dir + viewDir);
-        float spec = pow(max(dot(norm, halfway), 0.0), shininess);
-        pointSpecular += specularStrength * spec * pointLightColor[i] * atten;
     }
 
     vec3 spotDiffuse = vec3(0.0);
-    vec3 spotSpecular = vec3(0.0);
     for (int i = 0; i < numSpotLights; i++) {
         vec3 toSpot = spotLightPos[i] - FragPos;
         float spotDist = length(toSpot);
@@ -147,22 +158,19 @@ void main() {
         float spotDiff = max(dot(norm, spotDirToFrag), 0.0);
         float spotAttenuation = 1.0 / (spotLightConstant[i] + spotLightLinear[i] * spotDist + spotLightQuadratic[i] * spotDist * spotDist);
         spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
-
-        vec3 spotHalfway = normalize(spotDirToFrag + viewDir);
-        float spotSpec = pow(max(dot(norm, spotHalfway), 0.0), shininess);
-        spotSpecular += specularStrength * spotSpec * spotLightColor[i] * spotAttenuation * spotIntensity;
     }
 
-    vec3 specular = dirSpecular + pointSpecular + spotSpecular;
-    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * objectColor.rgb + specular;
-    FragColor = vec4(result, objectColor.a);
+    vec4 baseColor = useTexture ? texture(diffuseTexture, TexCoord) : objectColor;
+    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor.rgb;
+    float alpha = useTexture ? (objectColor.a * baseColor.a) : objectColor.a;
+    FragColor = vec4(result, alpha);
 }
 )";
 
 static GLint g_colorLoc = -1;
+static GLint g_diffuseTextureLoc = -1;
+static GLint g_useTextureLoc = -1;
 static GLint g_lightDirLoc = -1, g_lightColorLoc = -1;
-static GLint g_viewPosLoc = -1;
-static GLint g_specStrengthLoc = -1, g_shininessLoc = -1;
 
 // point light array uniform locations
 static GLint g_numPointLightsLoc = -1;
@@ -250,7 +258,7 @@ static GLuint compileShaderProgram() {
 // --- mesh helpers ---
 static Mesh createMeshInternal(const std::vector<GLfloat>& vertices) {
     Mesh mesh;
-    mesh.vertexCount = (int)(vertices.size() / 6);
+    mesh.vertexCount = (int)(vertices.size() / 8);
 
     glGenVertexArrays(1, &mesh.vao);
     glGenBuffers(1, &mesh.vbo);
@@ -259,11 +267,14 @@ static Mesh createMeshInternal(const std::vector<GLfloat>& vertices) {
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -283,6 +294,62 @@ static std::vector<GLfloat> readFloatArray(lua_State* L, int stackIndex) {
     }
 
     return result;
+}
+
+// --- texture helpers ---
+
+static std::string normalizeTexturePath(const char* path) {
+    std::string p(path);
+    for (char& c : p) {
+        if (c == '\\')
+            c = '/';
+        else if (c >= 'A' && c <= 'Z')
+            c += ('a' - 'A');
+    }
+    return p;
+}
+
+static int createTextureFromData(const char* path, int width, int height, int channels, const unsigned char* data) {
+    GLuint id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    GLint internalFormat = GL_RGBA8;
+    GLint format = GL_RGBA;
+    if (channels == 1) {
+        internalFormat = GL_R8;
+        format = GL_RED;
+    } else if (channels == 2) {
+        internalFormat = GL_RG8;
+        format = GL_RG;
+    } else if (channels == 3) {
+        internalFormat = GL_RGB8;
+        format = GL_RGB;
+    }
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    Texture tex;
+    tex.id = id;
+    tex.width = width;
+    tex.height = height;
+    tex.channels = channels;
+    tex.path = normalizeTexturePath(path);
+
+    int textureId = nextTextureId++;
+    textureRegistry[textureId] = tex;
+    texturePathCache[tex.path] = textureId;
+
+    return textureId;
 }
 
 // --- Lua bindings ---
@@ -372,12 +439,10 @@ static int lua_init(lua_State* L) {
     g_viewLoc = glGetUniformLocation(g_shaderProgram, "view");
     g_projLoc = glGetUniformLocation(g_shaderProgram, "projection");
     g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
+    g_diffuseTextureLoc = glGetUniformLocation(g_shaderProgram, "diffuseTexture");
+    g_useTextureLoc = glGetUniformLocation(g_shaderProgram, "useTexture");
     g_lightDirLoc = glGetUniformLocation(g_shaderProgram, "lightDir");
     g_lightColorLoc = glGetUniformLocation(g_shaderProgram, "lightColor");
-
-    g_viewPosLoc = glGetUniformLocation(g_shaderProgram, "viewPos");
-    g_specStrengthLoc = glGetUniformLocation(g_shaderProgram, "specularStrength");
-    g_shininessLoc = glGetUniformLocation(g_shaderProgram, "shininess");
 
     g_numPointLightsLoc = glGetUniformLocation(g_shaderProgram, "numPointLights");
     g_pointPosLoc = glGetUniformLocation(g_shaderProgram, "pointLightPos");
@@ -569,10 +634,56 @@ static int lua_addSpotLight(lua_State* L) {
     return 0;
 }
 
+static int lua_loadTexture(lua_State* L) {
+    const char* path = luaL_checkstring(L, 1);
+
+    std::string key = normalizeTexturePath(path);
+
+    auto cached = texturePathCache.find(key);
+    if (cached != texturePathCache.end()) {
+        lua_pushinteger(L, cached->second);
+        return 1;
+    }
+
+    stbi_set_flip_vertically_on_load(true);
+
+    int width, height, channels;
+    unsigned char* data = stbi_load(path, &width, &height, &channels, 0);
+    if (!data) {
+        return luaL_error(L, "Failed to load texture '%s': %s", path, stbi_failure_reason());
+    }
+
+    int textureId = createTextureFromData(path, width, height, channels, data);
+    stbi_image_free(data);
+
+    lua_pushinteger(L, textureId);
+    return 1;
+}
+
+static int lua_destroyTexture(lua_State* L) {
+    int textureId = (int)luaL_checkinteger(L, 1);
+
+    auto it = textureRegistry.find(textureId);
+    if (it == textureRegistry.end()) {
+        return luaL_error(L, "destroyTexture: invalid texture id %d", textureId);
+    }
+
+    glDeleteTextures(1, &it->second.id);
+    texturePathCache.erase(it->second.path);
+    textureRegistry.erase(it);
+
+    return 0;
+}
+
 static int lua_createMesh(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
 
     std::vector<GLfloat> vertices = readFloatArray(L, 1);
+
+    if (vertices.size() % 8 != 0) {
+        return luaL_error(L, "createMesh: expected 8 floats per vertex (position.xyz, normal.xyz, uv.xy), got %d", (int)vertices.size());
+    }
+
     Mesh mesh = createMeshInternal(vertices);
 
     int id = nextMeshId++;
@@ -597,14 +708,23 @@ static int lua_drawMesh(lua_State* L) {
     float ry = (float)luaL_optnumber(L, 12, 0.0);
     float rz = (float)luaL_optnumber(L, 13, 0.0);
     float a = (float)luaL_optnumber(L, 14, 1.0);
-    float specularStrength = (float)luaL_optnumber(L, 15, 0.5);
-    float shininess = (float)luaL_optnumber(L, 16, 32.0);
-    const char* uniqueId = luaL_checkstring(L, 17);
+    const char* uniqueId = luaL_checkstring(L, 15);
+    int textureId = luaL_optinteger(L, 16, -1);
 
     auto it = meshRegistry.find(meshId);
     if (it == meshRegistry.end()) {
         luaL_error(L, "drawMesh: invalid mesh id %d", meshId);
         return 0;
+    }
+
+    const Texture* texture = nullptr;
+    if (textureId != -1) {
+        auto texIt = textureRegistry.find(textureId);
+        if (texIt == textureRegistry.end()) {
+            luaL_error(L, "drawMesh: invalid texture id %d", textureId);
+            return 0;
+        }
+        texture = &texIt->second;
     }
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
@@ -615,8 +735,14 @@ static int lua_drawMesh(lua_State* L) {
 
     glUniformMatrix4fv(g_modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniform4f(g_colorLoc, r, g, b, a);
-    glUniform1f(g_specStrengthLoc, specularStrength);
-    glUniform1f(g_shininessLoc, shininess);
+
+    if (texture) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture->id);
+        glUniform1i(g_useTextureLoc, 1);
+    } else {
+        glUniform1i(g_useTextureLoc, 0);
+    }
 
     Mesh& mesh = it->second;
     glBindVertexArray(mesh.vao);
@@ -628,6 +754,8 @@ static int lua_drawMesh(lua_State* L) {
     obj.position = glm::vec3(x,y,z);
     obj.scale = glm::vec3(sx,sy,sz);
     obj.rotation = glm::vec3(rx,ry,rz);
+    obj.material.textureId = textureId;
+    obj.material.baseColor = glm::vec4(r, g, b, a);
 
     obj.uniqueId = uniqueId;
 
@@ -653,6 +781,10 @@ static int lua_beginFrame(lua_State* L) {
 
     glUseProgram(g_shaderProgram);
 
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(g_diffuseTextureLoc, 0);
+    glUniform1i(g_useTextureLoc, 0);
+
     glm::mat4 view = glm::lookAt(g_cameraPos, g_cameraTarget, glm::vec3(0, 1, 0));
     float aspect = (float)g_width / (float)g_height;
 
@@ -668,7 +800,6 @@ static int lua_beginFrame(lua_State* L) {
 
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
-    glUniform3f(g_viewPosLoc, g_cameraPos.x, g_cameraPos.y, g_cameraPos.z);
 
     int numPoints = (int)g_pointPositions.size();
     glUniform1i(g_numPointLightsLoc, numPoints);
@@ -1015,18 +1146,15 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
     bool selected = lua_toboolean(L, 2);
     bool forceOpen = lua_toboolean(L, 3);
-    bool isLeaf = lua_toboolean(L, 4); 
 
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_OpenOnArrow;
 
     if (selected)
         flags |= ImGuiTreeNodeFlags_Selected;
 
     if (forceOpen)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;
-
-    if (isLeaf)
-        flags |= ImGuiTreeNodeFlags_Leaf;
 
     bool open = ImGui::TreeNodeEx(label, flags);
 
@@ -1039,24 +1167,6 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
 
     return 3;
 }
-
-static int lua_imguiOpenPopup(lua_State* L) {
-    const char* id = luaL_checkstring(L, 1);
-    ImGui::OpenPopup(id);
-    return 0;
-}
-
-static int lua_imguiBeginPopup(lua_State* L) {
-    const char* id = luaL_checkstring(L, 1);
-    lua_pushboolean(L, ImGui::BeginPopup(id));
-    return 1;
-}
-
-static int lua_imguiEndPopup(lua_State* L) {
-    ImGui::EndPopup();
-    return 0;
-}
-
 
 static int lua_imguiTreePop(lua_State* L) {
     ImGui::TreePop();
@@ -1389,7 +1499,14 @@ static int lua_imguiSmallButton(lua_State* L) {
 }
 
 static int lua_imguiImage(lua_State* L) {
-    unsigned int texture = (unsigned int)luaL_checkinteger(L, 1);
+    int textureId = (int)luaL_checkinteger(L, 1);
+
+    auto it = textureRegistry.find(textureId);
+    if (it == textureRegistry.end()) {
+        return luaL_error(L, "imguiImage: invalid texture id %d", textureId);
+    }
+
+    unsigned int texture = it->second.id;
 
     float width = (float)luaL_checknumber(L, 2);
 
@@ -1645,24 +1762,73 @@ static int lua_imguiMenuItem(lua_State* L) {
     return 1;
 }
 
-static int lua_imguiCloseCurrentPopup(lua_State* L) {
-    ImGui::CloseCurrentPopup();
+static int lua_imguiBeginPopup(lua_State* L) {
+    const char* str_id = luaL_checkstring(L, 1);
+
+    lua_pushboolean(L, ImGui::BeginPopup(str_id));
+
+    return 1;
+}
+
+static int lua_imguiEndPopup(lua_State* L) {
+    ImGui::EndPopup();
+
     return 0;
 }
 
-static int lua_imguiVector2(lua_State* L) {
-    const char* label = luaL_checkstring(L, 1);
+static int lua_imguiCloseCurrentPopup(lua_State* L) {
+    ImGui::CloseCurrentPopup();
 
-    float x = (float)luaL_checknumber(L, 2);
-    float y = (float)luaL_checknumber(L, 3);
+    return 0;
+}
 
-    bool changed = ImGui::InputFloat2(label, &x);
+static int lua_imguiOpenPopup(lua_State* L) {
+    const char* str_id = luaL_checkstring(L, 1);
 
-    lua_pushnumber(L, x);
-    lua_pushnumber(L, y);
-    lua_pushboolean(L, changed);
+    ImGui::OpenPopup(str_id);
 
-    return 3;
+    return 0;
+}
+
+static int lua_shutdown(lua_State* L) {
+    if (!g_window) {
+        return 0;
+    }
+
+    for (auto& pair : meshRegistry) {
+        glDeleteVertexArrays(1, &pair.second.vao);
+        glDeleteBuffers(1, &pair.second.vbo);
+    }
+    meshRegistry.clear();
+
+    for (auto& pair : textureRegistry) {
+        glDeleteTextures(1, &pair.second.id);
+    }
+    textureRegistry.clear();
+    texturePathCache.clear();
+
+    if (g_shaderProgram) {
+        glDeleteProgram(g_shaderProgram);
+        g_shaderProgram = 0;
+    }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    glfwDestroyWindow(g_window);
+    g_window = nullptr;
+    glfwTerminate();
+
+    return 0;
+}
+
+static int lua_imguiSetKeyboardFocusHere(lua_State* L) {
+    int offset = luaL_optinteger(L, 1, 0);
+
+    ImGui::SetKeyboardFocusHere(offset);
+
+    return 0;
 }
 
 static int lua_imguiTextDisabled(lua_State* L) {
@@ -1673,18 +1839,15 @@ static int lua_imguiTextDisabled(lua_State* L) {
     return 0;
 }
 
-static int lua_imguiSetKeyboardFocusHere(lua_State* L) {
-    ImGui::SetKeyboardFocusHere();
-
-    return 0;
-}
-
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
+    {"loadTexture", lua_loadTexture},
+    {"destroyTexture", lua_destroyTexture},
     {"beginFrame", lua_beginFrame},
     {"drawMesh", lua_drawMesh},
     {"endFrame", lua_endFrame},
+    {"shutdown", lua_shutdown},
     {"pollEvents", lua_pollEvents},
     {"shouldClose", lua_shouldClose},
     {"setCamera", lua_setCamera},
@@ -1725,6 +1888,11 @@ static const luaL_Reg renderFunctions[] = {
     {"setFullscreen", lua_setFullscreen},
     {"raycast", lua_raycast},
     {"raycastWorld", lua_raycastWorld},
+    {"imguiBeginPopup", lua_imguiBeginPopup},
+    {"imguiEndPopup", lua_imguiEndPopup},
+    {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
+    {"imguiOpenPopup", lua_imguiOpenPopup},
+    {"imguiTextDisabled", lua_imguiTextDisabled},
     {"getWindowSize", lua_getWindowSize},
     {"imguiSetNextWindowPos", lua_imguiSetNextWindowPos},
     {"imguiSetNextWindowSize", lua_imguiSetNextWindowSize},
@@ -1735,6 +1903,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiNewLine", lua_imguiNewLine},
     {"screenPointToRay", lua_screenPointToRay},
     {"imguiBeginChild", lua_imguiBeginChild},
+    {"imguiSetKeyboardFocusHere", lua_imguiSetKeyboardFocusHere},
     {"imguiEndChild", lua_imguiEndChild},
     {"imguiBeginTabBar", lua_imguiBeginTabBar},
     {"imguiEndTabBar", lua_imguiEndTabBar},
@@ -1754,13 +1923,6 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginMenu", lua_imguiBeginMenu},
     {"imguiEndMenu", lua_imguiEndMenu},
     {"imguiMenuItem", lua_imguiMenuItem},
-    {"imguiOpenPopup", lua_imguiOpenPopup},
-    {"imguiBeginPopup", lua_imguiBeginPopup},
-    {"imguiEndPopup", lua_imguiEndPopup},
-    {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
-    {"imguiVector2", lua_imguiVector2},
-    {"imguiTextDisabled", lua_imguiTextDisabled},
-    {"imguiSetKeyboardFocusHere", lua_imguiSetKeyboardFocusHere},
     {nullptr, nullptr}
 };
 

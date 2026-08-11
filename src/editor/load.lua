@@ -32,7 +32,7 @@ local function handleShortcuts()
     end
 end
 
-local function draw(game, players)
+local function draw(workspace)
     if not hasApplied then
         Theme.apply()
     end
@@ -55,7 +55,7 @@ local function draw(game, players)
 
     local rects = Layout.apply(EditorState.collapsed)
 
-    Explorer.drawExplorer(game, rects.Explorer)
+    Explorer.drawExplorer(workspace, rects.Explorer)
     Inspector.drawInspector(rects.Inspector)
     Output.draw(rects.Output)
     TopBar.draw(rects.TopBar)
