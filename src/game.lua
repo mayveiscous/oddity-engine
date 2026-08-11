@@ -1,4 +1,5 @@
 local Instance = require "src.core.instance"
+local Internal = require "src.core.internal"
 local Vector3 = require "src.types.vector3"
 
 local Camera = require "src.classes.objects.camera"
@@ -8,6 +9,8 @@ local Workspace = require "src.classes.workspace"
 local LocalStorage = require "src.classes.local_storage"
 local ServerStorage = require "src.classes.server_storage"
 local ServerScripts = require "src.classes.server_scripts"
+local PlayerScripts = require "src.classes.player_scripts"
+local SoundStorage = require "src.classes.sound_storage"
 local Player = require "src.classes.objects.player"
 local Sky = require "src.classes.objects.sky"
 
@@ -19,13 +22,13 @@ local function createDefaultModules(player)
     local characterController = Instance.new("LuaScript")
     characterController.Name = "CharacterController"
     characterController.Source = defaultModuleSources.CharacterController
-    characterController.CoreScript = true
+    Internal.SetProperty(characterController, "CoreScript", true)
     characterController.Parent = player:FindFirstChild("Modules")
 
     local cameraController = Instance.new("LuaScript")
     cameraController.Name = "CameraController"
     cameraController.Source = defaultModuleSources.CameraController
-    cameraController.CoreScript = true
+    Internal.SetProperty(cameraController, "CoreScript", true)
     cameraController.Parent = player:FindFirstChild("Modules")
 end
 
@@ -45,12 +48,20 @@ Game.Players = createCore("Players", Game)
 Game.LocalStorage = createCore("LocalStorage", Game)
 Game.ServerStorage = createCore("ServerStorage", Game)
 Game.ServerScripts = createCore("ServerScripts", Game)
+Game.PlayerScripts = createCore("PlayerScripts", Game)
+Game.SoundStorage = createCore("SoundStorage", Game)
 
 Game.Lighting.Sky = createCore("Sky", Game.Lighting)
 
 local player = Instance.new("Player")
 player.Name = "mayveiscous"
 player.Parent = Game.Players
+
+local modules = Instance.new("Folder")
+modules.Name = "Modules"
+modules.Parent = player
+
+Game.Players.LocalPlayer = player
 createDefaultModules(player)
 
 function Game:GetService(name)
@@ -85,6 +96,32 @@ function Game:GetService(name)
     end
 
     error(("Service '%s' does not exist."):format(name), 2)
+end
+
+local originalParents = {}
+
+function Game.beginPlaytest()
+    for _, script in ipairs(Game.PlayerScripts:GetDescendants()) do
+        if script:IsA("LuaScript") or script:IsA("SinkScript") or script:IsA("Folder") then
+            if not Game.Players.LocalPlayer then goto continue end
+            originalParents[script] = script.Parent
+            script.Parent = Game.Players.LocalPlayer:FindFirstChild("Modules")
+        end
+
+        ::continue::
+    end
+end
+
+function Game.stopPlaytest()
+    if not Game.Players.LocalPlayer then goto continue end
+
+    for _, script in ipairs(Game.Players.LocalPlayer:FindFirstChild("Modules"):GetDescendants()) do
+        if not script.CoreScript then
+            script.Parent = originalParents[script]
+        end
+    end
+
+    ::continue::
 end
 
 return Game

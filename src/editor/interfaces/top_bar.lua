@@ -17,15 +17,15 @@ local TopBar = {}
 local playing = false
 
 local function beginPlaytestScripts()
-    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+    for _, obj in ipairs(Game:GetDescendants()) do
         if obj:IsA("LuaScript") then
-            obj:_start()
+            obj:UpdateRunning()
         end
     end
 end
 
 local function stopPlaytestScripts()
-    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+    for _, obj in ipairs(Game:GetDescendants()) do
         if obj:IsA("LuaScript") then
             obj:_stop()
         end
@@ -65,7 +65,7 @@ local function beginPlaytest()
 
     EditorState.playtestSnapshot = Snapshot.Capture(Game.Workspace)
 
-    for _, player in pairs(Game.Players) do
+    for _, player in pairs(Game.Players:GetChildren()) do
         CreateCharacter.createCharacter(player)
     end
 
@@ -73,6 +73,7 @@ local function beginPlaytest()
     beginPlaytestScripts()
 
     Tabs.setActiveIndex(Tabs.getSceneIndex())
+    Game.beginPlaytest()
     EditorState.StartPlaytest()
 end
 
@@ -83,6 +84,7 @@ local function stopPlaytest()
 
     TextEditor.discardPendingEdits()
 
+    Game.stopPlaytest()
     EditorState.StopPlaytest()
 end
 

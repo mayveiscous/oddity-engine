@@ -6,11 +6,11 @@ local ScriptRunner = require "src.scripting.script_runner"
 local EditorState = require "src.editor.state"
 local TextEditor = require "src.editor.interfaces.text_editor"
 
-local LuaScript = Instance:RegisterClass("LuaScript", "Instance", {
+local SinkScript = Instance:RegisterClass("SinkScript", "Instance", {
     Properties = {
         Source = {
             type = "string",
-            default = [[print("Hello Lua!")]],
+            default = [[outln -> "Hello Sink!"]],
             category = "Hidden",
         },
 
@@ -23,7 +23,7 @@ local LuaScript = Instance:RegisterClass("LuaScript", "Instance", {
     },
 })
 
-function LuaScript:UpdateRunning()
+function SinkScript:UpdateRunning()
     if not self.Parent then
         self:_stop()
         return
@@ -36,7 +36,7 @@ function LuaScript:UpdateRunning()
     end
 end
 
-function LuaScript:Init()
+function SinkScript:Init()
     local hasOpened = false
 
     self.AncestryChanged:Connect(function()
@@ -65,19 +65,22 @@ function LuaScript:Init()
     end)
 end
 
-function LuaScript:_start()
+function SinkScript:_start()
     if self._running then return end
+
     self._running = true
     self._thread = ScriptRunner.RunAsync(self)
 end
 
-function LuaScript:_stop()
+function SinkScript:_stop()
     if not self._running then return end
+
     self._running = false
+
     if self._thread then
         task.cancel(self._thread)
         self._thread = nil
     end
 end
 
-return LuaScript
+return SinkScript

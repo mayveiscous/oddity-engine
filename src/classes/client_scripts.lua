@@ -1,6 +1,6 @@
 local Instance = require "src.core.instance"
 
-local Players = Instance:RegisterClass("Players", "Instance", {
+local ClientScripts = Instance:RegisterClass("ClientScripts", "Instance", {
     Properties = {
         CanBeDeleted = {
             type = "boolean",
@@ -14,6 +14,12 @@ local Players = Instance:RegisterClass("Players", "Instance", {
             category = "Hidden",
         },
 
+        BlockScripts = {
+            type = "boolean",
+            default = false,
+            category = "Hidden"
+        },
+
         CanReparent = {
             type = "boolean",
             default = false,
@@ -25,13 +31,7 @@ local Players = Instance:RegisterClass("Players", "Instance", {
             default = true,
             category = "Hidden",
         },
-
-        LocalPlayer = {
-            type = "Instance",
-            default = nil,
-            category = "Player",
-        },
     },
 })
 
-return Players
+return ClientScripts

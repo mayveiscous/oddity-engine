@@ -111,6 +111,22 @@ Instance.Properties = {
     },
 }
 
+local function setPropertyInternal(instance, propertyName, value)
+    local state = rawget(instance, "_state")
+    local old = state[propertyName]
+
+    state[propertyName] = value
+
+    if isVector3(value) then
+        local Vector3 = require "src.types.vector3"
+        Vector3._bind(value, instance, propertyName)
+    end
+
+    if old ~= value and state.Changed then
+        state.Changed:Fire(propertyName, value)
+    end
+end
+
 local function buildMeta(classTable)
     return {
         __index = function(t, k)
@@ -138,38 +154,20 @@ local function buildMeta(classTable)
 
             local definition = getPropertyDefinition(classTable, k)
 
-            if definition then
-                if definition.ReadOnly then
-                    error(("Property '%s' is read-only!"):format(k), 2)
-                end
+            if definition and definition.ReadOnly then
+                error(("Property '%s' is read-only!"):format(k), 2)
+            end
 
+            if definition and definition.type and v ~= nil then
+               local TypeCheck = require "src.core.typecheck"
+               local actualType = TypeCheck.typeName(v)
 
-                -- Type checking
-                if definition.type and v ~= nil then
-                    local TypeCheck = require "src.core.typecheck"
-                    local actualType = TypeCheck.typeName(v)
-
-                    if actualType ~= definition.type then
-                        error(
-                            ("'%s' expects %s, got %s")
-                                :format(k, definition.type, actualType),
-                            2
-                        )
-                    end
+               if actualType ~= definition.type then
+                   error(("'%s' expects %s, got %s"):format(k, definition.type, actualType), 2)
                 end
             end
 
-            local old = state[k]
-            state[k] = v
-
-            if isVector3(v) then
-                local Vector3 = require "src.types.vector3"
-                Vector3._bind(v, t, k)
-            end
-
-            if old ~= v and state.Changed then
-                state.Changed:Fire(k, v)
-            end
+            setPropertyInternal(t, k, v)
         end,
 
         __tostring = function(t)
@@ -218,13 +216,15 @@ function Instance.new(className)
         if class.Properties then
             for propertyName, definition in pairs(class.Properties) do
                 if definition.default ~= nil then
+                    local state = rawget(self, "_state")
+
                     local value = definition.default
 
                     if type(value) == "function" then
                         value = value()
                     end
 
-                    self[propertyName] = value
+                    setPropertyInternal(self, propertyName, value)
                 end
             end
         end
@@ -443,6 +443,25 @@ function Instance:Destroy()
     for _, child in ipairs(self:GetChildren()) do
         child:Destroy()
     end
+end
+
+function Instance:ScriptsBlocked()
+    if self.BlockScripts then
+        return true 
+    end
+
+    local parent = self.Parent
+    local blocked = false
+
+    while parent do
+        if parent.BlockScripts then
+            blocked = true
+        end
+
+        parent = parent.Parent
+    end
+
+    return blocked
 end
 
 return Instance
