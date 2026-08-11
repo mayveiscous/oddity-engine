@@ -1,6 +1,8 @@
 local Materials = require "src.render.materials"
 local KeyCodes = require "src.data.keycodes"
 
+local graphics = require "oddity.graphics"
+
 local Color3 = require "src.types.color3"
 
 local Enum = {}
@@ -39,6 +41,12 @@ Enum.Colors = {
     LightCyan = Color3.new(0.5, 1, 1),
     LightPurple = Color3.new(0.75, 0.5, 1),
     LightPink = Color3.new(1, 0.5, 0.75),
+}
+
+Enum.Textures = {
+    Brick = graphics.loadTexture("assets/textures/brick.png"),
+    SmugFace = graphics.loadTexture("assets/textures/smug.png"),
+    Special = graphics.loadTexture("assets/textures/special.png"),
 }
 
 Enum.Materials = {

@@ -55,11 +55,8 @@ local function updateBodyMotor(character)
     body.Rotation = hitbox.Rotation
 end
 
-local textureIds = {}
-
 function RunService:Init()
-    textureIds.Brick = graphics.loadTexture("assets/textures/brick.png")
-    textureIds.Special = graphics.loadTexture("assets/textures/special.png")
+
 end
 
 function RunService:Step()
@@ -216,7 +213,7 @@ function RunService:Step()
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1,
             obj.UniqueId,
-            textureIds[obj.Texture]
+            Enum.Textures[obj.Texture]
         )
     end
 
@@ -232,7 +229,7 @@ function RunService:Step()
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1 - obj.Transparency,
             obj.UniqueId,
-            textureIds[obj.Texture]
+            Enum.Textures[obj.Texture]
         )
     end
 
