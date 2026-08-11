@@ -6,6 +6,11 @@ EditorState.CurrentTool = "Select" -- Select | Move | Scale | Rotate
 EditorState.isPlaytesting = false -- are we in a playtest, should we compute physics, spawn characters, etc.
 EditorState.collapsed = {}
 EditorState.returnTo = nil
+EditorState.AttentionFocus = "Editor"
+
+function EditorState.AttentionFocusedTo(focus)
+    return ((EditorState.AttentionFocus:lower()) == (focus:lower()))
+end
 
 function EditorState.StartPlaytest()
     EditorState.returnTo = Tabs.getActiveIndex()

@@ -39,15 +39,18 @@ local function draw(workspace)
 
     InputService.Update()
 
-    if InputService.IsKeyDown("One") then
-        EditorState.CurrentTool = "Select"
-    elseif InputService.IsKeyDown("Two") then
-        EditorState.CurrentTool = "Move"
-    elseif InputService.IsKeyDown("Three") then
-        EditorState.CurrentTool = "Scale"
-    elseif InputService.IsKeyDown("Four") then
-        EditorState.CurrentTool = "Rotate"
+    if not EditorState.AttentionFocusedTo("TextEditor") then
+        if InputService.IsKeyDown("One") then
+            EditorState.CurrentTool = "Select"
+        elseif InputService.IsKeyDown("Two") then
+            EditorState.CurrentTool = "Move"
+        elseif InputService.IsKeyDown("Three") then
+            EditorState.CurrentTool = "Scale"
+        elseif InputService.IsKeyDown("Four") then
+            EditorState.CurrentTool = "Rotate"
+        end
     end
+
 
     if not EditorState.isPlaytesting and not graphics.imguiWantsKeyboard() then
         handleShortcuts()

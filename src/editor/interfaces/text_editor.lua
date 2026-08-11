@@ -70,6 +70,7 @@ local function drawContent()
     end
 
     if tab.type == "script" then
+        EditorState.AttentionFocus = "TextEditor"
         local content = Tabs.getScriptContent(tab.script)
 
         local changed, newText =

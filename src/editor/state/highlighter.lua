@@ -16,11 +16,12 @@ function Highlighter.draw()
         graphics.drawMesh(
             selected._meshId,
             selected.Position.X, selected.Position.Y, selected.Position.Z,
-            selected.Size.X * outlineThickness, selected.Size.Y * outlineThickness, selected.Size.Z * outlineThickness,
+            selected.Size.X * outlineThickness,
+            selected.Size.Y * outlineThickness,
+            selected.Size.Z * outlineThickness,
             1, 0.8, 0,
             selected.Rotation.X, selected.Rotation.Y, selected.Rotation.Z,
             1,
-            0, 1,
             "gizmo_highlight",
             -1
         )
