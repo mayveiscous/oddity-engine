@@ -1,6 +1,6 @@
 local Instance = require "src.core.instance"
 
-local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance", {
+local PlayerScripts = Instance:RegisterClass("PlayerScripts", "Instance", {
     Properties = {
         CanBeDeleted = {
             type = "boolean",
@@ -34,4 +34,4 @@ local ServerScripts = Instance:RegisterClass("ServerScripts", "Instance", {
     },
 })
 
-return ServerScripts
+return PlayerScripts

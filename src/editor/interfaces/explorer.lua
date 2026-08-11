@@ -220,6 +220,7 @@ local function drawExplorer(game, rect)
     drawNode(game.ServerScripts)
     drawNode(game.ServerStorage)
     drawNode(game.LocalStorage)
+    drawNode(game.PlayerScripts)
 
     if openRenamePopup then
         ui.openPopup("rename_popup")
