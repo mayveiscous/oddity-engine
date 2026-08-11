@@ -62,8 +62,7 @@ local function drawProperty(name, value, readOnly)
         end
 
     elseif type(value) == "string" then
-        local newValue, changed =
-            ui.inputText("##" .. name, value)
+        local newValue, changed = ui.inputText("##" .. name, value)
 
         if changed then
             return newValue

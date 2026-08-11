@@ -67,7 +67,7 @@ local function directionFromYawPitch(yawDeg, pitchDeg)
 end
 
 RunService.Heartbeat:Connect(function(dt)
-    if EditorState.isPlaytesting then
+    if EditorState.isPlaytesting or EditorState.Typing then
         return
     end -- in a playtest, don't interfere with character camera controller
 

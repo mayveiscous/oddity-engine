@@ -42,6 +42,7 @@ InsertObject.Catalog = {
     { label = "SinkScript", className = "SinkScript"},
     { label = "Module",     className = "Module" },
     { label = "Audio",      className = "Audio" },
+    { label = "Texture",    className = "Texture" },
 }
 
 function InsertObject.CreateEntry(entry, parent)

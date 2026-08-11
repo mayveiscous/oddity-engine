@@ -13,6 +13,7 @@ local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
 
 local Enum = require "src.types.enum"
+local Texture = require "src.classes.objects.texture"
 
 local Game = require "src.game"
 
@@ -53,6 +54,43 @@ local function updateBodyMotor(character)
 
     body.Position = hitbox.Position + AnimUtil.rotateVector3(motor.C0, hitbox.Rotation)
     body.Rotation = hitbox.Rotation
+end
+
+-- Builds the appearance table passed as drawMesh's trailing arg:
+--   { material = imageId|nil, faces = { [1..6] = imageId|nil } }
+-- indexed per Texture.FaceIndex (Front, Back, Left, Right, Top, Bottom).
+-- Face overrides come from Texture children; a specific face overwrites
+-- whatever an earlier "All" set for that slot, in child order.
+local function buildAppearance(obj)
+    local mat = Enum.Materials[obj.Material] or Enum.Materials.Plastic
+    local materialImage = mat.image and Enum.Images[mat.image]
+
+    local faces = nil
+
+    if obj.GetChildren then
+        for _, child in ipairs(obj:GetChildren()) do
+            if child:IsA("Texture") and child.Image ~= "" then
+                local imageId = Enum.Images[child.Image]
+
+                if imageId then
+                    faces = faces or {}
+
+                    if child.Face == "All" then
+                        for i = 1, 6 do
+                            faces[i] = imageId
+                        end
+                    else
+                        local index = Texture.FaceIndex[child.Face]
+                        if index then
+                            faces[index] = imageId
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return { material = materialImage, faces = faces }
 end
 
 function RunService:Init()
@@ -203,8 +241,6 @@ function RunService:Step()
 
     -- graphics opaque
     for _, obj in ipairs(opaque) do
-        local mat = Enum.Materials[obj.Material]
-        if not mat then mat = Enum.Materials.Plastic end
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -213,14 +249,12 @@ function RunService:Step()
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1,
             obj.UniqueId,
-            Enum.Textures[obj.Texture]
+            buildAppearance(obj)
         )
     end
 
     -- graphics transparent
     for _, obj in ipairs(transparent) do
-        local mat = Enum.Materials[obj.Material]
-        if not mat then mat = Enum.Materials.Plastic end
         graphics.drawMesh(
             obj._meshId,
             obj.Position.X, obj.Position.Y, obj.Position.Z,
@@ -229,7 +263,7 @@ function RunService:Step()
             obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z,
             1 - obj.Transparency,
             obj.UniqueId,
-            Enum.Textures[obj.Texture]
+            buildAppearance(obj)
         )
     end
 

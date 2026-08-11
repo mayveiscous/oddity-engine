@@ -75,12 +75,6 @@ local Block = Instance:RegisterClass("Block", "Instance", {
             default = "Plastic",
             category = "Appearance",
         },
-
-        Texture = {
-            type = "string",
-            default = "",
-            category = "Appearance"
-        },
     }
 })
 

@@ -6,6 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <unordered_map>
 #include <vector>
+#include <string>
 #include <iostream>
 #include <cfloat>
 #include <cstring>
@@ -105,8 +106,29 @@ out vec4 FragColor;
 #define MAX_SPOT_LIGHTS 8
 
 uniform vec4 objectColor;
-uniform sampler2D diffuseTexture;
-uniform bool useTexture;
+
+// Material: sampled and tinted (multiplied) by objectColor. Optional -
+// materials without an image just use flat objectColor.
+uniform sampler2D materialTexture;
+uniform bool useMaterialTexture;
+
+// Face textures: sampled verbatim, fully overriding objectColor. Takes
+// priority over materialTexture on whichever face is active. Named per-face
+// rather than a sampler array to avoid dynamic-index-into-opaque-array
+// restrictions in GLSL 330.
+uniform sampler2D faceTextureFront;
+uniform sampler2D faceTextureBack;
+uniform sampler2D faceTextureLeft;
+uniform sampler2D faceTextureRight;
+uniform sampler2D faceTextureTop;
+uniform sampler2D faceTextureBottom;
+
+uniform bool useFaceTextureFront;
+uniform bool useFaceTextureBack;
+uniform bool useFaceTextureLeft;
+uniform bool useFaceTextureRight;
+uniform bool useFaceTextureTop;
+uniform bool useFaceTextureBottom;
 
 uniform vec3 lightDir;
 uniform vec3 lightColor;
@@ -127,6 +149,38 @@ uniform float spotLightOuterCutoff[MAX_SPOT_LIGHTS];
 uniform float spotLightConstant[MAX_SPOT_LIGHTS];
 uniform float spotLightLinear[MAX_SPOT_LIGHTS];
 uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
+
+// Face order: 0=Front(-Z) 1=Back(+Z) 2=Left(-X) 3=Right(+X) 4=Top(+Y) 5=Bottom(-Y).
+// Must stay in sync with Texture.FaceIndex (src/classes/objects/texture.lua)
+// and the appearance-table packing in runservice.lua's buildAppearance().
+int faceIndexFromNormal(vec3 n) {
+    vec3 an = abs(n);
+    if (an.z >= an.x && an.z >= an.y) {
+        return n.z < 0.0 ? 0 : 1;
+    } else if (an.x >= an.y) {
+        return n.x < 0.0 ? 2 : 3;
+    } else {
+        return n.y < 0.0 ? 5 : 4;
+    }
+}
+
+bool faceTextureActive(int idx) {
+    if (idx == 0) return useFaceTextureFront;
+    if (idx == 1) return useFaceTextureBack;
+    if (idx == 2) return useFaceTextureLeft;
+    if (idx == 3) return useFaceTextureRight;
+    if (idx == 4) return useFaceTextureTop;
+    return useFaceTextureBottom;
+}
+
+vec4 sampleFaceTexture(int idx, vec2 uv) {
+    if (idx == 0) return texture(faceTextureFront, uv);
+    if (idx == 1) return texture(faceTextureBack, uv);
+    if (idx == 2) return texture(faceTextureLeft, uv);
+    if (idx == 3) return texture(faceTextureRight, uv);
+    if (idx == 4) return texture(faceTextureTop, uv);
+    return texture(faceTextureBottom, uv);
+}
 
 void main() {
     vec3 norm = normalize(Normal);
@@ -160,16 +214,42 @@ void main() {
         spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
     }
 
-    vec4 baseColor = useTexture ? texture(diffuseTexture, TexCoord) : objectColor;
+    int faceIdx = faceIndexFromNormal(norm);
+
+    vec4 baseColor;
+    float alpha;
+
+    if (faceTextureActive(faceIdx)) {
+        // Texture instance on this face: full override, Color is ignored.
+        vec4 texel = sampleFaceTexture(faceIdx, TexCoord);
+        baseColor = texel;
+        alpha = objectColor.a * texel.a;
+    } else if (useMaterialTexture) {
+        // Material image: sampled and tinted by Color.
+        vec4 texel = texture(materialTexture, TexCoord);
+        baseColor = vec4(texel.rgb * objectColor.rgb, texel.a);
+        alpha = objectColor.a * texel.a;
+    } else {
+        baseColor = objectColor;
+        alpha = objectColor.a;
+    }
+
     vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor.rgb;
-    float alpha = useTexture ? (objectColor.a * baseColor.a) : objectColor.a;
     FragColor = vec4(result, alpha);
 }
 )";
 
 static GLint g_colorLoc = -1;
-static GLint g_diffuseTextureLoc = -1;
-static GLint g_useTextureLoc = -1;
+
+static GLint g_materialTextureLoc = -1;
+static GLint g_useMaterialTextureLoc = -1;
+
+// index order matches faceIndexFromNormal in the shader:
+// 0=Front 1=Back 2=Left 3=Right 4=Top 5=Bottom
+static const char* kFaceNames[6] = { "Front", "Back", "Left", "Right", "Top", "Bottom" };
+static GLint g_faceTextureLoc[6] = { -1, -1, -1, -1, -1, -1 };
+static GLint g_useFaceTextureLoc[6] = { -1, -1, -1, -1, -1, -1 };
+
 static GLint g_lightDirLoc = -1, g_lightColorLoc = -1;
 
 // point light array uniform locations
@@ -439,8 +519,17 @@ static int lua_init(lua_State* L) {
     g_viewLoc = glGetUniformLocation(g_shaderProgram, "view");
     g_projLoc = glGetUniformLocation(g_shaderProgram, "projection");
     g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
-    g_diffuseTextureLoc = glGetUniformLocation(g_shaderProgram, "diffuseTexture");
-    g_useTextureLoc = glGetUniformLocation(g_shaderProgram, "useTexture");
+
+    g_materialTextureLoc = glGetUniformLocation(g_shaderProgram, "materialTexture");
+    g_useMaterialTextureLoc = glGetUniformLocation(g_shaderProgram, "useMaterialTexture");
+
+    for (int i = 0; i < 6; i++) {
+        std::string samplerName = std::string("faceTexture") + kFaceNames[i];
+        std::string flagName = std::string("useFaceTexture") + kFaceNames[i];
+        g_faceTextureLoc[i] = glGetUniformLocation(g_shaderProgram, samplerName.c_str());
+        g_useFaceTextureLoc[i] = glGetUniformLocation(g_shaderProgram, flagName.c_str());
+    }
+
     g_lightDirLoc = glGetUniformLocation(g_shaderProgram, "lightDir");
     g_lightColorLoc = glGetUniformLocation(g_shaderProgram, "lightColor");
 
@@ -709,7 +798,33 @@ static int lua_drawMesh(lua_State* L) {
     float rz = (float)luaL_optnumber(L, 13, 0.0);
     float a = (float)luaL_optnumber(L, 14, 1.0);
     const char* uniqueId = luaL_checkstring(L, 15);
-    int textureId = luaL_optinteger(L, 16, -1);
+
+    // Appearance table (optional, arg 16): { material = imageId|nil, faces = { [1..6] = imageId|nil } }
+    // faces is 1-indexed (Lua convention) in the order Front,Back,Left,Right,Top,Bottom -
+    // matching src/classes/objects/texture.lua's Texture.FaceIndex and the shader's
+    // faceIndexFromNormal (0-indexed there, so faces[i] here maps to shader slot i-1).
+    int materialTextureId = -1;
+    int faceTextureIds[6] = { -1, -1, -1, -1, -1, -1 };
+
+    if (lua_istable(L, 16)) {
+        lua_getfield(L, 16, "material");
+        if (lua_isnumber(L, -1)) {
+            materialTextureId = (int)lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+
+        lua_getfield(L, 16, "faces");
+        if (lua_istable(L, -1)) {
+            for (int i = 0; i < 6; i++) {
+                lua_rawgeti(L, -1, i + 1);
+                if (lua_isnumber(L, -1)) {
+                    faceTextureIds[i] = (int)lua_tointeger(L, -1);
+                }
+                lua_pop(L, 1);
+            }
+        }
+        lua_pop(L, 1);
+    }
 
     auto it = meshRegistry.find(meshId);
     if (it == meshRegistry.end()) {
@@ -717,14 +832,22 @@ static int lua_drawMesh(lua_State* L) {
         return 0;
     }
 
-    const Texture* texture = nullptr;
-    if (textureId != -1) {
-        auto texIt = textureRegistry.find(textureId);
-        if (texIt == textureRegistry.end()) {
-            luaL_error(L, "drawMesh: invalid texture id %d", textureId);
-            return 0;
+    const Texture* materialTexture = nullptr;
+    if (materialTextureId != -1) {
+        auto matTexIt = textureRegistry.find(materialTextureId);
+        if (matTexIt != textureRegistry.end()) {
+            materialTexture = &matTexIt->second;
         }
-        texture = &texIt->second;
+    }
+
+    const Texture* faceTextures[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+    for (int i = 0; i < 6; i++) {
+        if (faceTextureIds[i] != -1) {
+            auto faceTexIt = textureRegistry.find(faceTextureIds[i]);
+            if (faceTexIt != textureRegistry.end()) {
+                faceTextures[i] = &faceTexIt->second;
+            }
+        }
     }
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
@@ -736,12 +859,24 @@ static int lua_drawMesh(lua_State* L) {
     glUniformMatrix4fv(g_modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniform4f(g_colorLoc, r, g, b, a);
 
-    if (texture) {
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture->id);
-        glUniform1i(g_useTextureLoc, 1);
+    if (materialTexture) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, materialTexture->id);
+        glUniform1i(g_materialTextureLoc, 1);
+        glUniform1i(g_useMaterialTextureLoc, 1);
     } else {
-        glUniform1i(g_useTextureLoc, 0);
+        glUniform1i(g_useMaterialTextureLoc, 0);
+    }
+
+    for (int i = 0; i < 6; i++) {
+        if (faceTextures[i]) {
+            glActiveTexture(GL_TEXTURE2 + i);
+            glBindTexture(GL_TEXTURE_2D, faceTextures[i]->id);
+            glUniform1i(g_faceTextureLoc[i], 2 + i);
+            glUniform1i(g_useFaceTextureLoc[i], 1);
+        } else {
+            glUniform1i(g_useFaceTextureLoc[i], 0);
+        }
     }
 
     Mesh& mesh = it->second;
@@ -754,7 +889,7 @@ static int lua_drawMesh(lua_State* L) {
     obj.position = glm::vec3(x,y,z);
     obj.scale = glm::vec3(sx,sy,sz);
     obj.rotation = glm::vec3(rx,ry,rz);
-    obj.material.textureId = textureId;
+    obj.material.textureId = materialTextureId;
     obj.material.baseColor = glm::vec4(r, g, b, a);
 
     obj.uniqueId = uniqueId;
@@ -780,10 +915,6 @@ static int lua_beginFrame(lua_State* L) {
     ImGui::NewFrame();
 
     glUseProgram(g_shaderProgram);
-
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(g_diffuseTextureLoc, 0);
-    glUniform1i(g_useTextureLoc, 0);
 
     glm::mat4 view = glm::lookAt(g_cameraPos, g_cameraTarget, glm::vec3(0, 1, 0));
     float aspect = (float)g_width / (float)g_height;

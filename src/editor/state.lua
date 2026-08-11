@@ -7,9 +7,14 @@ EditorState.isPlaytesting = false -- are we in a playtest, should we compute phy
 EditorState.collapsed = {}
 EditorState.returnTo = nil
 EditorState.AttentionFocus = "Editor"
+EditorState.Typing = false
 
 function EditorState.AttentionFocusedTo(focus)
     return ((EditorState.AttentionFocus:lower()) == (focus:lower()))
+end
+
+function EditorState.IsTyping()
+    return EditorState.Typing
 end
 
 function EditorState.StartPlaytest()

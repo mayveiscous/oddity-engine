@@ -43,10 +43,26 @@ Enum.Colors = {
     LightPink = Color3.new(1, 0.5, 0.75),
 }
 
-Enum.Textures = {
-    Brick = graphics.loadTexture("assets/textures/brick.png"),
-    SmugFace = graphics.loadTexture("assets/textures/smug.png"),
-    Special = graphics.loadTexture("assets/textures/special.png"),
+local function safeLoadTexture(path)
+    local ok, result = pcall(graphics.loadTexture, path)
+    if ok then
+        return result
+    end
+
+    print("Failed to load '" .. path .. "': " .. tostring(result))
+    return nil
+end
+
+Enum.Images = {
+    Brick = safeLoadTexture("assets/textures/brick.png"),
+    SmugFace = safeLoadTexture("assets/textures/smug.png"),
+    Special = safeLoadTexture("assets/textures/special.png"),
+
+    metal = safeLoadTexture("assets/textures/metal.png"),
+    wood = safeLoadTexture("assets/textures/wood.png"),
+    fabric = safeLoadTexture("assets/textures/fabric.png"),
+    glass = safeLoadTexture("assets/textures/glass.png"),
+    brick = safeLoadTexture("assets/textures/brick.png"),
 }
 
 Enum.Materials = {
@@ -55,6 +71,7 @@ Enum.Materials = {
     Wood = Materials.Wood,
     Fabric = Materials.Fabric,
     Glass = Materials.Glass,
+    Brick = Materials.Brick,
 }
 
 Enum.KeyCodes = KeyCodes.Keys
