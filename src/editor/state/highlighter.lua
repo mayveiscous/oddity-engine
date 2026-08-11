@@ -21,7 +21,8 @@ function Highlighter.draw()
             selected.Rotation.X, selected.Rotation.Y, selected.Rotation.Z,
             1,
             0, 1,
-            "gizmo_highlight"
+            "gizmo_highlight",
+            -1
         )
 
         if EditorState.CurrentTool == "Move" then

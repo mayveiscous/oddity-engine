@@ -135,6 +135,30 @@ function ui.closeCurrentPopup()
     graphics.imguiCloseCurrentPopup()
 end
 
+function ui.beginDragDropSource()
+    return graphics.imguiBeginDragDropSource()
+end
+
+function ui.setDragDropPayload(type, data)
+    graphics.imguiSetDragDropPayload(type, data)
+end
+
+function ui.endDragDropSource()
+    graphics.imguiEndDragDropSource()
+end
+
+function ui.beginDragDropTarget()
+    return graphics.imguiBeginDragDropTarget()
+end
+
+function ui.acceptDragDropPayload(type)
+    return graphics.imguiAcceptDragDropPayload(type)
+end
+
+function ui.endDragDropTarget()
+    graphics.imguiEndDragDropTarget()
+end
+
 function ui.treePop()
 graphics.imguiTreePop()
 end

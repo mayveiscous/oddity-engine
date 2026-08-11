@@ -10,7 +10,11 @@ local renameBuffer = ""
 
 local renameInstance = nil
 local openRenamePopup = false
+
 local renameFocus = false
+local insertFocus = false
+
+local explorerRoot = nil
 
 local function shouldExpand(instance)
     local selected = SelectionService.current
@@ -30,6 +34,36 @@ local function shouldExpand(instance)
     end
 
     return false
+end
+
+local function findInstanceById(root, id)
+    if tostring(root.UniqueId) == id then
+        return root
+    end
+
+    for _, child in ipairs(root:GetChildren()) do
+        local found = findInstanceById(child, id)
+
+        if found then
+            return found
+        end
+    end
+
+    return nil
+end
+
+local function canReparent(instance, newParent)
+    if instance == newParent then
+        return false
+    end
+
+    for _, ancestor in ipairs(newParent:GetAncestors()) do
+        if ancestor == instance then
+            return false
+        end
+    end
+
+    return true
 end
 
 local function ownsSelection(instance)
@@ -53,15 +87,25 @@ local function ownsSelection(instance)
 end
 
 local function drawInsertPanel(instance)
+    if insertFocus then
+        ui.setKeyboardFocusHere()
+        insertFocus = false
+    end
+
     insertSearch = ui.inputText(
         "##insert_search_" .. instance.UniqueId,
         insertSearch
     )
 
     local query = insertSearch:lower()
+    local firstMatch = nil
 
     for _, entry in ipairs(InsertObject.Catalog) do
         if query == "" or entry.label:lower():find(query, 1, true) then
+            if not firstMatch then
+                firstMatch = entry
+            end
+
             local hit = ui.selectable(
                 entry.label ..
                 "##insert_item_" ..
@@ -74,8 +118,15 @@ local function drawInsertPanel(instance)
                 InsertObject.CreateEntry(entry, instance)
                 insertSearch = ""
                 ui.closeCurrentPopup()
+                return
             end
         end
+    end
+
+    if InputService.IsKeyPressed("Enter") and firstMatch then
+        InsertObject.CreateEntry(firstMatch, instance)
+        insertSearch = ""
+        ui.closeCurrentPopup()
     end
 end
 
@@ -166,6 +217,29 @@ local function drawNode(instance)
         isLeaf
     )
 
+    if not instance.IsCoreService then
+        if ui.beginDragDropSource() then
+            ui.setDragDropPayload("ODDITY_INSTANCE", tostring(instance.UniqueId))
+
+            ui.text(instance.Name)
+
+            ui.endDragDropSource()
+        end
+    end
+
+    if ui.beginDragDropTarget() then
+        local draggedId = ui.acceptDragDropPayload("ODDITY_INSTANCE")
+
+        if draggedId then
+            local dragged = findInstanceById(explorerRoot, draggedId)
+             if dragged and canReparent(dragged, instance) then
+                dragged.Parent = instance
+            end
+        end
+
+        ui.endDragDropTarget()
+    end
+
     if not isLeaf then
         expanded[instance.UniqueId] = open
     end
@@ -175,6 +249,7 @@ local function drawNode(instance)
     end
 
     local insertId = "insert_popup_" .. instance.UniqueId
+
     local contextId = "context_popup_" .. instance.UniqueId
 
     if rightClicked then
@@ -186,6 +261,7 @@ local function drawNode(instance)
 
     if ui.smallButton("+##insert_toggle_" .. instance.UniqueId) then
         insertSearch = ""
+        insertFocus = true
         ui.openPopup(insertId)
     end
 
@@ -209,6 +285,7 @@ local function drawNode(instance)
 end
 
 local function drawExplorer(game, rect)
+    explorerRoot = game
     ui.setNextWindowPos(rect.x, rect.y)
     ui.setNextWindowSize(rect.w, rect.h)
 

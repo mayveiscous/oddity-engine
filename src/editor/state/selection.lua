@@ -45,7 +45,7 @@ RunService.Heartbeat:Connect(function(dt)
                 SelectionService.Clear()
             end
         end
-    else
+        
         Gizmo.endDrag()
         Gizmo.endFreeDrag()
     end

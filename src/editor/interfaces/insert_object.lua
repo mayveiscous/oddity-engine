@@ -39,6 +39,7 @@ InsertObject.Catalog = {
     { label = "PointLight", className = "PointLight" },
     { label = "SpotLight",  className = "SpotLight" },
     { label = "LuaScript",  className = "LuaScript" },
+    { label = "SinkScript", className = "SinkScript"},
     { label = "Module",     className = "Module" },
     { label = "Audio",      className = "Audio" },
 }

@@ -4,7 +4,7 @@ local Sky = Instance:RegisterClass("Sky", "Instance", {
     Properties = {
         Texture = {
             type = "string",
-            default = nil,
+            default = "",
             category = "Appearance",
         },
     },

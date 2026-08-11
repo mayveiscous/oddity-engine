@@ -1839,6 +1839,58 @@ static int lua_imguiTextDisabled(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiBeginDragDropSource(lua_State* L) {
+    lua_pushboolean(L, ImGui::BeginDragDropSource());
+    return 1;
+}
+
+static int lua_imguiSetDragDropPayload(lua_State* L) {
+    const char* type = luaL_checkstring(L, 1);
+    const char* data = luaL_checkstring(L, 2);
+
+    ImGui::SetDragDropPayload(
+        type,
+        data,
+        strlen(data) + 1
+    );
+
+    return 0;
+}
+
+static int lua_imguiEndDragDropSource(lua_State* L) {
+    ImGui::EndDragDropSource();
+    return 0;
+}
+
+static int lua_imguiBeginDragDropTarget(lua_State* L) {
+    lua_pushboolean(L, ImGui::BeginDragDropTarget());
+    return 1;
+}
+
+static int lua_imguiAcceptDragDropPayload(lua_State* L) {
+    const char* type = luaL_checkstring(L, 1);
+
+    const ImGuiPayload* payload =
+        ImGui::AcceptDragDropPayload(type);
+
+    if (!payload) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    const char* data =
+        static_cast<const char*>(payload->Data);
+
+    lua_pushstring(L, data);
+
+    return 1;
+}
+
+static int lua_imguiEndDragDropTarget(lua_State* L) {
+    ImGui::EndDragDropTarget();
+    return 0;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -1886,6 +1938,13 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiWantsMouse", lua_imguiWantsMouse},
     {"imguiWantsKeyboard", lua_imguiWantsKeyboard},
     {"setFullscreen", lua_setFullscreen},
+    {"imguiBeginDragDropSource", lua_imguiBeginDragDropSource},
+    {"imguiSetDragDropPayload", lua_imguiSetDragDropPayload},
+    {"imguiEndDragDropSource", lua_imguiEndDragDropSource},
+
+    {"imguiBeginDragDropTarget", lua_imguiBeginDragDropTarget},
+    {"imguiAcceptDragDropPayload", lua_imguiAcceptDragDropPayload},
+    {"imguiEndDragDropTarget", lua_imguiEndDragDropTarget},
     {"raycast", lua_raycast},
     {"raycastWorld", lua_raycastWorld},
     {"imguiBeginPopup", lua_imguiBeginPopup},
