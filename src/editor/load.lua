@@ -67,10 +67,15 @@ end)
 
 KBM.Delete:Connect(function()
     if not EditorState.Typing then
+        local deleted = false
         for _, inst in ipairs(SelectionService.GetAll()) do
-            inst:Destroy()
+            if not inst.IsCoreService and inst.CanBeDeleted then
+                deleted = true
+                inst:Destroy()
+            end
         end
 
+        if not deleted then return end
         SelectionService.Clear()
     end
 end)

@@ -111,6 +111,15 @@ out vec4 FragColor;
 uniform vec4 objectColor;
 uniform bool selectionOutline;
 
+uniform vec3 viewPos;
+
+// Per-draw material specular properties (from materials.lua's
+// specularStrength/shininess, passed through buildAppearance() in
+// runservice.lua). Blinn-Phong specular is added on top of the lit color,
+// not tinted by it - matte materials still get a light-colored highlight.
+uniform float materialSpecularStrength;
+uniform float materialShininess;
+
 // Material: sampled and tinted (multiplied) by objectColor. Optional -
 // materials without an image just use flat objectColor.
 uniform sampler2D materialTexture;
@@ -159,12 +168,12 @@ uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
 // Face order: 0=Front(-Z) 1=Back(+Z) 2=Left(-X) 3=Right(+X) 4=Top(+Y) 5=Bottom(-Y).
 // Must stay in sync with Texture.FaceIndex (src/classes/objects/texture.lua)
 // and the appearance-table packing in runservice.lua's buildAppearance().
-// IMPORTANT: operates on the LOCAL (object-space) normal so a face keeps its
-// assigned texture regardless of the object's world rotation.
+// Operates on the LOCAL (object-space) normal so a face keeps its assigned
+// texture regardless of the object's world rotation.
 int faceIndexFromNormal(vec3 n) {
     vec3 an = abs(n);
     if (an.z >= an.x && an.z >= an.y) {
-        return n.z < 0.0 ? 1 : 0;
+        return n.z < 0.0 ? 0 : 1;
     } else if (an.x >= an.y) {
         return n.x < 0.0 ? 2 : 3;
     } else {
@@ -197,22 +206,37 @@ void main() {
     }
 
     vec3 norm = normalize(Normal);
+    vec3 viewDir = normalize(viewPos - FragPos);
+
     vec3 ambient = 0.15 * lightColor;
 
     float dirDiff = max(dot(norm, -lightDir), 0.0);
     vec3 dirDiffuse = dirDiff * lightColor;
 
+    // Blinn-Phong specular for the directional (sun) light.
+    vec3 dirHalfway = normalize(-lightDir + viewDir);
+    float dirSpecAngle = max(dot(norm, dirHalfway), 0.0);
+    float dirSpec = (dirDiff > 0.0) ? pow(dirSpecAngle, materialShininess) : 0.0;
+    vec3 dirSpecular = materialSpecularStrength * dirSpec * lightColor;
+
     vec3 pointDiffuse = vec3(0.0);
+    vec3 pointSpecular = vec3(0.0);
     for (int i = 0; i < numPointLights; i++) {
         vec3 toLight = pointLightPos[i] - FragPos;
         float dist = length(toLight);
-        vec3 dir = toLight / max(dist, 0.0001); // avoid divide-by-zero
+        vec3 dir = toLight / max(dist, 0.0001);
         float diff = max(dot(norm, dir), 0.0);
         float atten = 1.0 / (pointLightConstant[i] + pointLightLinear[i] * dist + pointLightQuadratic[i] * dist * dist);
         pointDiffuse += diff * pointLightColor[i] * atten;
+
+        vec3 halfway = normalize(dir + viewDir);
+        float specAngle = max(dot(norm, halfway), 0.0);
+        float spec = (diff > 0.0) ? pow(specAngle, materialShininess) : 0.0;
+        pointSpecular += materialSpecularStrength * spec * pointLightColor[i] * atten;
     }
 
     vec3 spotDiffuse = vec3(0.0);
+    vec3 spotSpecular = vec3(0.0);
     for (int i = 0; i < numSpotLights; i++) {
         vec3 toSpot = spotLightPos[i] - FragPos;
         float spotDist = length(toSpot);
@@ -225,6 +249,11 @@ void main() {
         float spotDiff = max(dot(norm, spotDirToFrag), 0.0);
         float spotAttenuation = 1.0 / (spotLightConstant[i] + spotLightLinear[i] * spotDist + spotLightQuadratic[i] * spotDist * spotDist);
         spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
+
+        vec3 halfway = normalize(spotDirToFrag + viewDir);
+        float specAngle = max(dot(norm, halfway), 0.0);
+        float spec = (spotDiff > 0.0) ? pow(specAngle, materialShininess) : 0.0;
+        spotSpecular += materialSpecularStrength * spec * spotLightColor[i] * spotAttenuation * spotIntensity;
     }
 
     int faceIdx = faceIndexFromNormal(normalize(LocalNormal));
@@ -253,7 +282,12 @@ void main() {
     vec3 baseColor = baseColorFull.rgb;
     float alpha = baseColorFull.a;
 
-    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor;
+    // Diffuse terms are modulated by surface color; specular is added on top,
+    // unmodulated, since even matte materials get a light-colored highlight.
+    vec3 litColor = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor;
+    vec3 specular = dirSpecular + pointSpecular + spotSpecular;
+
+    vec3 result = litColor + specular;
     FragColor = vec4(result, alpha);
 }
 )";
@@ -263,6 +297,10 @@ static GLint g_colorLoc = -1;
 static GLint g_materialTextureLoc = -1;
 static GLint g_useMaterialTextureLoc = -1;
 static GLint g_selectionOutlineLoc = -1;
+
+static GLint g_viewPosLoc = -1;
+static GLint g_materialSpecularStrengthLoc = -1;
+static GLint g_materialShininessLoc = -1;
 
 // index order matches faceIndexFromNormal in the shader:
 // 0=Front 1=Back 2=Left 3=Right 4=Top 5=Bottom
@@ -543,6 +581,9 @@ static int lua_init(lua_State* L) {
 
     g_materialTextureLoc = glGetUniformLocation(g_shaderProgram, "materialTexture");
     g_useMaterialTextureLoc = glGetUniformLocation(g_shaderProgram, "useMaterialTexture");
+    g_viewPosLoc = glGetUniformLocation(g_shaderProgram, "viewPos");
+    g_materialSpecularStrengthLoc = glGetUniformLocation(g_shaderProgram, "materialSpecularStrength");
+    g_materialShininessLoc = glGetUniformLocation(g_shaderProgram, "materialShininess");
 
     for (int i = 0; i < 6; i++) {
         std::string samplerName = std::string("faceTexture") + kFaceNames[i];
@@ -826,11 +867,25 @@ static int lua_drawMesh(lua_State* L) {
     // faceIndexFromNormal (0-indexed there, so faces[i] here maps to shader slot i-1).
     int materialTextureId = -1;
     int faceTextureIds[6] = { -1, -1, -1, -1, -1, -1 };
+    float specularStrength = 0.5f;
+    float shininess = 32.0f;
 
     if (lua_istable(L, 16)) {
         lua_getfield(L, 16, "material");
         if (lua_isnumber(L, -1)) {
             materialTextureId = (int)lua_tointeger(L, -1);
+        }
+        lua_pop(L, 1);
+
+        lua_getfield(L, 16, "specularStrength");
+        if (lua_isnumber(L, -1)) {
+            specularStrength = (float)lua_tonumber(L, -1);
+        }
+        lua_pop(L, 1);
+
+        lua_getfield(L, 16, "shininess");
+        if (lua_isnumber(L, -1)) {
+            shininess = (float)lua_tonumber(L, -1);
         }
         lua_pop(L, 1);
 
@@ -879,6 +934,8 @@ static int lua_drawMesh(lua_State* L) {
 
     glUniformMatrix4fv(g_modelLoc, 1, GL_FALSE, glm::value_ptr(model));
     glUniform4f(g_colorLoc, r, g, b, a);
+    glUniform1f(g_materialSpecularStrengthLoc, specularStrength);
+    glUniform1f(g_materialShininessLoc, shininess);
 
     if (materialTexture) {
         glActiveTexture(GL_TEXTURE1);
@@ -1059,6 +1116,7 @@ static int lua_beginFrame(lua_State* L) {
 
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
+    glUniform3f(g_viewPosLoc, g_cameraPos.x, g_cameraPos.y, g_cameraPos.z);
 
     int numPoints = (int)g_pointPositions.size();
     glUniform1i(g_numPointLightsLoc, numPoints);
