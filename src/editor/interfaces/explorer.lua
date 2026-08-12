@@ -289,6 +289,7 @@ local function drawExplorer(game, rect)
     ui.setNextWindowPos(rect.x, rect.y)
     ui.setNextWindowSize(rect.w, rect.h)
 
+
     ui.beginWindow("Explorer", {"NoMove"})
 
     drawNode(game.Workspace)

@@ -14,7 +14,7 @@ base.Locked = true
 base.Anchored = true 
 base.CanCollide = true 
 
-base.Material = ""
+base.Material = "Plastic"
 base.Parent = game.Workspace
 
 local spawn = Instance.new("Spawn")

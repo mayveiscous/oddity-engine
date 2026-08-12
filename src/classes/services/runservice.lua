@@ -62,7 +62,7 @@ end
 -- Face overrides come from Texture children; a specific face overwrites
 -- whatever an earlier "All" set for that slot, in child order.
 local function buildAppearance(obj)
-    local mat = Enum.Materials[obj.Material] or Enum.Materials.Brick
+    local mat = Enum.Materials[obj.Material] or Enum.Materials.Plastic
     local materialImage = mat.image and Enum.Images[mat.image]
 
     local faces = nil
@@ -236,9 +236,6 @@ function RunService:Step()
         end
     end
 
-    -- highlight selected obj
-    Highlighter.draw()
-
     -- graphics opaque
     for _, obj in ipairs(opaque) do
         graphics.drawMesh(
@@ -266,6 +263,9 @@ function RunService:Step()
             buildAppearance(obj)
         )
     end
+
+    -- highlight selected obj
+    Highlighter.draw()
 
     graphics.endFrame()
     graphics.pollEvents()

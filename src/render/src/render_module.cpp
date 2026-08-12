@@ -85,11 +85,13 @@ uniform mat4 projection;
 
 out vec3 FragPos;
 out vec3 Normal;
+out vec3 LocalNormal;
 out vec2 TexCoord;
 
 void main() {
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
+    LocalNormal = aNormal;
     TexCoord = aTexCoord;
     gl_Position = projection * view * vec4(FragPos, 1.0);
 }
@@ -99,6 +101,7 @@ static const char* fragmentShaderSource = R"(
 #version 330 core
 in vec3 FragPos;
 in vec3 Normal;
+in vec3 LocalNormal;
 in vec2 TexCoord;
 out vec4 FragColor;
 
@@ -113,10 +116,12 @@ uniform bool selectionOutline;
 uniform sampler2D materialTexture;
 uniform bool useMaterialTexture;
 
-// Face textures: sampled verbatim, fully overriding objectColor. Takes
-// priority over materialTexture on whichever face is active. Named per-face
-// rather than a sampler array to avoid dynamic-index-into-opaque-array
-// restrictions in GLSL 330.
+// Face textures: composited as a decal OVER the base material/color, using
+// the decal's own alpha as a blend mask (NOT as the object's own opacity).
+// This lets a texture with a transparent background reveal the underlying
+// material/color rather than punching a hole through to whatever's behind
+// the object in the scene. Named per-face rather than a sampler array to
+// avoid dynamic-index-into-opaque-array restrictions in GLSL 330.
 uniform sampler2D faceTextureFront;
 uniform sampler2D faceTextureBack;
 uniform sampler2D faceTextureLeft;
@@ -154,10 +159,12 @@ uniform float spotLightQuadratic[MAX_SPOT_LIGHTS];
 // Face order: 0=Front(-Z) 1=Back(+Z) 2=Left(-X) 3=Right(+X) 4=Top(+Y) 5=Bottom(-Y).
 // Must stay in sync with Texture.FaceIndex (src/classes/objects/texture.lua)
 // and the appearance-table packing in runservice.lua's buildAppearance().
+// IMPORTANT: operates on the LOCAL (object-space) normal so a face keeps its
+// assigned texture regardless of the object's world rotation.
 int faceIndexFromNormal(vec3 n) {
     vec3 an = abs(n);
     if (an.z >= an.x && an.z >= an.y) {
-        return n.z < 0.0 ? 0 : 1;
+        return n.z < 0.0 ? 1 : 0;
     } else if (an.x >= an.y) {
         return n.x < 0.0 ? 2 : 3;
     } else {
@@ -220,27 +227,33 @@ void main() {
         spotDiffuse += spotDiff * spotLightColor[i] * spotAttenuation * spotIntensity;
     }
 
-    int faceIdx = faceIndexFromNormal(norm);
+    int faceIdx = faceIndexFromNormal(normalize(LocalNormal));
 
-    vec4 baseColor;
-    float alpha;
-
-    if (faceTextureActive(faceIdx)) {
-        // Texture instance on this face: full override, Color is ignored.
-        vec4 texel = sampleFaceTexture(faceIdx, TexCoord);
-        baseColor = texel;
-        alpha = objectColor.a * texel.a;
-    } else if (useMaterialTexture) {
-        // Material image: sampled and tinted by Color.
+    // Base surface: material texture (tinted by Color) or flat Color.
+    vec4 baseSurface;
+    if (useMaterialTexture) {
         vec4 texel = texture(materialTexture, TexCoord);
-        baseColor = vec4(texel.rgb * objectColor.rgb, texel.a);
-        alpha = objectColor.a * texel.a;
+        baseSurface = vec4(texel.rgb * objectColor.rgb, objectColor.a * texel.a);
     } else {
-        baseColor = objectColor;
-        alpha = objectColor.a;
+        baseSurface = objectColor;
     }
 
-    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor.rgb;
+    vec4 baseColorFull;
+
+    if (faceTextureActive(faceIdx)) {
+        // Decal composites OVER the base surface using its own alpha as a
+        // blend mask. The object's own opacity (baseSurface.a) is preserved
+        // regardless of the decal's transparency.
+        vec4 texel = sampleFaceTexture(faceIdx, TexCoord);
+        baseColorFull = vec4(mix(baseSurface.rgb, texel.rgb, texel.a), baseSurface.a);
+    } else {
+        baseColorFull = baseSurface;
+    }
+
+    vec3 baseColor = baseColorFull.rgb;
+    float alpha = baseColorFull.a;
+
+    vec3 result = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor;
     FragColor = vec4(result, alpha);
 }
 )";
@@ -529,6 +542,7 @@ static int lua_init(lua_State* L) {
     g_selectionOutlineLoc = glGetUniformLocation(g_shaderProgram, "selectionOutline");
 
     g_materialTextureLoc = glGetUniformLocation(g_shaderProgram, "materialTexture");
+    g_useMaterialTextureLoc = glGetUniformLocation(g_shaderProgram, "useMaterialTexture");
 
     for (int i = 0; i < 6; i++) {
         std::string samplerName = std::string("faceTexture") + kFaceNames[i];
@@ -2141,6 +2155,16 @@ static int lua_imguiWantTextInput(lua_State* L) {
     return 1;
 }
 
+static int lua_imguiIsItemHovered(lua_State* L) {
+    lua_pushboolean(L, ImGui::IsItemHovered());
+    return 1;
+}
+
+static int lua_imguiWantCaptureMouse(lua_State* L) {
+    lua_pushboolean(L, ImGui::GetIO().WantCaptureMouse);
+    return 1;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -2200,6 +2224,8 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginPopup", lua_imguiBeginPopup},
     {"imguiEndPopup", lua_imguiEndPopup},
     {"imguiCloseCurrentPopup", lua_imguiCloseCurrentPopup},
+    {"imguiIsItemHovered", lua_imguiIsItemHovered},
+    {"imguiWantCaptureMouse", lua_imguiWantCaptureMouse},
     {"imguiOpenPopup", lua_imguiOpenPopup},
     {"imguiTextDisabled", lua_imguiTextDisabled},
     {"getWindowSize", lua_getWindowSize},

@@ -6,6 +6,8 @@ local PhysicsEngine = require "src.physics.core.engine"
 
 local graphics = require "oddity.graphics"
 
+local ui = require "src.core.ui"
+
 local Gizmo = {}
 Gizmo.freeDragging = false
 
@@ -205,6 +207,10 @@ function Gizmo.draw(blockMeshId)
 end
 
 function Gizmo.tryBeginDrag(hitId, mx, my)
+    if ui.wantCaptureMouse() then
+        return false
+    end
+
     for _, axis in ipairs(axes) do
         if axis.id == hitId then
             Gizmo.dragging = axis
@@ -218,17 +224,24 @@ function Gizmo.tryBeginDrag(hitId, mx, my)
 
             local planeNormal
             if sidewaysLen < 1e-4 then
-                local fallback = (math.abs(axis.dir.Y) < 0.9) and Vector3.new(0, 1, 0) or Vector3.new(1, 0, 0)
-                planeNormal = normalize(cross(axis.dir, cross(fallback, axis.dir)))
+                local fallback = (math.abs(axis.dir.Y) < 0.9)
+                    and Vector3.new(0, 1, 0)
+                    or Vector3.new(1, 0, 0)
+
+                planeNormal = normalize(
+                    cross(axis.dir, cross(fallback, axis.dir))
+                )
             else
                 planeNormal = normalize(cross(axis.dir, sideways))
             end
 
             Gizmo.dragPlaneNormal = planeNormal
             Gizmo.dragStartOffset = Gizmo.closestPointOnAxis(axis, mx, my)
+
             return true
         end
     end
+
     return false
 end
 
@@ -263,6 +276,10 @@ function Gizmo.tryBeginFreeDrag(mx, my)
     local inst = SelectionService.current
     if not inst then return false end
 
+    if ui.wantCaptureMouse() then
+        return false
+    end
+
     freeSnapTargets = { X = nil, Y = nil, Z = nil }
 
     local ox, oy, oz, dx, dy, dz = graphics.screenPointToRay(mx, my)
@@ -272,7 +289,13 @@ function Gizmo.tryBeginFreeDrag(mx, my)
     freeDragPlaneNormal = normalize(rayDir)
     freeDragStartObjPos = inst.Position
     Gizmo.freeDragging = true
-    Gizmo.freeDragStartHit = Gizmo.rayPlaneHit(rayOrigin, rayDir, inst.Position, freeDragPlaneNormal)
+    Gizmo.freeDragStartHit = Gizmo.rayPlaneHit(
+        rayOrigin,
+        rayDir,
+        inst.Position,
+        freeDragPlaneNormal
+    )
+
     return true
 end
 

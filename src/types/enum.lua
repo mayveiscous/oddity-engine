@@ -77,6 +77,16 @@ Enum.Materials = {
     Concrete = Materials.Concrete
 }
 
+Enum.Faces = {
+    All = "All",
+    Front = "Front",
+    Back = "Back",
+    Left = "Left",
+    Right = "Right",
+    Top = "Top",
+    Bottom = "Bottom",
+}
+
 Enum.KeyCodes = KeyCodes.Keys
 Enum.MouseButtons = KeyCodes.MouseButtons
 

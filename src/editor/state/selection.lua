@@ -21,17 +21,17 @@ RunService.Heartbeat:Connect(function(dt)
     local x, y = InputService.GetMousePos()
     local mouseDown = InputService.IsMouseButtonDown("One")
 
-    if mouseDown then
-        if Gizmo.dragging then
-            Gizmo.updateDrag(x, y)
-        elseif Gizmo.freeDragging then
-            Gizmo.updateFreeDrag(x, y)
-        elseif not wasMouseDown then
-            local hit = graphics.raycast(x, y)
+if mouseDown then
+    if Gizmo.dragging then
+        Gizmo.updateDrag(x, y)
+    elseif Gizmo.freeDragging then
+        Gizmo.updateFreeDrag(x, y)
+    elseif not wasMouseDown then
+        local hit = graphics.raycast(x, y)
 
-            if hit and Gizmo.tryBeginDrag(hit, x, y) then
-                -- axis drag started
-            elseif hit then
+        if hit and Gizmo.tryBeginDrag(hit, x, y) then
+            -- axis drag started
+        elseif hit then
             local inst = Game.Workspace:FindByUniqueId(hit)
             if inst then
                 if inst.Locked then
@@ -42,13 +42,13 @@ RunService.Heartbeat:Connect(function(dt)
                 end
             end
         else
-                SelectionService.Clear()
-            end
+            SelectionService.Clear()
         end
-        
-        Gizmo.endDrag()
-        Gizmo.endFreeDrag()
     end
+else
+    Gizmo.endDrag()
+    Gizmo.endFreeDrag()
+end
 
-    wasMouseDown = mouseDown
+wasMouseDown = mouseDown
 end)

@@ -2,6 +2,8 @@ local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 local Color3 = require "src.types.color3"
 
+local Enum = require "src.types.enum"
+
 local DefaultRig = {}
 
 function DefaultRig.Create(parent, position, name)
@@ -28,6 +30,12 @@ function DefaultRig.Create(parent, position, name)
     body.Position = Vector3.new(position.X, position.Y + bodyY, position.Z)
     body.Color = color
     body.Name = "Body"
+
+    local face = Instance.new("Texture")
+    face.Name = "face"
+    face.Face = Enum.Faces.Front
+    face.Image = "SmugFace"
+    face.Parent = body
 
     local hitboxHeight = legSize.Y + bodySize.Y
     local hitbox = Instance.new("Block")

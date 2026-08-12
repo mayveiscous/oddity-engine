@@ -1,7 +1,7 @@
 local Game = require "src.game"
 local task = require "oddity.task"
 
-local Vector3 = require "src/types/vector3"
+local Vector3 = require "src.types.vector3"
 
 local debug = require "oddity.debug"
 
