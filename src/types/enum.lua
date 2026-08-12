@@ -54,7 +54,6 @@ local function safeLoadTexture(path)
 end
 
 Enum.Images = {
-    Brick = safeLoadTexture("assets/textures/brick.png"),
     SmugFace = safeLoadTexture("assets/textures/smug.png"),
     Special = safeLoadTexture("assets/textures/special.png"),
 
@@ -63,6 +62,8 @@ Enum.Images = {
     fabric = safeLoadTexture("assets/textures/fabric.png"),
     glass = safeLoadTexture("assets/textures/glass.png"),
     brick = safeLoadTexture("assets/textures/brick.png"),
+    grass = safeLoadTexture("assets/textures/grass.png"),
+    concrete = safeLoadTexture("assets/textures/concrete.png")
 }
 
 Enum.Materials = {
@@ -72,6 +73,8 @@ Enum.Materials = {
     Fabric = Materials.Fabric,
     Glass = Materials.Glass,
     Brick = Materials.Brick,
+    Grass = Materials.Grass,
+    Concrete = Materials.Concrete
 }
 
 Enum.KeyCodes = KeyCodes.Keys

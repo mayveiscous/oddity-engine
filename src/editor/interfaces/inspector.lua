@@ -38,11 +38,11 @@ local function drawLabel(name)
 end
 
 local function drawCombo(name, value, options)
-    local current = 1
+    local current = 0
 
     for i, option in ipairs(options) do
         if option == value then
-            current = i
+            current = i - 1
             break
         end
     end
@@ -54,7 +54,7 @@ local function drawCombo(name, value, options)
     )
 
     if changed then
-        return options[newCurrent], true
+        return options[newCurrent + 1], true
     end
 
     return value, false
@@ -63,6 +63,7 @@ end
 local function getPropertyOptions(name, value)
     if name == "Face" then
         return {
+            "All",
             "Top",
             "Bottom",
             "Left",
@@ -76,6 +77,7 @@ local function getPropertyOptions(name, value)
         return {
             "Plastic",
             "Wood",
+            "Fabric",
             "Metal",
             "Glass",
             "Concrete",
@@ -88,7 +90,7 @@ local function getPropertyOptions(name, value)
         return {
             "Block",
             "Sphere",
-            "Cylinder",
+            "Wedge",
         }
     end
 
@@ -229,9 +231,7 @@ local function drawInspector(rects)
                         property.definition.readOnly
                     )
 
-                    if not property.definition.readOnly
-                        and newValue ~= oldValue then
-
+                    if not property.definition.readOnly and newValue ~= oldValue then
                         inst[property.name] = newValue
                     end
                 end

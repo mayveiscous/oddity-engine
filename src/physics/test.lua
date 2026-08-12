@@ -11,6 +11,4 @@ local debug = require "oddity.debug"
 
 local obj = PhysicsObject.new(Vector3.new(0, 1, 0), Vector3.new(0, 1, 0))
 
-print(debug.dump(obj))
-
 -- abc:Normalize()

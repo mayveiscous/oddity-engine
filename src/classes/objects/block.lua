@@ -81,14 +81,17 @@ local Block = Instance:RegisterClass("Block", "Instance", {
 local meshCache = {}
 
 function Block:EnsureMesh()
-    if self._meshId then
+    local shape = self.Shape or "Block"
+
+    -- Reuse this instance's mesh if it is still the correct shape.
+    if self._meshId and self._meshShape == shape then
         return self._meshId
     end
 
-    local shape = self.Shape or "Block"
-
+    -- Reuse the globally cached mesh for this shape.
     if meshCache[shape] then
         self._meshId = meshCache[shape]
+        self._meshShape = shape
         return self._meshId
     end
 
@@ -109,6 +112,7 @@ function Block:EnsureMesh()
     if ok then
         meshCache[shape] = meshId
         self._meshId = meshId
+        self._meshShape = shape
     end
 
     return self._meshId

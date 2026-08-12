@@ -292,10 +292,7 @@ local function openProject(project)
 
     local jsonString = file:read("*a")
     file:close()
-
-    print("Opening:", path)
-    print("JSON:", jsonString)
-
+    
     local buildResult = Build.test(jsonString)
 
     if not buildResult then

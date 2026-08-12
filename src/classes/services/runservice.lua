@@ -62,7 +62,7 @@ end
 -- Face overrides come from Texture children; a specific face overwrites
 -- whatever an earlier "All" set for that slot, in child order.
 local function buildAppearance(obj)
-    local mat = Enum.Materials[obj.Material] or Enum.Materials.Plastic
+    local mat = Enum.Materials[obj.Material] or Enum.Materials.Brick
     local materialImage = mat.image and Enum.Images[mat.image]
 
     local faces = nil
