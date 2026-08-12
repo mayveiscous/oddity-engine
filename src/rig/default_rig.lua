@@ -69,7 +69,6 @@ function DefaultRig.Create(parent, position, name)
         motor.C0 = c0
         motor.C1 = c1
         motor.Name = name
-
         return limb, motor
     end
 

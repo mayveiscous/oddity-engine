@@ -26,6 +26,20 @@ local Lighting = Instance:RegisterClass("Lighting", "Instance", {
             default = nil,
             category = "Lighting",
         },
+
+        AmbientColor = {
+            type = "Color3",
+            default = function()
+                return Color3.new(1, 1, 1)
+            end,
+            category = "Lighting",
+        },
+
+        AmbientIntensity = {
+            type = "number",
+            default = 0.15,
+            category = "Lighting",
+        },
         
         CanBeDeleted = {
             type = "boolean",
