@@ -9,28 +9,14 @@ local TextEditor = require "src.editor.interfaces.text_editor"
 local Theme = require "src.editor.interfaces.theme"
 local UndoStack = require "src.editor.state.undo"
 local SelectionService = require "src.classes.services.selectionservice"
+local KBM = require "src.editor.state.keybinds"
+
+local ui = require "src.core.ui"
 
 local EditorState = require "src.editor.state"
 
 local graphics = require "oddity.graphics"
 local hasApplied = false
-
-local function handleShortcuts()
-    local ctrl = InputService.IsKeyDown("LeftControl") or InputService.IsKeyDown("RightControl")
-
-    if ctrl and InputService.IsKeyPressed("Z") then
-        UndoStack.Undo()
-    elseif ctrl and InputService.IsKeyPressed("Y") then
-        UndoStack.Redo()
-    end
-
-    if InputService.IsKeyPressed("Delete") then
-        for _, inst in ipairs(SelectionService.GetAll()) do
-            inst:Destroy()
-        end
-        SelectionService.Clear()
-    end
-end
 
 local function draw(workspace)
     if not hasApplied then
@@ -38,23 +24,9 @@ local function draw(workspace)
     end
 
     InputService.Update()
+    KBM.poll()
 
-    if not EditorState.AttentionFocusedTo("TextEditor") then
-        if InputService.IsKeyDown("One") then
-            EditorState.CurrentTool = "Select"
-        elseif InputService.IsKeyDown("Two") then
-            EditorState.CurrentTool = "Move"
-        elseif InputService.IsKeyDown("Three") then
-            EditorState.CurrentTool = "Scale"
-        elseif InputService.IsKeyDown("Four") then
-            EditorState.CurrentTool = "Rotate"
-        end
-    end
-
-
-    if not EditorState.isPlaytesting and not graphics.imguiWantsKeyboard() then
-        handleShortcuts()
-    end
+    EditorState.Typing = ui.wantTextInput()
 
     local rects = Layout.apply(EditorState.collapsed)
 
@@ -70,6 +42,38 @@ local function draw(workspace)
     EditorState.collapsed.Output = graphics.imguiWindowCollapsed("Output")
     EditorState.collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
 end
+
+KBM.ToolChange:Connect(function(new)
+    if not EditorState.AttentionFocusedTo("TextEditor") then
+        EditorState.CurrentTool = new
+    end
+end)
+
+KBM.DuplicatePressed:Connect(function()
+    if not EditorState.Typing then
+        for _, inst in ipairs(SelectionService.GetAll()) do
+            inst:Duplicate()
+        end
+    end
+end)
+
+KBM.UndoPressed:Connect(function()
+    UndoStack.Undo()
+end)
+
+KBM.RedoPressed:Connect(function()
+    UndoStack.Redo()
+end)
+
+KBM.Delete:Connect(function()
+    if not EditorState.Typing then
+        for _, inst in ipairs(SelectionService.GetAll()) do
+            inst:Destroy()
+        end
+
+        SelectionService.Clear()
+    end
+end)
 
 return {
     draw = draw

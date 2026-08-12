@@ -15,6 +15,8 @@ local createError = nil
 local recent = nil
 local selectedRecent = nil
 
+local shouldFocus = false
+
 local result = nil
 
 local SIDEBAR_WIDTH = 200
@@ -167,6 +169,7 @@ local function drawTemplateCard(template)
         selectedTemplate = template.id
         newProjectName = template.name
         createError = nil
+        shouldFocus = true
     end
 end
 
@@ -178,10 +181,7 @@ local function drawNewTab(contentWidth)
 
     ui.spacing()
 
-    text(
-        "Choose a template to get started.",
-        Theme.palette.textDim
-    )
+    text("Choose a template to get started.", Theme.palette.textDim)
 
     ui.spacing()
     ui.spacing()
@@ -220,27 +220,30 @@ local function drawNewTab(contentWidth)
 
     ui.spacing()
 
-    text(
-        "Give your project a name.",
-        Theme.palette.textDim
-    )
+
+    text("Give your project a name.", Theme.palette.textDim)
 
     ui.spacing()
 
-    local value, changed =
-        ui.inputText("##ProjectName", newProjectName)
+    if shouldFocus then
+        ui.setKeyboardFocusHere()
+    end
+
+    local value, changed = ui.inputText("##ProjectName", newProjectName)
 
     if changed then
         newProjectName = value
         createError = nil
     end
 
+
+    shouldFocus = false
+
     ui.spacing()
     ui.spacing()
 
     if ui.button("Create Project", 150, 36) then
-        local project, err =
-            Projects.create(newProjectName, selectedTemplate)
+        local project, err = Projects.create(newProjectName, selectedTemplate)
 
         if project then
             result = project
@@ -394,7 +397,7 @@ local function drawRecentTab()
         ui.spacing()
 
         if ui.button("Open Project", 140, 36) then
-           local project = recent[selectedRecent]
+            local project = recent[selectedRecent]
 
             local opened, err = openProject(project)
 

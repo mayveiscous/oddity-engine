@@ -103,6 +103,14 @@ function ui.sliderFloat(label, value, min, max)
 return graphics.imguiSliderFloat(label, value, min, max)
 end
 
+function ui.isAnyItemActive()
+    return graphics.imguiIsAnyItemActive()
+end
+
+function ui.wantTextInput()
+    return graphics.imguiWantsTextInput()
+end
+
 function ui.combo(label, current, items)
 return graphics.imguiCombo(label, current, items)
 end

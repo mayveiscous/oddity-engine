@@ -37,6 +37,64 @@ local function drawLabel(name)
     ui.setCursorPosX(LABEL_WIDTH)
 end
 
+local function drawCombo(name, value, options)
+    local current = 1
+
+    for i, option in ipairs(options) do
+        if option == value then
+            current = i
+            break
+        end
+    end
+
+    local newCurrent, changed = ui.combo(
+        "##" .. name,
+        current,
+        options
+    )
+
+    if changed then
+        return options[newCurrent], true
+    end
+
+    return value, false
+end
+
+local function getPropertyOptions(name, value)
+    if name == "Face" then
+        return {
+            "Top",
+            "Bottom",
+            "Left",
+            "Right",
+            "Front",
+            "Back",
+        }
+    end
+
+    if name == "Material" then
+        return {
+            "Plastic",
+            "Wood",
+            "Metal",
+            "Glass",
+            "Concrete",
+            "Brick",
+            "Grass",
+        }
+    end
+
+    if name == "Shape" then
+        return {
+            "Block",
+            "Sphere",
+            "Cylinder",
+        }
+    end
+
+    return nil
+end
+
 local function drawProperty(name, value, readOnly)
     drawLabel(name)
 
@@ -45,6 +103,21 @@ local function drawProperty(name, value, readOnly)
         return value
     end
 
+    local options = getPropertyOptions(name, value)
+
+    if options then
+        local newValue, changed = drawCombo(
+            name,
+            value,
+            options
+        )
+
+        if changed then
+            return newValue
+        end
+
+        return value
+    end
     if type(value) == "boolean" then
         local newValue, changed =
             ui.checkbox("##" .. name, value)
@@ -52,22 +125,18 @@ local function drawProperty(name, value, readOnly)
         if changed then
             return newValue
         end
-
     elseif type(value) == "number" then
-        local newValue, changed =
-            ui.inputFloat("##" .. name, value)
+        local newValue, changed = ui.inputFloat("##" .. name, value)
 
         if changed then
             return newValue
         end
-
     elseif type(value) == "string" then
         local newValue, changed = ui.inputText("##" .. name, value)
 
         if changed then
             return newValue
         end
-
     elseif isVector3(value) then
         local x, y, z, changed = ui.vector3(
             "##" .. name,
@@ -79,7 +148,6 @@ local function drawProperty(name, value, readOnly)
         if changed then
             return Vector3.new(x, y, z)
         end
-
     elseif isVector2(value) then
         local x, y, changed = ui.vector2(
             "##" .. name,
@@ -90,7 +158,6 @@ local function drawProperty(name, value, readOnly)
         if changed then
             return Vector2.new(x, y)
         end
-
     elseif isColor3(value) then
         local r, g, b, changed = ui.color(
             "##" .. name,
@@ -102,10 +169,8 @@ local function drawProperty(name, value, readOnly)
         if changed then
             return Color3.new(r, g, b)
         end
-
     elseif isInstance(value) then
         ui.text(value.Name or value.ClassName)
-
     else
         ui.text(tostring(value))
     end
@@ -157,7 +222,12 @@ local function drawInspector(rects)
             if ui.collapsingHeader(category, true) then
                 for _, property in ipairs(sortedProperties(properties)) do
                     local oldValue = property.value
-                    local newValue = drawProperty(property.name, oldValue, property.definition.readOnly)
+
+                    local newValue = drawProperty(
+                        property.name,
+                        oldValue,
+                        property.definition.readOnly
+                    )
 
                     if not property.definition.readOnly
                         and newValue ~= oldValue then

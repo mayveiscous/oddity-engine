@@ -127,6 +127,35 @@ local function setPropertyInternal(instance, propertyName, value)
     end
 end
 
+local function copyState(source, destination)
+    for key, value in pairs(source) do
+        if key ~= "UniqueId"
+        and key ~= "Parent"
+        and key ~= "_children"
+        and key ~= "_attributes"
+        and key ~= "_tags"
+        and key ~= "Changed"
+        and key ~= "ChildAdded"
+        and key ~= "ChildRemoved"
+        and key ~= "AncestryChanged"
+        and key ~= "AttributeSet" then
+            destination[key] = value
+        end
+    end
+
+    destination.UniqueId = generateId()
+
+    destination._attributes = {}
+    for key, value in pairs(source._attributes) do
+        destination._attributes[key] = value
+    end
+
+    destination._tags = {}
+    for key, value in pairs(source._tags) do
+        destination._tags[key] = value
+    end
+end
+
 local function buildMeta(classTable)
     return {
         __index = function(t, k)
@@ -267,6 +296,23 @@ function Instance:GetProperties()
     end
 
     return properties
+end
+
+function Instance:Duplicate()
+    local oldState = rawget(self, "_state")
+
+    local duplicate = Instance.new(oldState.ClassName)
+    local newState = rawget(duplicate, "_state")
+
+    copyState(oldState, newState)
+
+    newState.UniqueId = generateId()
+
+    if oldState.Parent then
+        duplicate:SetParent(oldState.Parent)
+    end
+
+    return duplicate
 end
 
 function Instance:SetParent(newParent)

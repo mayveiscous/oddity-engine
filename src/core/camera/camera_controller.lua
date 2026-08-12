@@ -5,6 +5,7 @@ local Game = require "src.game"
 local Vector3 = require "src.types.vector3"
 local graphics = require "oddity.graphics"
 
+local KBM = require "src.editor.state.keybinds"
 local debug = require "oddity.debug"
 
 local minSpeed = 7
@@ -33,6 +34,17 @@ local pitch = math.deg(math.asin(
     startDy / math.sqrt(startDx*startDx + startDy*startDy + startDz*startDz)
 ))
 local o_pitch = pitch
+
+local keys = {
+    W = false,
+    A = false,
+    S = false,
+    D = false,
+}
+
+KBM.Wasd:Connect(function(key, isDown)
+    keys[key] = isDown
+end)
 
 local function normalize(v)
     local len = math.sqrt(v.X^2 + v.Y^2 + v.Z^2)
@@ -115,10 +127,10 @@ RunService.Heartbeat:Connect(function(dt)
 
     local move = Vector3.new(0, 0, 0)
 
-    if InputService.IsKeyDown("W") then move = move + forward end
-    if InputService.IsKeyDown("S") then move = move - forward end
-    if InputService.IsKeyDown("D") then move = move + right end
-    if InputService.IsKeyDown("A") then move = move - right end
+    if keys.W then move = move + forward end
+    if keys.S then move = move - forward end
+    if keys.D then move = move + right end
+    if keys.A then move = move - right end
 
     if move.Magnitude > 0 then
         currentSpeed = math.min(

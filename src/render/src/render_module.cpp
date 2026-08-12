@@ -106,6 +106,7 @@ out vec4 FragColor;
 #define MAX_SPOT_LIGHTS 8
 
 uniform vec4 objectColor;
+uniform bool selectionOutline;
 
 // Material: sampled and tinted (multiplied) by objectColor. Optional -
 // materials without an image just use flat objectColor.
@@ -183,6 +184,11 @@ vec4 sampleFaceTexture(int idx, vec2 uv) {
 }
 
 void main() {
+    if (selectionOutline) {
+        FragColor = objectColor;
+        return;
+    }
+
     vec3 norm = normalize(Normal);
     vec3 ambient = 0.15 * lightColor;
 
@@ -243,6 +249,7 @@ static GLint g_colorLoc = -1;
 
 static GLint g_materialTextureLoc = -1;
 static GLint g_useMaterialTextureLoc = -1;
+static GLint g_selectionOutlineLoc = -1;
 
 // index order matches faceIndexFromNormal in the shader:
 // 0=Front 1=Back 2=Left 3=Right 4=Top 5=Bottom
@@ -519,9 +526,9 @@ static int lua_init(lua_State* L) {
     g_viewLoc = glGetUniformLocation(g_shaderProgram, "view");
     g_projLoc = glGetUniformLocation(g_shaderProgram, "projection");
     g_colorLoc = glGetUniformLocation(g_shaderProgram, "objectColor");
+    g_selectionOutlineLoc = glGetUniformLocation(g_shaderProgram, "selectionOutline");
 
     g_materialTextureLoc = glGetUniformLocation(g_shaderProgram, "materialTexture");
-    g_useMaterialTextureLoc = glGetUniformLocation(g_shaderProgram, "useMaterialTexture");
 
     for (int i = 0; i < 6; i++) {
         std::string samplerName = std::string("faceTexture") + kFaceNames[i];
@@ -895,6 +902,113 @@ static int lua_drawMesh(lua_State* L) {
     obj.uniqueId = uniqueId;
 
     renderObjects.push_back(obj);
+
+    return 0;
+}
+
+static int lua_imguiIsAnyItemActive(lua_State* L) {
+    lua_pushboolean(L, ImGui::IsAnyItemActive());
+    return 1;
+}
+
+static int lua_drawSelectionOutline(lua_State* L) {
+    int meshId = (int)luaL_checkinteger(L, 1);
+
+    float x = (float)luaL_optnumber(L, 2, 0.0);
+    float y = (float)luaL_optnumber(L, 3, 0.0);
+    float z = (float)luaL_optnumber(L, 4, 0.0);
+
+    float sx = (float)luaL_optnumber(L, 5, 1.0);
+    float sy = (float)luaL_optnumber(L, 6, 1.0);
+    float sz = (float)luaL_optnumber(L, 7, 1.0);
+
+    float rx = (float)luaL_optnumber(L, 8, 0.0);
+    float ry = (float)luaL_optnumber(L, 9, 0.0);
+    float rz = (float)luaL_optnumber(L, 10, 0.0);
+
+    float thickness = (float)luaL_optnumber(L, 11, 1.05);
+
+    float r = (float)luaL_optnumber(L, 12, 1.0);
+    float g = (float)luaL_optnumber(L, 13, 0.0);
+    float b = (float)luaL_optnumber(L, 14, 0.0);
+    float a = (float)luaL_optnumber(L, 15, 1.0);
+
+    auto it = meshRegistry.find(meshId);
+
+    if (it == meshRegistry.end()) {
+        return luaL_error(L, "drawSelectionOutline: invalid mesh id %d", meshId);
+    }
+
+    glm::mat4 model = glm::translate(
+        glm::mat4(1.0f),
+        glm::vec3(x, y, z)
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(ry),
+        glm::vec3(0, 1, 0)
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(rx),
+        glm::vec3(1, 0, 0)
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(rz),
+        glm::vec3(0, 0, 1)
+    );
+
+    model = glm::scale(
+        model,
+        glm::vec3(
+            sx * thickness,
+            sy * thickness,
+            sz * thickness
+        )
+    );
+
+    glUseProgram(g_shaderProgram);
+
+    glUniformMatrix4fv(
+        g_modelLoc,
+        1,
+        GL_FALSE,
+        glm::value_ptr(model)
+    );
+
+    glUniform4f(
+        g_colorLoc,
+        r,
+        g,
+        b,
+        a
+    );
+
+    glUniform1i(
+        g_selectionOutlineLoc,
+        GL_TRUE
+    );
+
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_FALSE);
+
+    Mesh& mesh = it->second;
+
+    glBindVertexArray(mesh.vao);
+    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
+
+    glUniform1i(
+        g_selectionOutlineLoc,
+        GL_FALSE
+    );
 
     return 0;
 }
@@ -2022,6 +2136,11 @@ static int lua_imguiEndDragDropTarget(lua_State* L) {
     return 0;
 }
 
+static int lua_imguiWantTextInput(lua_State* L) {
+    lua_pushboolean(L, ImGui::GetIO().WantTextInput);
+    return 1;
+}
+
 static const luaL_Reg renderFunctions[] = {
     {"init", lua_init},
     {"createMesh", lua_createMesh},
@@ -2029,6 +2148,7 @@ static const luaL_Reg renderFunctions[] = {
     {"destroyTexture", lua_destroyTexture},
     {"beginFrame", lua_beginFrame},
     {"drawMesh", lua_drawMesh},
+    {"drawSelectionOutline", lua_drawSelectionOutline},
     {"endFrame", lua_endFrame},
     {"shutdown", lua_shutdown},
     {"pollEvents", lua_pollEvents},
@@ -2072,7 +2192,6 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginDragDropSource", lua_imguiBeginDragDropSource},
     {"imguiSetDragDropPayload", lua_imguiSetDragDropPayload},
     {"imguiEndDragDropSource", lua_imguiEndDragDropSource},
-
     {"imguiBeginDragDropTarget", lua_imguiBeginDragDropTarget},
     {"imguiAcceptDragDropPayload", lua_imguiAcceptDragDropPayload},
     {"imguiEndDragDropTarget", lua_imguiEndDragDropTarget},
@@ -2113,6 +2232,8 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginMenu", lua_imguiBeginMenu},
     {"imguiEndMenu", lua_imguiEndMenu},
     {"imguiMenuItem", lua_imguiMenuItem},
+    {"imguiIsAnyItemActive", lua_imguiIsAnyItemActive},
+    {"imguiWantsTextInput", lua_imguiWantTextInput},
     {nullptr, nullptr}
 };
 
