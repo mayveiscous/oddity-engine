@@ -7,7 +7,7 @@ local Enum = require "src.types.enum"
 local DefaultRig = {}
 
 function DefaultRig.Create(parent, position, name)
-    local color = Color3.new(0.9, 0.8, 0.2)
+    local color = Color3.new(0.6, 0.6, 0.5)
     position = position or Vector3.new(0, 0, 0)
 
     local character = Instance.new("Character")
@@ -33,8 +33,8 @@ function DefaultRig.Create(parent, position, name)
 
     local face = Instance.new("Texture")
     face.Name = "face"
-    face.Face = Enum.Faces.Front
-    face.Image = "SmugFace"
+    face.Face = Enum.Faces.Back
+    face.Image = "Default"
     face.Parent = body
 
     local hitboxHeight = legSize.Y + bodySize.Y

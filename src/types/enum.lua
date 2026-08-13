@@ -55,7 +55,9 @@ end
 
 Enum.Images = {
     SmugFace = safeLoadTexture("assets/textures/smug.png"),
+    Smile = safeLoadTexture("assets/textures/smile.png"),
     Special = safeLoadTexture("assets/textures/special.png"),
+    Default = safeLoadTexture("assets/textures/default.png"),
 
     metal = safeLoadTexture("assets/textures/metal.png"),
     wood = safeLoadTexture("assets/textures/wood.png"),

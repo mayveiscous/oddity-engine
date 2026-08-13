@@ -26,6 +26,12 @@ local PointLight = Instance:RegisterClass("PointLight", "Instance", {
             default = true,
             category = "PointLight",
         },
+
+        Range = {
+            type = "number",
+            default = 20,
+            category = "PointLight",
+        },
     },
 })
 

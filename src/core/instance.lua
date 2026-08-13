@@ -178,13 +178,13 @@ local function buildMeta(classTable)
             end
 
             if k == "Name" and state.CanRename == false then
-                error(("Instance: %s cannot be renamed!"):format(state.Name), 2)
+                warn(("Instance: %s cannot be renamed!"):format(state.Name), 2)
             end
 
             local definition = getPropertyDefinition(classTable, k)
 
             if definition and definition.ReadOnly then
-                error(("Property '%s' is read-only!"):format(k), 2)
+                warn(("Property '%s' is read-only!"):format(k), 2)
             end
 
             if definition and definition.type and v ~= nil then
@@ -192,7 +192,7 @@ local function buildMeta(classTable)
                local actualType = TypeCheck.typeName(v)
 
                if actualType ~= definition.type then
-                   error(("'%s' expects %s, got %s"):format(k, definition.type, actualType), 2)
+                   warn(("'%s' expects %s, got %s"):format(k, definition.type, actualType), 2)
                 end
             end
 
@@ -210,7 +210,7 @@ function Instance.new(className)
     local classTable = ClassRegistry[className]
 
     if not classTable then
-        error(("Unknown class '%s'"):format(className))
+        warn(("Unknown class '%s'"):format(className))
     end
 
     local state = {
@@ -366,7 +366,7 @@ end
 
 function Instance:SetAttribute(name, value)
     if type(name) ~= "string" then
-        error("Attribute names must be a string", 2)
+        warn("Attribute names must be a string", 2)
     end
 
     local state = rawget(self, "_state")

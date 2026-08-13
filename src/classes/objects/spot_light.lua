@@ -46,6 +46,12 @@ local SpotLight = Instance:RegisterClass("SpotLight", "Instance", {
             default = 17.5,
             category = "SpotLight",
         },
+
+        Range = {
+            type = "number",
+            default = 20,
+            category = "SpotLight",
+        },
     },
 })
 

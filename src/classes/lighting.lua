@@ -13,17 +13,17 @@ local Lighting = Instance:RegisterClass("Lighting", "Instance", {
             category = "Lighting",
         },
 
+        Sky = {
+            type = "Instance",
+            default = nil,
+            category = "Lighting",
+        },
+
         Color = {
             type = "Color3",
             default = function()
                 return Color3.new(1, 1, 1)
             end,
-            category = "Lighting",
-        },
-
-        Sky = {
-            type = "Instance",
-            default = nil,
             category = "Lighting",
         },
 
@@ -38,6 +38,12 @@ local Lighting = Instance:RegisterClass("Lighting", "Instance", {
         AmbientIntensity = {
             type = "number",
             default = 0.15,
+            category = "Lighting",
+        },
+
+        FogDensity = {
+            type = "number",
+            default = 0.0008,
             category = "Lighting",
         },
         

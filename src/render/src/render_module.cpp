@@ -82,17 +82,20 @@ layout (location = 2) in vec2 aTexCoord;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat4 lightSpaceMatrix;
 
 out vec3 FragPos;
 out vec3 Normal;
 out vec3 LocalNormal;
 out vec2 TexCoord;
+out vec4 FragPosLightSpace;
 
 void main() {
     FragPos = vec3(model * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(model))) * aNormal;
     LocalNormal = aNormal;
     TexCoord = aTexCoord;
+    FragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
     gl_Position = projection * view * vec4(FragPos, 1.0);
 }
 )";
@@ -107,6 +110,10 @@ out vec4 FragColor;
 
 #define MAX_POINT_LIGHTS 8
 #define MAX_SPOT_LIGHTS 8
+
+in vec4 FragPosLightSpace;
+uniform sampler2D shadowMap;
+uniform mat4 lightSpaceMatrix;
 
 uniform vec4 objectColor;
 uniform bool selectionOutline;
@@ -147,6 +154,12 @@ uniform bool useFaceTextureBottom;
 
 uniform vec3 lightDir;
 uniform vec3 lightColor;
+
+uniform vec3 ambientColor;
+uniform float ambientIntensity;
+
+uniform vec3 fogColor;
+uniform float fogDensity;
 
 uniform int numPointLights;
 uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
@@ -199,6 +212,29 @@ vec4 sampleFaceTexture(int idx, vec2 uv) {
     return texture(faceTextureBottom, uv);
 }
 
+float ShadowCalculation(vec4 fragPosLightSpace, float NdotL) {
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    if (projCoords.z > 1.0) return 0.0;
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0) return 0.0;
+
+    float currentDepth = projCoords.z;
+    float bias = max(0.0025 * (1.0 - NdotL), 0.0008);
+
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+    for (int x = -2; x <= 2; x++) {
+        for (int y = -2; y <= 2; y++) {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += (currentDepth - bias > pcfDepth) ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 25.0;
+}
+
 void main() {
     if (selectionOutline) {
         FragColor = objectColor;
@@ -208,16 +244,19 @@ void main() {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    vec3 ambient = 0.15 * lightColor;
+    vec3 ambient = ambientColor * ambientIntensity;
 
     float dirDiff = max(dot(norm, -lightDir), 0.0);
     vec3 dirDiffuse = dirDiff * lightColor;
 
-    // Blinn-Phong specular for the directional (sun) light.
     vec3 dirHalfway = normalize(-lightDir + viewDir);
     float dirSpecAngle = max(dot(norm, dirHalfway), 0.0);
     float dirSpec = (dirDiff > 0.0) ? pow(dirSpecAngle, materialShininess) : 0.0;
     vec3 dirSpecular = materialSpecularStrength * dirSpec * lightColor;
+
+    float shadow = ShadowCalculation(FragPosLightSpace, dirDiff);
+    dirDiffuse *= (1.0 - shadow);
+    dirSpecular *= (1.0 - shadow);
 
     vec3 pointDiffuse = vec3(0.0);
     vec3 pointSpecular = vec3(0.0);
@@ -258,37 +297,120 @@ void main() {
 
     int faceIdx = faceIndexFromNormal(normalize(LocalNormal));
 
-    // Base surface: material texture (tinted by Color) or flat Color.
+    // Authored colors (objectColor, texture albedo) are sRGB/display space;
+    // convert to linear before lighting math. Light colors/intensities are
+    // treated as already-linear.
+    vec3 objectColorLinear = pow(objectColor.rgb, vec3(2.2));
+
     vec4 baseSurface;
     if (useMaterialTexture) {
         vec4 texel = texture(materialTexture, TexCoord);
-        baseSurface = vec4(texel.rgb * objectColor.rgb, objectColor.a * texel.a);
+        vec3 texelLinear = pow(texel.rgb, vec3(2.2));
+        baseSurface = vec4(texelLinear * objectColorLinear, objectColor.a * texel.a);
     } else {
-        baseSurface = objectColor;
+        baseSurface = vec4(objectColorLinear, objectColor.a);
     }
 
     vec4 baseColorFull;
 
     if (faceTextureActive(faceIdx)) {
-        // Decal composites OVER the base surface using its own alpha as a
-        // blend mask. The object's own opacity (baseSurface.a) is preserved
-        // regardless of the decal's transparency.
         vec4 texel = sampleFaceTexture(faceIdx, TexCoord);
-        baseColorFull = vec4(mix(baseSurface.rgb, texel.rgb, texel.a), baseSurface.a);
+        vec3 texelLinear = pow(texel.rgb, vec3(2.2));
+        baseColorFull = vec4(mix(baseSurface.rgb, texelLinear, texel.a), baseSurface.a);
     } else {
         baseColorFull = baseSurface;
     }
 
     vec3 baseColor = baseColorFull.rgb;
-    float alpha = baseColorFull.a;
+    float alpha = baseColorFull.a; 
 
-    // Diffuse terms are modulated by surface color; specular is added on top,
-    // unmodulated, since even matte materials get a light-colored highlight.
     vec3 litColor = (ambient + dirDiffuse + pointDiffuse + spotDiffuse) * baseColor;
     vec3 specular = dirSpecular + pointSpecular + spotSpecular;
 
-    vec3 result = litColor + specular;
+    vec3 preFog = litColor + specular;
+
+    float dist = length(viewPos - FragPos);
+    float fogFactor = clamp(1.0 - exp(-fogDensity * fogDensity * dist * dist), 0.0, 1.0);
+    vec3 fogColorLinear = pow(fogColor, vec3(2.2));
+
+    vec3 result = mix(preFog, fogColorLinear, fogFactor);
+    result = result / (result + vec3(1.0)); // Reinhard tone mapping
+    result = pow(result, vec3(1.0 / 2.2)); // gamma-encode for display
+
     FragColor = vec4(result, alpha);
+}
+)";
+
+static const char* depthVertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+
+uniform mat4 model;
+uniform mat4 lightSpaceMatrix;
+
+void main() {
+    gl_Position = lightSpaceMatrix * model * vec4(aPos, 1.0);
+}
+)";
+
+static const char* depthFragmentShaderSource = R"(
+#version 330 core
+void main() {}
+)";
+
+static const char* skyVertexShaderSource = R"(
+#version 330 core
+
+const vec2 positions[3] = vec2[3](
+    vec2(-1.0, -1.0),
+    vec2( 3.0, -1.0),
+    vec2(-1.0,  3.0)
+);
+
+out vec2 vNDC;
+
+void main() {
+    vNDC = positions[gl_VertexID];
+    gl_Position = vec4(positions[gl_VertexID], 0.0, 1.0);
+}
+)";
+
+static const char* skyFragmentShaderSource = R"(
+#version 330 core
+in vec2 vNDC;
+out vec4 FragColor;
+
+uniform mat4 invViewProj;
+uniform vec3 topColor;
+uniform vec3 horizonColor;
+uniform vec3 lightDir;
+uniform vec3 lightColor;
+
+void main() {
+    vec4 clipNear = vec4(vNDC, -1.0, 1.0);
+    vec4 worldNear = invViewProj * clipNear;
+    worldNear /= worldNear.w;
+
+    vec4 clipFar = vec4(vNDC, 1.0, 1.0);
+    vec4 worldFar = invViewProj * clipFar;
+    worldFar /= worldFar.w;
+
+    vec3 dir = normalize(worldFar.xyz - worldNear.xyz);
+
+    float t = clamp(dir.y * 0.5 + 0.5, 0.0, 1.0);
+    vec3 skyColor = mix(horizonColor, topColor, t);
+    vec3 skyColorLinear = pow(skyColor, vec3(2.2));
+
+    vec3 sunDir = normalize(-lightDir);
+    float sunAmount = max(dot(dir, sunDir), 0.0);
+    vec3 glow = lightColor * pow(sunAmount, 256.0) * 2.0;
+    glow += lightColor * pow(sunAmount, 8.0) * 0.15;
+
+    vec3 result = skyColorLinear + glow;
+    result = result / (result + vec3(1.0));
+    result = pow(result, vec3(1.0 / 2.2));
+
+    FragColor = vec4(result, 1.0);
 }
 )";
 
@@ -320,6 +442,96 @@ static GLint g_numSpotLightsLoc = -1;
 static GLint g_spotPosLoc = -1, g_spotDirLoc = -1, g_spotColorLoc = -1;
 static GLint g_spotInnerLoc = -1, g_spotOuterLoc = -1;
 static GLint g_spotConstLoc = -1, g_spotLinearLoc = -1, g_spotQuadLoc = -1;
+
+static glm::vec3 g_ambientColor = glm::vec3(1.0f, 1.0f, 1.0f);
+static float g_ambientIntensity = 0.15f;
+static GLint g_ambientColorLoc = -1;
+static GLint g_ambientIntensityLoc = -1;
+
+static glm::vec3 g_fogColor = glm::vec3(0.75f, 0.85f, 0.95f);
+static float g_fogDensity = 0.008f;
+static GLint g_fogColorLoc = -1;
+static GLint g_fogDensityLoc = -1;
+
+static const int SHADOW_WIDTH = 2048;
+static const int SHADOW_HEIGHT = 2048;
+
+static GLuint g_shadowFBO = 0;
+static GLuint g_shadowDepthTexture = 0;
+static GLuint g_depthShaderProgram = 0;
+static GLint g_depthModelLoc = -1, g_depthLightSpaceLoc = -1;
+
+static GLint g_lightSpaceMatrixLoc = -1;
+static GLint g_shadowMapLoc = -1;
+
+static glm::mat4 g_lightSpaceMatrix = glm::mat4(1.0f);
+
+static GLuint g_skyShaderProgram = 0;
+static GLuint g_dummyVAO = 0;
+static GLint g_skyInvViewProjLoc = -1;
+static GLint g_skyTopColorLoc = -1;
+static GLint g_skyHorizonColorLoc = -1;
+static GLint g_skyLightDirLoc = -1;
+static GLint g_skyLightColorLoc = -1;
+
+static glm::vec3 g_skyTopColor = glm::vec3(0.25f, 0.45f, 0.85f);
+static glm::vec3 g_skyHorizonColor = glm::vec3(0.75f, 0.85f, 0.95f);
+
+static GLuint compileDepthShaderProgram() {
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &depthVertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &depthFragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    GLint success;
+    GLchar infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, nullptr, infoLog);
+        std::cerr << "Depth program link error: " << infoLog << std::endl;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
+}
+
+static GLuint compileSkyShaderProgram() {
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &skyVertexShaderSource, nullptr);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &skyFragmentShaderSource, nullptr);
+    glCompileShader(fragmentShader);
+
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+
+    GLint success;
+    GLchar infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, nullptr, infoLog);
+        std::cerr << "Sky program link error: " << infoLog << std::endl;
+    }
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
+}
 
 static double g_scrollDeltaY = 0.0;
 
@@ -612,6 +824,46 @@ static int lua_init(lua_State* L) {
     g_spotLinearLoc = glGetUniformLocation(g_shaderProgram, "spotLightLinear");
     g_spotQuadLoc = glGetUniformLocation(g_shaderProgram, "spotLightQuadratic");
 
+    g_ambientColorLoc = glGetUniformLocation(g_shaderProgram, "ambientColor");
+    g_ambientIntensityLoc = glGetUniformLocation(g_shaderProgram, "ambientIntensity");
+
+    g_fogColorLoc = glGetUniformLocation(g_shaderProgram, "fogColor");
+    g_fogDensityLoc = glGetUniformLocation(g_shaderProgram, "fogDensity");
+
+    g_lightSpaceMatrixLoc = glGetUniformLocation(g_shaderProgram, "lightSpaceMatrix");
+    g_shadowMapLoc = glGetUniformLocation(g_shaderProgram, "shadowMap");
+
+    g_depthShaderProgram = compileDepthShaderProgram();
+    g_depthModelLoc = glGetUniformLocation(g_depthShaderProgram, "model");
+    g_depthLightSpaceLoc = glGetUniformLocation(g_depthShaderProgram, "lightSpaceMatrix");
+
+    glGenTextures(1, &g_shadowDepthTexture);
+    glBindTexture(GL_TEXTURE_2D, g_shadowDepthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glGenFramebuffers(1, &g_shadowFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_shadowFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, g_shadowDepthTexture, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    g_skyShaderProgram = compileSkyShaderProgram();
+    g_skyInvViewProjLoc = glGetUniformLocation(g_skyShaderProgram, "invViewProj");
+    g_skyTopColorLoc = glGetUniformLocation(g_skyShaderProgram, "topColor");
+    g_skyHorizonColorLoc = glGetUniformLocation(g_skyShaderProgram, "horizonColor");
+    g_skyLightDirLoc = glGetUniformLocation(g_skyShaderProgram, "lightDir");
+    g_skyLightColorLoc = glGetUniformLocation(g_skyShaderProgram, "lightColor");
+
+    glGenVertexArrays(1, &g_dummyVAO);
+
     return 0;
 }
 
@@ -690,6 +942,44 @@ static int lua_setLight(lua_State* L) {
 
     g_lightDir = glm::normalize(glm::vec3(dx, dy, dz));
     g_lightColor = glm::vec3(r, g, b);
+
+    return 0;
+}
+
+static int lua_setAmbient(lua_State* L) {
+    float r = (float)luaL_checknumber(L, 1);
+    float g = (float)luaL_checknumber(L, 2);
+    float b = (float)luaL_checknumber(L, 3);
+    float intensity = (float)luaL_checknumber(L, 4);
+
+    g_ambientColor = glm::vec3(r, g, b);
+    g_ambientIntensity = intensity;
+
+    return 0;
+}
+
+static int lua_setFog(lua_State* L) {
+    float r = (float)luaL_checknumber(L, 1);
+    float g = (float)luaL_checknumber(L, 2);
+    float b = (float)luaL_checknumber(L, 3);
+    float density = (float)luaL_checknumber(L, 4);
+
+    g_fogColor = glm::vec3(r, g, b);
+    g_fogDensity = density;
+
+    return 0;
+}
+
+static int lua_setSky(lua_State* L) {
+    float tr = (float)luaL_checknumber(L, 1);
+    float tg = (float)luaL_checknumber(L, 2);
+    float tb = (float)luaL_checknumber(L, 3);
+    float hr = (float)luaL_checknumber(L, 4);
+    float hg = (float)luaL_checknumber(L, 5);
+    float hb = (float)luaL_checknumber(L, 6);
+
+    g_skyTopColor = glm::vec3(tr, tg, tb);
+    g_skyHorizonColor = glm::vec3(hr, hg, hb);
 
     return 0;
 }
@@ -1111,12 +1401,46 @@ static int lua_beginFrame(lua_State* L) {
         500.0f
     );
 
+    // Sky pass: drawn first, depth write disabled, so real geometry (which
+    // depth-tests against the untouched, freshly-cleared depth buffer)
+    // naturally draws over it wherever it covers the screen.
+    {
+        glm::mat4 invViewProj = glm::inverse(projection * view);
+
+        glDepthMask(GL_FALSE);
+        glUseProgram(g_skyShaderProgram);
+        glUniformMatrix4fv(g_skyInvViewProjLoc, 1, GL_FALSE, glm::value_ptr(invViewProj));
+        glUniform3f(g_skyTopColorLoc, g_skyTopColor.x, g_skyTopColor.y, g_skyTopColor.z);
+        glUniform3f(g_skyHorizonColorLoc, g_skyHorizonColor.x, g_skyHorizonColor.y, g_skyHorizonColor.z);
+        glUniform3f(g_skyLightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
+        glUniform3f(g_skyLightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
+
+        glBindVertexArray(g_dummyVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(0);
+
+        glDepthMask(GL_TRUE);
+        glUseProgram(g_shaderProgram);
+    }
+
     glUniformMatrix4fv(g_viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(g_projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
     glUniform3f(g_lightDirLoc, g_lightDir.x, g_lightDir.y, g_lightDir.z);
     glUniform3f(g_lightColorLoc, g_lightColor.x, g_lightColor.y, g_lightColor.z);
     glUniform3f(g_viewPosLoc, g_cameraPos.x, g_cameraPos.y, g_cameraPos.z);
+
+    glUniformMatrix4fv(g_lightSpaceMatrixLoc, 1, GL_FALSE, glm::value_ptr(g_lightSpaceMatrix));
+
+    glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, g_shadowDepthTexture);
+    glUniform1i(g_shadowMapLoc, 8);
+
+    glUniform3f(g_ambientColorLoc, g_ambientColor.x, g_ambientColor.y, g_ambientColor.z);
+    glUniform1f(g_ambientIntensityLoc, g_ambientIntensity);
+
+    glUniform3f(g_fogColorLoc, g_fogColor.x, g_fogColor.y, g_fogColor.z);
+    glUniform1f(g_fogDensityLoc, g_fogDensity);
 
     int numPoints = (int)g_pointPositions.size();
     glUniform1i(g_numPointLightsLoc, numPoints);
@@ -1141,6 +1465,75 @@ static int lua_beginFrame(lua_State* L) {
         glUniform1fv(g_spotQuadLoc, numSpots, g_spotQuadratics.data());
     }
 
+    return 0;
+}
+
+static int lua_beginShadowPass(lua_State* L) {
+    float dx = (float)luaL_checknumber(L, 1);
+    float dy = (float)luaL_checknumber(L, 2);
+    float dz = (float)luaL_checknumber(L, 3);
+    float cx = (float)luaL_checknumber(L, 4);
+    float cy = (float)luaL_checknumber(L, 5);
+    float cz = (float)luaL_checknumber(L, 6);
+    float radius = (float)luaL_optnumber(L, 7, 50.0);
+
+    glm::vec3 dir = glm::normalize(glm::vec3(dx, dy, dz));
+    glm::vec3 center(cx, cy, cz);
+    glm::vec3 lightPos = center - dir * (radius * 2.0f);
+
+    glm::vec3 up = (fabsf(dir.y) > 0.95f) ? glm::vec3(1, 0, 0) : glm::vec3(0, 1, 0);
+    glm::mat4 lightView = glm::lookAt(lightPos, center, up);
+    glm::mat4 lightProjection = glm::ortho(-radius, radius, -radius, radius, 0.1f, radius * 4.0f);
+
+    g_lightSpaceMatrix = lightProjection * lightView;
+
+    glBindFramebuffer(GL_FRAMEBUFFER, g_shadowFBO);
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(g_depthShaderProgram);
+    glUniformMatrix4fv(g_depthLightSpaceLoc, 1, GL_FALSE, glm::value_ptr(g_lightSpaceMatrix));
+
+    return 0;
+}
+
+static int lua_drawMeshDepth(lua_State* L) {
+    int meshId = (int)luaL_checkinteger(L, 1);
+    float x = (float)luaL_optnumber(L, 2, 0.0);
+    float y = (float)luaL_optnumber(L, 3, 0.0);
+    float z = (float)luaL_optnumber(L, 4, 0.0);
+    float sx = (float)luaL_optnumber(L, 5, 1.0);
+    float sy = (float)luaL_optnumber(L, 6, 1.0);
+    float sz = (float)luaL_optnumber(L, 7, 1.0);
+    float rx = (float)luaL_optnumber(L, 8, 0.0);
+    float ry = (float)luaL_optnumber(L, 9, 0.0);
+    float rz = (float)luaL_optnumber(L, 10, 0.0);
+
+    auto it = meshRegistry.find(meshId);
+    if (it == meshRegistry.end()) {
+        return 0;
+    }
+
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+    model = glm::rotate(model, glm::radians(ry), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(rx), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(rz), glm::vec3(0, 0, 1));
+    model = glm::scale(model, glm::vec3(sx, sy, sz));
+
+    glUniformMatrix4fv(g_depthModelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    Mesh& mesh = it->second;
+    glBindVertexArray(mesh.vao);
+    glDrawArrays(GL_TRIANGLES, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+
+    return 0;
+}
+
+static int lua_endShadowPass(lua_State* L) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, g_width, g_height);
+    glUseProgram(g_shaderProgram);
     return 0;
 }
 
@@ -2230,6 +2623,9 @@ static const luaL_Reg renderFunctions[] = {
     {"destroyTexture", lua_destroyTexture},
     {"beginFrame", lua_beginFrame},
     {"drawMesh", lua_drawMesh},
+    {"setAmbient", lua_setAmbient},
+    {"setSky", lua_setSky},
+    {"setFog", lua_setFog},
     {"drawSelectionOutline", lua_drawSelectionOutline},
     {"endFrame", lua_endFrame},
     {"shutdown", lua_shutdown},
@@ -2318,6 +2714,9 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiMenuItem", lua_imguiMenuItem},
     {"imguiIsAnyItemActive", lua_imguiIsAnyItemActive},
     {"imguiWantsTextInput", lua_imguiWantTextInput},
+    {"beginShadowPass", lua_beginShadowPass},
+    {"drawMeshDepth", lua_drawMeshDepth},
+    {"endShadowPass", lua_endShadowPass},
     {nullptr, nullptr}
 };
 

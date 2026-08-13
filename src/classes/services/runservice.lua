@@ -121,20 +121,28 @@ function RunService:Step()
                 obj.Position = obj.Parent.Position
             end
 
+            local linear = 4.5 / obj.Range
+            local quadratic = 75 / (obj.Range * obj.Range)
+
             graphics.addPointLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
-                obj.Color.R, obj.Color.G, obj.Color.B
+                obj.Color.R, obj.Color.G, obj.Color.B,
+                1.0, linear, quadratic
             )
         elseif obj:IsA("SpotLight") and obj.Enabled then
             if obj.Parent and obj.Parent.Position ~= nil then
                obj.Position = obj.Parent.Position
             end
-            
+
+            local linear = 4.5 / obj.Range
+            local quadratic = 75 / (obj.Range * obj.Range)
+
             graphics.addSpotLight(
                 obj.Position.X, obj.Position.Y, obj.Position.Z,
                 obj.Direction.X, obj.Direction.Y, obj.Direction.Z,
                 obj.Color.R, obj.Color.G, obj.Color.B,
-                obj.InnerAngle, obj.OuterAngle
+                obj.InnerAngle, obj.OuterAngle,
+                1.0, linear, quadratic
             )
         elseif obj:IsA("Motor") then
             if obj.Name ~= "BodyMotor" then
@@ -178,7 +186,6 @@ function RunService:Step()
 
         updateMotors(motors)
 
-        -- apply forces (BodyVelocity-style)
         for _, force in ipairs(forces) do
             local parent = force.Parent
             if parent and parent.Position then
@@ -194,7 +201,45 @@ function RunService:Step()
             end
         end
     end
- 
+
+    -- collect meshes
+    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
+        if obj.EnsureMesh then
+            local meshId = obj:EnsureMesh()
+
+            if meshId then
+                if obj.Transparency and obj.Transparency > 0 then
+                    table.insert(transparent, obj)
+                else
+                    table.insert(opaque, obj)
+                end
+            end
+        end
+    end
+
+    -- shadow pass
+    if Game.CurrentCamera then
+        local cam = Game.CurrentCamera
+        local light = Game.Lighting
+
+        graphics.beginShadowPass(
+            light.Direction.X, light.Direction.Y, light.Direction.Z,
+            cam.LookAt.X, cam.LookAt.Y, cam.LookAt.Z,
+            100
+        )
+
+        for _, obj in ipairs(opaque) do
+            graphics.drawMeshDepth(
+                obj._meshId,
+                obj.Position.X, obj.Position.Y, obj.Position.Z,
+                obj.Size.X, obj.Size.Y, obj.Size.Z,
+                obj.Rotation.X, obj.Rotation.Y, obj.Rotation.Z
+            )
+        end
+
+        graphics.endShadowPass()
+    end
+
     graphics.beginFrame()
 
     -- draw ui
@@ -224,20 +269,24 @@ function RunService:Step()
             light.Color.G,
             light.Color.B
         )
-    end
 
-    -- collect meshes
-    for _, obj in ipairs(Game.Workspace:GetDescendants()) do
-        if obj.EnsureMesh then
-            local meshId = obj:EnsureMesh()
+        graphics.setAmbient(
+            light.AmbientColor.R,
+            light.AmbientColor.G,
+            light.AmbientColor.B,
+            light.AmbientIntensity
+        )
 
-            if meshId then
-                if obj.Transparency and obj.Transparency > 0 then
-                    table.insert(transparent, obj)
-                else
-                    table.insert(opaque, obj)
-                end
-            end
+        if light.Sky then
+            graphics.setSky(
+                light.Sky.TopColor.R, light.Sky.TopColor.G, light.Sky.TopColor.B,
+                light.Sky.HorizonColor.R, light.Sky.HorizonColor.G, light.Sky.HorizonColor.B
+            )
+
+            graphics.setFog(
+                light.Sky.HorizonColor.R, light.Sky.HorizonColor.G, light.Sky.HorizonColor.B,
+                light.FogDensity
+            )
         end
     end
 
