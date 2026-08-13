@@ -121,6 +121,7 @@ function RunService:Step()
                 obj.Position = obj.Parent.Position
             end
 
+            local range = math.max(obj.Range, 0.1)
             local linear = 4.5 / obj.Range
             local quadratic = 75 / (obj.Range * obj.Range)
 
@@ -134,6 +135,7 @@ function RunService:Step()
                obj.Position = obj.Parent.Position
             end
 
+            local range = math.max(obj.Range, 0.1)
             local linear = 4.5 / obj.Range
             local quadratic = 75 / (obj.Range * obj.Range)
 
