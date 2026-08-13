@@ -1604,32 +1604,56 @@ glm::vec3 screenToWorldRay(float mouseX, float mouseY) {
     return rayWorld;
 }
 
-bool rayBox(const glm::vec3& origin, const glm::vec3& dir, const glm::vec3& min, const glm::vec3& max, float& t) {
-    float tx1 = (min.x - origin.x) / dir.x;
-    float tx2 = (max.x - origin.x) / dir.x;
+bool rayBox(const glm::vec3& origin, const glm::vec3& dir, const glm::vec3& min, const glm::vec3& max, float& t, glm::vec3& normal) {
+    float tmin = -FLT_MAX;
+    float tmax = FLT_MAX;
 
-    float tmin = std::min(tx1, tx2);
-    float tmax = std::max(tx1, tx2);
+    normal = glm::vec3(0.0f);
 
-    float ty1 = (min.y - origin.y) / dir.y;
-    float ty2 = (max.y - origin.y) / dir.y;
+    auto updateAxis = [&](float originAxis, float dirAxis, float minAxis, float maxAxis, const glm::vec3& minNormal, const glm::vec3& maxNormal) {
+        if (std::abs(dirAxis) < 1e-6f) {
+            return originAxis >= minAxis && originAxis <= maxAxis;
+        }
 
-    tmin = std::max(tmin, std::min(ty1, ty2));
-    tmax = std::min(tmax, std::max(ty1, ty2));
+        float t1 = (minAxis - originAxis) / dirAxis;
+        float t2 = (maxAxis - originAxis) / dirAxis;
 
-    float tz1 = (min.z - origin.z) / dir.z;
-    float tz2 = (max.z - origin.z) / dir.z;
+        glm::vec3 n1 = minNormal;
+        glm::vec3 n2 = maxNormal;
 
-    tmin = std::max(tmin, std::min(tz1, tz2));
-    tmax = std::min(tmax, std::max(tz1, tz2));
+        if (t1 > t2) {
+            std::swap(t1, t2);
+            std::swap(n1, n2);
+        }
 
-    if (tmax < 0.0f)
+        if (t1 > tmin) {
+            tmin = t1;
+            normal = n1;
+        }
+
+        tmax = std::min(tmax, t2);
+
+        return tmin <= tmax;
+    };
+
+    if (!updateAxis(origin.x, dir.x, min.x, max.x, glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0))) {
         return false;
+    }
 
-    if (tmin > tmax)
+    if (!updateAxis(origin.y, dir.y, min.y, max.y, glm::vec3(0, -1, 0), glm::vec3(0, 1, 0))) {
         return false;
+    }
 
-    t = (tmin >= 0.0f) ? tmin : tmax;
+    if (!updateAxis(origin.z, dir.z, min.z, max.z, glm::vec3(0, 0, -1), glm::vec3(0, 0, 1))) {
+        return false;
+    }
+
+    if (tmax < 0.0f) {
+        return false;
+    }
+
+    t = tmin >= 0.0f ? tmin : tmax;
+
     return true;
 }
 
@@ -1652,9 +1676,10 @@ static int lua_raycast(lua_State* L) {
 
         glm::vec3 min = obj.position - half;
         glm::vec3 max = obj.position + half;
+        glm::vec3 normal;
 
         float t;
-        if (rayBox(origin, dir, min, max, t)) {
+        if (rayBox(origin, dir, min, max, t, normal)) {
             if (t < closestT) {
                 closestT = t;
                 closest = &obj;
@@ -1685,14 +1710,19 @@ static int lua_raycastWorld(lua_State* L) {
     float closestT = FLT_MAX;
     RenderObject* closest = nullptr;
 
+    glm::vec3 closestNormal(0.0f);
+
     for (auto& obj : renderObjects) {
         glm::vec3 half = obj.scale * 0.5f;
         glm::vec3 min = obj.position - half;
         glm::vec3 max = obj.position + half;
         float t;
-        if (rayBox(origin, dir, min, max, t) && t < closestT) {
+        glm::vec3 normal;
+
+        if (rayBox(origin, dir, min, max, t, normal) && t < closestT) {
             closestT = t;
             closest = &obj;
+            closestNormal = normal;
         }
     }
 

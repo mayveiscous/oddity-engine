@@ -41,10 +41,11 @@ function Workspace:FindByUniqueId(id)
 end
 
 function Workspace:Raycast(origin, direction)
-    local uniqueId, distance, hx, hy, hz = graphics.raycastWorld(
-        origin.X, origin.Y, origin.Z,
-        direction.X, direction.Y, direction.Z
-    )
+    local uniqueId, distance, hx, hy, hz, nx, ny, nz =
+        graphics.raycastWorld(
+            origin.X, origin.Y, origin.Z,
+            direction.X, direction.Y, direction.Z
+        )
 
     if not uniqueId then
         return nil
@@ -56,6 +57,7 @@ function Workspace:Raycast(origin, direction)
         Instance = inst,
         Distance = distance,
         Position = Vector3.new(hx, hy, hz),
+        Normal = Vector3.new(nx, ny, nz),
     }
 end
 

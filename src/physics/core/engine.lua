@@ -172,4 +172,133 @@ function PhysicsObject.fromPart(part)
     return PhysicsObject.new(part.Position, Vector3.new(0, 0, 0), AABB.fromBlock(part), part)
 end
 
+function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
+    local obj = PhysicsEngine.GetObjectForInstance(inst)
+
+    if not obj then
+        return desiredPosition
+    end
+
+    colliders = colliders or {}
+
+    local originalPosition = obj.m_position
+
+    obj.m_position = desiredPosition
+
+    if obj.collider.Type == "AABB" then
+        obj.collider:Recenter(desiredPosition)
+    elseif obj.collider.m_center then
+        obj.collider.m_center = desiredPosition
+    end
+
+    local position = desiredPosition
+
+    for _ = 1, 4 do
+        local hadCollision = false
+
+        for _, block in ipairs(colliders) do
+            if block ~= inst then
+                local blockCollider = block.collider or AABB.fromBlock(block)
+                local result = CollisionType.Test(obj.collider, blockCollider)
+
+                if result.Intersects then
+                    hadCollision = true
+
+                    local penetration = -result.Distance
+
+                    if penetration > 0 then
+                        position = position + result.Normal * penetration
+
+                        obj.m_position = position
+
+                        if obj.collider.Type == "AABB" then
+                            obj.collider:Recenter(position)
+                        elseif obj.collider.m_center then
+                            obj.collider.m_center = position
+                        end
+                    end
+                end
+            end
+        end
+
+        if not hadCollision then
+            break
+        end
+    end
+
+    obj.m_position = originalPosition
+
+    if obj.collider.Type == "AABB" then
+        obj.collider:Recenter(originalPosition)
+    elseif obj.collider.m_center then
+        obj.collider.m_center = originalPosition
+    end
+
+    return position
+end
+
+function PhysicsEngine.GetContact(inst, colliders)
+    local obj = PhysicsEngine.GetObjectForInstance(inst)
+
+    if not obj then
+        return nil
+    end
+
+    for _, block in ipairs(colliders or {}) do
+        if block ~= inst then
+            local blockCollider = block.collider or AABB.fromBlock(block)
+            local result = CollisionType.Test(obj.collider, blockCollider)
+
+            if result.Intersects then
+                return {
+                    Instance = block,
+                    Normal = result.Normal,
+                    Distance = result.Distance,
+                }
+            end
+        end
+    end
+
+    return nil
+end
+
+function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
+    local obj = PhysicsEngine.GetObjectForInstance(inst)
+
+    if not obj then
+        return desiredPosition
+    end
+
+    local position = desiredPosition
+
+    for _ = 1, 4 do
+        local collided = false
+
+        obj.m_position = position
+        obj.collider:Recenter(position)
+
+        for _, block in ipairs(colliders or {}) do
+            if block ~= inst then
+                local blockCollider = block.collider or AABB.fromBlock(block)
+                local result = CollisionType.Test(obj.collider, blockCollider)
+
+                if result.Intersects then
+                    local penetration = -result.Distance
+
+                    if penetration > 0 then
+                        position = position + result.Normal * penetration
+                        collided = true
+                    end
+                end
+            end
+        end
+
+        if not collided then
+            break
+        end
+    end
+
+    return position
+end
+
 return PhysicsEngine
