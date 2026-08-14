@@ -18,7 +18,7 @@ local function loadProject(project)
     RunService:Run()
 end
 
-graphics.init(1920, 1080, "Oddity Engine")
+graphics.init(800, 600, "Oddity Engine")
 
 local project = ProjectSelection.run()
 

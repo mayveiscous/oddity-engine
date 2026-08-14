@@ -70,11 +70,11 @@ local function beginPlaytest()
     end
 
     beginPlaytestPhysics()
-    beginPlaytestScripts()
 
     Tabs.setActiveIndex(Tabs.getSceneIndex())
     Game.beginPlaytest()
     EditorState.StartPlaytest()
+    beginPlaytestScripts()
 end
 
 local function stopPlaytest()

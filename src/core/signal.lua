@@ -31,6 +31,17 @@ function Signal:Connect(fn)
     return connection
 end
 
+function Signal:Once(fn)
+    local connection
+
+    connection = self:Connect(function(...)
+        connection:Disconnect()
+        fn(...)
+    end)
+
+    return connection
+end
+
 function Signal._connections_remove(connection)
     local signal = connection._signal
     signal._connections[connection._id] = nil
@@ -45,12 +56,12 @@ end
 function Signal:Wait()
     local co = coroutine.running()
     local args
-    local conn
-    conn = self:Connect(function(...)
+
+    self:Once(function(...)
         args = {...}
-        conn:Disconnect()
         coroutine.resume(co)
     end)
+
     coroutine.yield()
     return table.unpack(args)
 end
