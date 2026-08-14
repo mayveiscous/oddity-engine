@@ -36,17 +36,6 @@ function AABB:ClosestPoint(point)
     )
 end
 
-function AABB:Intersect(other)
-    local dist1 = other.min - self.max
-    local dist2 = self.min - other.max
-    local biggestDist = Vector3.Max(dist1, dist2)
-
-    return {
-        Intersects = biggestDist.Magnitude < 0,
-        Distance = biggestDist.Magnitude
-    }
-end
-
 function AABB:IntersectSphere(sphere)
     local closest = Vector3.new(
         math.max(self.min.X, math.min(sphere.m_center.X, self.max.X)),

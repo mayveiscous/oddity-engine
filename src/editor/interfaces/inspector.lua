@@ -1,6 +1,8 @@
 local Explorer = require "src.editor.interfaces.explorer"
 local ui = require "src.core.ui"
 
+local EditorState = require "src.editor.state"
+
 local Vector3 = require "src.types.vector3"
 local Vector2 = require "src.types.vector2"
 local Color3 = require "src.types.color3"
@@ -203,6 +205,10 @@ local function drawInspector(rects)
     ui.setNextWindowSize(rects.w, rects.h)
 
     ui.beginWindow("Properties", {"NoMove"})
+
+    if ui.isWindowHovered() then
+        EditorState.AttentionFocus = "Properties"
+    end
 
     local inst = Explorer.getSelected()
 

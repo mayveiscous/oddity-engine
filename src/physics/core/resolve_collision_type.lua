@@ -26,6 +26,16 @@ function Collision.Test(a, b)
         result.Normal = -result.Normal
 
         return result
+
+    elseif a.Type == "AABB" and b.Type == "ConvexHull" then
+        return b:IntersectAABB(a)
+
+    elseif a.Type == "ConvexHull" and b.Type == "AABB" then
+        local result = a:IntersectAABB(b)
+
+        result.Normal = -result.Normal
+
+        return result
     end
 
     error("No collision handler for " .. a.Type .. " and " .. b.Type)

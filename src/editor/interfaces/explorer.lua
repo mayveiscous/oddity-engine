@@ -3,6 +3,8 @@ local InsertObject = require "src.editor.interfaces.insert_object"
 local InputService = require "src.classes.services.inputservice"
 local ui = require "src.core.ui"
 
+local EditorState = require "src.editor.state"
+
 local expanded = {}
 
 local insertSearch = ""
@@ -289,8 +291,11 @@ local function drawExplorer(game, rect)
     ui.setNextWindowPos(rect.x, rect.y)
     ui.setNextWindowSize(rect.w, rect.h)
 
-
     ui.beginWindow("Explorer", {"NoMove"})
+
+    if ui.isWindowHovered() then
+        EditorState.AttentionFocus = "Explorer"
+    end
 
     drawNode(game.Workspace)
     drawNode(game.Lighting)
@@ -305,7 +310,6 @@ local function drawExplorer(game, rect)
         openRenamePopup = false
     end
 
-    -- Rename popup
     if ui.beginPopup("rename_popup") then
         drawRenamePanel()
         ui.endPopup()

@@ -1,5 +1,7 @@
 local Signal = require "oddity.signal"
 
+local ProjectDetails = require "src.data.project_details"
+
 local Instance = {}
 local ClassRegistry = {}
 
@@ -154,6 +156,56 @@ local function copyState(source, destination)
     for key, value in pairs(source._tags) do
         destination._tags[key] = value
     end
+end
+
+local function serializeValue(value)
+    if isVector3(value) then
+        return {
+            x = value.X,
+            y = value.Y,
+            z = value.Z,
+        }
+    end
+
+    if type(value) ~= "table" then
+        return value
+    end
+
+    local result = {}
+
+    for key, value in pairs(value) do
+        result[key] = serializeValue(value)
+    end
+
+    return result
+end
+
+local function serializeInstance(instance)
+    local state = rawget(instance, "_state")
+    local object = {}
+
+    for key, value in pairs(state) do
+        if key ~= "_children"
+        and key ~= "_attributes"
+        and key ~= "_tags"
+        and key ~= "Changed"
+        and key ~= "ChildAdded"
+        and key ~= "ChildRemoved"
+        and key ~= "AncestryChanged"
+        and key ~= "AttributeSet"
+        and key ~= "Parent" then
+            object[string.lower(key)] = serializeValue(value)
+        end
+    end
+
+    object.attributes = serializeValue(state._attributes)
+    object.tags = serializeValue(state._tags)
+
+    if state.Parent then
+        object.parent = state.Parent.UniqueId
+    end
+
+    return object
 end
 
 local function buildMeta(classTable)
@@ -345,6 +397,8 @@ function Instance:SetParent(newParent)
         local newState = rawget(newParent, "_state")
         newState._children[self] = true
         newState.ChildAdded:Fire(self)
+
+        ProjectDetails.Append("scene.objects", serializeInstance(self))
     end
 
     state.AncestryChanged:Fire(self, newParent)

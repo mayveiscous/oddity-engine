@@ -1,6 +1,7 @@
 local Vector3 = require "src.types.vector3"
-local AABB = require "src.physics.colliders.aabb"
 
+local AABB = require "src.physics.colliders.aabb"
+local ConvexHull = require "src.physics.colliders.convex_hull"
 local CollisionType = require "src.physics.core.resolve_collision_type"
 local PhysicsObject = require "src.physics.core.physics_object"
 
@@ -14,6 +15,18 @@ PhysicsEngine.MaxSubstep = 1 / 120  -- caps how far anything can move before a c
 PhysicsEngine.MaxSubsteps = 8       -- ceiling so a lag spike can't spiral into dozens of steps
 PhysicsEngine.GroundFriction = 8
 
+local function getColliderFor(block)
+    if block.collider then
+        return block.collider
+    end
+
+    if block.Shape == "Wedge" then
+        return ConvexHull.fromWedge(block)
+    end
+
+    return AABB.fromBlock(block)
+end
+
 local function applyWorldCollision(obj, colliders)
     local slop = 0.005
     local iterations = 4
@@ -23,7 +36,7 @@ local function applyWorldCollision(obj, colliders)
 
         for _, block in ipairs(colliders) do
             if block ~= obj.instance then
-                local blockCollider = block.collider or AABB.fromBlock(block)
+                local blockCollider = getColliderFor(block)
                 local result = CollisionType.Test(obj.collider, blockCollider)
 
                 if result.Intersects then
@@ -47,7 +60,7 @@ local function applyWorldCollision(obj, colliders)
                         obj.m_velocity = obj.m_velocity - result.Normal * vn
                     end
 
-                    if result.Normal.Y > 0.7 then
+                    if result.Normal.Y > 0.65 then
                         obj.Grounded = true
 
                         if obj.m_velocity.Y < 0 then
@@ -153,7 +166,9 @@ function PhysicsEngine.Simulate(dt, colliders)
 
     for _ = 1, steps do
         for _, obj in pairs(PhysicsEngine.registered) do
-            if obj.collider.Type == "AABB" then
+            if obj.instance and obj.instance.Shape == "Wedge" then
+                obj.collider = ConvexHull.fromWedge(obj.instance, obj.m_position)
+            elseif obj.collider.Type == "AABB" then
                 obj.collider:Recenter(obj.m_position)
             else
                 obj.collider.m_center = obj.m_position
@@ -179,96 +194,6 @@ function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
         return desiredPosition
     end
 
-    colliders = colliders or {}
-
-    local originalPosition = obj.m_position
-
-    obj.m_position = desiredPosition
-
-    if obj.collider.Type == "AABB" then
-        obj.collider:Recenter(desiredPosition)
-    elseif obj.collider.m_center then
-        obj.collider.m_center = desiredPosition
-    end
-
-    local position = desiredPosition
-
-    for _ = 1, 4 do
-        local hadCollision = false
-
-        for _, block in ipairs(colliders) do
-            if block ~= inst then
-                local blockCollider = block.collider or AABB.fromBlock(block)
-                local result = CollisionType.Test(obj.collider, blockCollider)
-
-                if result.Intersects then
-                    hadCollision = true
-
-                    local penetration = -result.Distance
-
-                    if penetration > 0 then
-                        position = position + result.Normal * penetration
-
-                        obj.m_position = position
-
-                        if obj.collider.Type == "AABB" then
-                            obj.collider:Recenter(position)
-                        elseif obj.collider.m_center then
-                            obj.collider.m_center = position
-                        end
-                    end
-                end
-            end
-        end
-
-        if not hadCollision then
-            break
-        end
-    end
-
-    obj.m_position = originalPosition
-
-    if obj.collider.Type == "AABB" then
-        obj.collider:Recenter(originalPosition)
-    elseif obj.collider.m_center then
-        obj.collider.m_center = originalPosition
-    end
-
-    return position
-end
-
-function PhysicsEngine.GetContact(inst, colliders)
-    local obj = PhysicsEngine.GetObjectForInstance(inst)
-
-    if not obj then
-        return nil
-    end
-
-    for _, block in ipairs(colliders or {}) do
-        if block ~= inst then
-            local blockCollider = block.collider or AABB.fromBlock(block)
-            local result = CollisionType.Test(obj.collider, blockCollider)
-
-            if result.Intersects then
-                return {
-                    Instance = block,
-                    Normal = result.Normal,
-                    Distance = result.Distance,
-                }
-            end
-        end
-    end
-
-    return nil
-end
-
-function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
-    local obj = PhysicsEngine.GetObjectForInstance(inst)
-
-    if not obj then
-        return desiredPosition
-    end
-
     local position = desiredPosition
 
     for _ = 1, 4 do
@@ -279,7 +204,7 @@ function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
 
         for _, block in ipairs(colliders or {}) do
             if block ~= inst then
-                local blockCollider = block.collider or AABB.fromBlock(block)
+                local blockCollider = getColliderFor(block)
                 local result = CollisionType.Test(obj.collider, blockCollider)
 
                 if result.Intersects then
@@ -299,6 +224,31 @@ function PhysicsEngine.ResolveDragPosition(inst, desiredPosition, colliders)
     end
 
     return position
+end
+
+function PhysicsEngine.GetContact(inst, colliders)
+    local obj = PhysicsEngine.GetObjectForInstance(inst)
+
+    if not obj then
+        return nil
+    end
+
+    for _, block in ipairs(colliders or {}) do
+        if block ~= inst then
+            local blockCollider = getColliderFor(block)
+            local result = CollisionType.Test(obj.collider, blockCollider)
+
+            if result.Intersects then
+                return {
+                    Instance = block,
+                    Normal = result.Normal,
+                    Distance = result.Distance,
+                }
+            end
+        end
+    end
+
+    return nil
 end
 
 return PhysicsEngine

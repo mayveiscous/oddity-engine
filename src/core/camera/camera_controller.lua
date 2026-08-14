@@ -167,7 +167,7 @@ RunService.Heartbeat:Connect(function(dt)
 
     local scroll = InputService.GetMouseScroll()
 
-    if scroll ~= 0 then
+    if scroll ~= 0 and not EditorState.AttentionFocusedTo("Properties") then
         local distance = math.max(
             scrollDistance,
             currentSpeed * 0.15

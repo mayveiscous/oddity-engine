@@ -2641,6 +2641,11 @@ static int lua_imguiIsItemHovered(lua_State* L) {
     return 1;
 }
 
+static int lua_imguiIsWindowHovered(lua_State* L) {
+    lua_pushboolean(L, ImGui::IsWindowHovered());
+    return 1;
+}
+
 static int lua_imguiWantCaptureMouse(lua_State* L) {
     lua_pushboolean(L, ImGui::GetIO().WantCaptureMouse);
     return 1;
@@ -2703,6 +2708,7 @@ static const luaL_Reg renderFunctions[] = {
     {"imguiBeginDragDropTarget", lua_imguiBeginDragDropTarget},
     {"imguiAcceptDragDropPayload", lua_imguiAcceptDragDropPayload},
     {"imguiEndDragDropTarget", lua_imguiEndDragDropTarget},
+    {"imguiIsWindowHovered", lua_imguiIsWindowHovered},
     {"raycast", lua_raycast},
     {"raycastWorld", lua_raycastWorld},
     {"imguiBeginPopup", lua_imguiBeginPopup},

@@ -9,12 +9,11 @@ function Build.test(data)
 
     Details.update(object)
 
-    print(debug.dump(object))
+    for _, obj in ipairs(object.scene.objects) do
+        print(obj.name)
+    end
 
     return object
 end
-
--- needs to build the hierarchy using the json
--- data.scene.objects
 
 return Build
