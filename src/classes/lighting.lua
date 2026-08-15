@@ -3,7 +3,7 @@ local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 local Color3 = require "src.types.color3"
 
-local Lighting = Instance:RegisterClass("Lighting", "Instance", {
+local Lighting = Instance:RegisterClass("Lighting", "Service", {
     Properties = {
         Direction = {
             type = "Vector3",
@@ -46,29 +46,11 @@ local Lighting = Instance:RegisterClass("Lighting", "Instance", {
             default = 0.0008,
             category = "Lighting",
         },
-        
-        CanBeDeleted = {
+
+        ShowInExplorer = {
             type = "boolean",
             default = false,
             category = "Hidden"
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanReparent = {
-            type = "boolean",
-            default = false,
-            category = "Hidden"
-        },
-
-        IsCoreService = {
-            type = "boolean",
-            default = true,
-            category = "Hidden",
         },
     },
 })

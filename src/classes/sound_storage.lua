@@ -1,35 +1,11 @@
 local Instance = require "src.core.instance"
 
-local SoundStorage = Instance:RegisterClass("SoundStorage", "Instance", {
+local SoundStorage = Instance:RegisterClass("SoundStorage", "Service", {
     Properties = {
-        CanBeDeleted = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        BlockScripts = {
-            type = "boolean",
-            default = false,
-            category = "Hidden"
-        },
-
-        CanReparent = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        IsCoreService = {
+        ShowInExplorer = {
             type = "boolean",
             default = true,
-            category = "Hidden",
+            category = "Hidden"
         },
     },
 })

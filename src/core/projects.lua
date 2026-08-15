@@ -11,6 +11,10 @@ local function documentsRoot()
     return home .. "/Documents/Oddity/Projects"
 end
 
+function Projects.documentsRoot()
+    return documentsRoot()
+end
+
 Projects.root = documentsRoot()
 
 local function ensureRoot()

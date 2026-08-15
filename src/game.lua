@@ -11,10 +11,11 @@ local ServerStorage = require "src.classes.server_storage"
 local ServerScripts = require "src.classes.server_scripts"
 local PlayerScripts = require "src.classes.player_scripts"
 local SoundStorage = require "src.classes.sound_storage"
+local DataService = require "src.classes.data_service"
 local Player = require "src.classes.objects.player"
 local Sky = require "src.classes.objects.sky"
 
-local GameO = require "src.classes.game"
+local GameClass = require "src.classes.game"
 
 local defaultModuleSources = require "src.data.default_modules"
 
@@ -50,6 +51,7 @@ Game.ServerStorage = createCore("ServerStorage", Game)
 Game.ServerScripts = createCore("ServerScripts", Game)
 Game.PlayerScripts = createCore("PlayerScripts", Game)
 Game.SoundStorage = createCore("SoundStorage", Game)
+Game.DataService = createCore("DataService", Game)
 
 Game.Lighting.Sky = createCore("Sky", Game.Lighting)
 

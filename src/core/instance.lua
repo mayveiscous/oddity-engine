@@ -64,7 +64,6 @@ end
 
 ClassRegistry["Instance"] = Instance
 Instance.__index = Instance
-
 Instance.Properties = {
     Name = {
         type = "string",
@@ -112,6 +111,41 @@ Instance.Properties = {
         category = "Hidden",
     },
 }
+
+ClassRegistry["Service"] = Instance:RegisterClass("Service", "Instance", {
+    Properties = {
+        IsCoreService = {
+            type = "boolean",
+            default = true,
+            category = "Hidden",
+        },
+
+        CanBeDeleted = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
+        CanReparent = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
+        CanRename = {
+            type = "boolean",
+            default = false,
+            category = "Hidden",
+        },
+
+
+        ShowInExplorer = {
+            type = "boolean",
+            default = false,
+            category = "Hidden"
+        },
+    },
+})
 
 local function setPropertyInternal(instance, propertyName, value)
     local state = rawget(instance, "_state")

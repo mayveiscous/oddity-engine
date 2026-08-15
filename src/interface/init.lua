@@ -4,7 +4,7 @@ local ProjectSelection = require "src.interface.project_selection"
 local function loadProject(project)
     require "src.classes"
 
-    require "src.core.camera.camera_controller"
+    require "src.editor.camera_controller"
     require "src.scripting.default_modules.character_camera"
 
     local RunService = require "src.classes.services.runservice"

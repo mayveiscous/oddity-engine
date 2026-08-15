@@ -2,30 +2,12 @@ local Instance = require "src.core.instance"
 
 local graphics = require "oddity.graphics"
 
-local Workspace = Instance:RegisterClass("Workspace", "Instance", {
+local Workspace = Instance:RegisterClass("Workspace", "Service", {
     Properties = {
-        CanBeDeleted = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        IsCoreService = {
+        ShowInExplorer = {
             type = "boolean",
             default = true,
-            category = "Hidden",
-        },
-
-        CanReparent = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
+            category = "Hidden"
         },
     },
 })

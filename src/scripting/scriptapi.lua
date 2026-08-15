@@ -15,9 +15,6 @@ function api.build(self)
         Keyframe = require "src.types.keyframe",
         
         game = require "src.game",
-        RunService = require "src.classes.services.runservice",
-        InputService = require "src.classes.services.inputservice",
-        SelectionService = require "src.classes.services.selectionservice",
         Workspace = require "src.classes.workspace",
     }
 end

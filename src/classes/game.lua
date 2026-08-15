@@ -1,22 +1,10 @@
 local Instance = require "src.core.instance"
 
-local Game = Instance:RegisterClass("Game", "Instance", {
+local Game = Instance:RegisterClass("Game", "Service", {
     Properties = {
-        CanBeDeleted = {
+        ShowInExplorer = {
             type = "boolean",
-            default = false,
-            category = "Hidden"
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanReparent = {
-            type = "boolean",
-            default = false,
+            default = true,
             category = "Hidden"
         },
     },

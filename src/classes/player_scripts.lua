@@ -1,35 +1,17 @@
 local Instance = require "src.core.instance"
 
-local PlayerScripts = Instance:RegisterClass("PlayerScripts", "Instance", {
+local PlayerScripts = Instance:RegisterClass("PlayerScripts", "Service", {
     Properties = {
-        CanBeDeleted = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
         BlockScripts = {
             type = "boolean",
             default = false,
             category = "Hidden"
         },
 
-        CanReparent = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        IsCoreService = {
+        ShowInExplorer = {
             type = "boolean",
             default = true,
-            category = "Hidden",
+            category = "Hidden"
         },
     },
 })

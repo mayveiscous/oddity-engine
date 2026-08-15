@@ -1,29 +1,11 @@
 local Instance = require "src.core.instance"
 
-local ServerStorage = Instance:RegisterClass("ServerStorage", "Instance", {
+local ServerStorage = Instance:RegisterClass("ServerStorage", "Service", {
     Properties = {
-        CanBeDeleted = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanReparent = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        CanRename = {
-            type = "boolean",
-            default = false,
-            category = "Hidden",
-        },
-
-        IsCoreService = {
+        ShowInExplorer = {
             type = "boolean",
             default = true,
-            category = "Hidden",
+            category = "Hidden"
         },
 
         BlockScripts = {
