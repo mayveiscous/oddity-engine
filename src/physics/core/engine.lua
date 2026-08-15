@@ -114,26 +114,68 @@ function PhysicsEngine:HandleCollisions()
     for i = 1, #objs - 1 do
         for j = i + 1, #objs do
             local a, b = objs[i], objs[j]
-            local result = CollisionType.Test(a.collider, b.collider)
 
-            if result.Intersects then
-                local delta = b.m_position - a.m_position
-                local dist = delta.Magnitude
-                local normal = result.Normal
+            local aIsWedge = a.instance and a.instance.Shape == "Wedge"
+            local bIsWedge = b.instance and b.instance.Shape == "Wedge"
 
-                local penetration = -result.Distance
-                local correction = (normal * (penetration / 2)) / 2
-                a.m_position = a.m_position - correction
-                b.m_position = b.m_position + correction
+            if not aIsWedge and not bIsWedge then
+                local result = CollisionType.Test(a.collider, b.collider)
 
-                local approachSpeed = (b.m_velocity - a.m_velocity):Dot(normal)
-                if approachSpeed < 0 then
-                    local impulse = normal * (approachSpeed * (1 + PhysicsEngine.Restitution))
-                    a.m_velocity = a.m_velocity + impulse
-                    b.m_velocity = b.m_velocity - impulse
+                if result.Intersects then
+                    local delta = b.m_position - a.m_position
+                    local dist = delta.Magnitude
+                    local normal = result.Normal
+
+                    local penetration = -result.Distance
+                    local correction = (normal * (penetration / 2)) / 2
+                    a.m_position = a.m_position - correction
+                    b.m_position = b.m_position + correction
+
+                    local approachSpeed = (b.m_velocity - a.m_velocity):Dot(normal)
+                    if approachSpeed < 0 then
+                        local impulse = normal * (approachSpeed * (1 + PhysicsEngine.Restitution))
+                        a.m_velocity = a.m_velocity + impulse
+                        b.m_velocity = b.m_velocity - impulse
+                    end
                 end
             end
         end
+    end
+end
+
+local function applyWedgeGroundProbe(obj, colliders)
+    if not obj.collider or not obj.collider.half then
+        return
+    end
+
+    local feetY = obj.m_position.Y - obj.collider.half.Y
+    local feetPos = Vector3.new(obj.m_position.X, feetY, obj.m_position.Z)
+
+    local probeDistance = math.max(0.5, obj.collider.half.Y)
+
+    local best = nil
+
+    for _, block in ipairs(colliders) do
+        if block ~= obj.instance and block.Shape == "Wedge" then
+            local hit = ConvexHull.probeWedgeGround(feetPos, probeDistance, block)
+
+            if hit and (not best or hit.distance < best.distance) then
+                best = hit
+            end
+        end
+    end
+
+    if not best then
+        return
+    end
+
+    if obj.m_velocity.Y <= 0.5 then
+        local newFeetY = best.point.Y
+        obj.m_position = Vector3.new(obj.m_position.X, newFeetY + obj.collider.half.Y, obj.m_position.Z)
+        obj.collider:Recenter(obj.m_position)
+
+        obj.Grounded = true
+        obj.m_velocity = Vector3.new(obj.m_velocity.X, 0, obj.m_velocity.Z)
     end
 end
 
@@ -147,6 +189,7 @@ local function simulateObject(obj, colliders, subDt)
 
     obj:Integrate(subDt)
     applyWorldCollision(obj, colliders)
+    applyWedgeGroundProbe(obj, colliders)
 
     if obj.Grounded then
         local decay = math.max(0, 1 - PhysicsEngine.GroundFriction * subDt)
@@ -166,9 +209,7 @@ function PhysicsEngine.Simulate(dt, colliders)
 
     for _ = 1, steps do
         for _, obj in pairs(PhysicsEngine.registered) do
-            if obj.instance and obj.instance.Shape == "Wedge" then
-                obj.collider = ConvexHull.fromWedge(obj.instance, obj.m_position)
-            elseif obj.collider.Type == "AABB" then
+            if obj.collider.Type == "AABB" then
                 obj.collider:Recenter(obj.m_position)
             else
                 obj.collider.m_center = obj.m_position
