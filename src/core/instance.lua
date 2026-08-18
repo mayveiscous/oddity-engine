@@ -267,6 +267,10 @@ local function buildMeta(classTable)
                 warn(("Instance: %s cannot be renamed!"):format(state.Name), 2)
             end
 
+            if propertyName == "LookDirection" then
+                return self:GetLookDirection()
+            end
+
             local definition = getPropertyDefinition(classTable, k)
 
             if definition and definition.ReadOnly then

@@ -97,6 +97,10 @@ function Game:GetService(name)
         return Game.ServerScripts
     end
 
+    if name == "DataService" then
+        return Game.DataService
+    end
+
     error(("Service '%s' does not exist."):format(name), 2)
 end
 

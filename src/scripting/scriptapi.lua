@@ -2,10 +2,12 @@ local api = {}
 
 function api.build(self)
     return {
+        -- core
         script = self,
         task = require "oddity.task",
         require = require "src.scripting.instance_require",
 
+        -- types
         Instance = require "src.core.instance",
         Vector3 = require "src.types.vector3",
         Vector2 = require "src.types.vector2",
@@ -14,6 +16,7 @@ function api.build(self)
         Range = require "src.types.range",
         Keyframe = require "src.types.keyframe",
         
+        -- game state
         game = require "src.game",
         Workspace = require "src.classes.workspace",
     }

@@ -75,6 +75,14 @@ local Block = Instance:RegisterClass("Block", "Instance", {
             default = "Plastic",
             category = "Appearance",
         },
+        LookDirection = {
+            type = "Vector3",
+            default = function()
+                return Vector3.new(0, 0, -1)
+            end,
+            ReadOnly = true,
+            category = "Transform"
+        }
     }
 })
 
@@ -116,6 +124,19 @@ function Block:EnsureMesh()
     end
 
     return self._meshId
+end
+
+function Block:GetLookDirection()
+    local yaw = self.Rotation.Y
+    local pitch = self.Rotation.X
+
+    local cosPitch = math.cos(pitch)
+
+    return Vector3.new(
+        -math.sin(yaw) * cosPitch,
+         math.sin(pitch),
+        -math.cos(yaw) * cosPitch
+    ).Unit
 end
 
 return Block
