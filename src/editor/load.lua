@@ -18,6 +18,15 @@ local EditorState = require "src.editor.state"
 local graphics = require "oddity.graphics"
 local hasApplied = false
 
+-- Tracks the dockspace's last known size so we can rebuild the split
+-- layout whenever the window is resized (fullscreen toggle, dragging
+-- the border, etc). DockBuilder-built splits don't reliably re-flow
+-- on their own when the host window changes size later, so we force
+-- it. NOTE: this means manually-redocked panels reset to the default
+-- layout on resize -- acceptable for now, revisit once basic resize
+-- is confirmed working.
+local lastDockW, lastDockH = nil, nil
+
 local function draw(workspace)
     if not hasApplied then
         Theme.apply()
@@ -30,16 +39,39 @@ local function draw(workspace)
 
     local rects = Layout.apply(EditorState.collapsed)
 
-    Explorer.drawExplorer(workspace, rects.Explorer)
-    Inspector.drawInspector(rects.Inspector)
-    Output.draw(rects.Output)
+    local dockId = ui.dockSpace("MainDockspace", rects.Dock.x, rects.Dock.y, rects.Dock.w, rects.Dock.h)
+
+    -- Rebuild the default split whenever the dockspace's size changes
+    -- (first launch, no imgui.ini entry yet -- OR the window/fullscreen
+    -- was resized and the previously-built node needs to catch up).
+    local sizeChanged = lastDockW ~= nil and (
+        math.abs(rects.Dock.w - lastDockW) > 0.5 or
+        math.abs(rects.Dock.h - lastDockH) > 0.5
+    )
+
+    if not ui.dockBuilderNodeExists(dockId) or sizeChanged then
+        ui.dockBuilderReset(dockId, rects.Dock.w, rects.Dock.h)
+
+        local rightId, leftoverId = ui.dockBuilderSplit(dockId, "Right", rects.PanelWidth / rects.Dock.w)
+        local explorerId, inspectorId = ui.dockBuilderSplit(rightId, "Up", rects.ExplorerHeightRatio)
+        local outputId = ui.dockBuilderSplit(leftoverId, "Down", rects.OutputHeight / rects.Dock.h)
+
+        ui.dockBuilderDockWindow("Explorer", explorerId)
+        ui.dockBuilderDockWindow("Properties", inspectorId)
+        ui.dockBuilderDockWindow("Output", outputId)
+
+        ui.dockBuilderFinish(dockId)
+    end
+
+    lastDockW, lastDockH = rects.Dock.w, rects.Dock.h
+
+    Explorer.drawExplorer(workspace)
+    Inspector.drawInspector()
+    Output.draw()
     TopBar.draw(rects.TopBar)
     AnimationEditor.draw()
     TextEditor.draw(rects)
 
-    EditorState.collapsed.Explorer = graphics.imguiWindowCollapsed("Explorer")
-    EditorState.collapsed.Inspector = graphics.imguiWindowCollapsed("Inspector")
-    EditorState.collapsed.Output = graphics.imguiWindowCollapsed("Output")
     EditorState.collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
 end
 

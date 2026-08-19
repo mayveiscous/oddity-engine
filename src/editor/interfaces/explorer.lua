@@ -142,9 +142,7 @@ local function drawContextPanel(instance)
         ui.closeCurrentPopup()
     end
 
-    if ui.selectable(
-        "Delete##ctx_delete_" .. instance.UniqueId
-    ) then
+    if ui.selectable("Delete##ctx_delete_" .. instance.UniqueId) then
         local ownedSelection = ownsSelection(instance)
 
         instance:Destroy()
@@ -152,6 +150,14 @@ local function drawContextPanel(instance)
         if ownedSelection then
             SelectionService.Clear()
         end
+
+        ui.closeCurrentPopup()
+    end
+
+    if ui.selectable("Duplicate##ctx_duplicate_" .. instance.UniqueId) then
+        local dup = instance:Duplicate()
+        SelectionService.Clear()
+        SelectionService.Select(dup)
 
         ui.closeCurrentPopup()
     end
@@ -286,17 +292,15 @@ local function drawNode(instance)
     end
 end
 
-local function drawExplorer(game, rect)
+local function drawExplorer(game)
     explorerRoot = game
-    ui.setNextWindowPos(rect.x, rect.y)
-    ui.setNextWindowSize(rect.w, rect.h)
 
-    ui.beginWindow("Explorer", {"NoMove"})
+    ui.beginWindow("Explorer")
 
     if ui.isWindowHovered() then
         EditorState.AttentionFocus = "Explorer"
     end
-
+    
     drawNode(game.Workspace)
     drawNode(game.Lighting)
     drawNode(game.Players)

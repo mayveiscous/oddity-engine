@@ -9,10 +9,8 @@ local prefixes = {
     error = "[ERROR] ",
 }
 
-function Output.draw(rects)
-    ui.setNextWindowPos(rects.x, rects.y)
-    ui.setNextWindowSize(rects.w, rects.h)
-    ui.beginWindow("Output", {"NoMove"})
+function Output.draw()
+    ui.beginWindow("Output")
 
     if ui.button("Clear") then
         Log.clear()

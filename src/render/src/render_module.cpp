@@ -14,6 +14,7 @@
 #include <algorithm>
 
 #include "imgui.h"
+#include "imgui_internal.h" // needed for ImGui::DockBuilder* (not part of the stable public API)
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
@@ -772,6 +773,10 @@ static int lua_init(lua_State* L) {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(g_window, true);
@@ -2104,6 +2109,118 @@ static int lua_imguiSetNextWindowSize(lua_State* L) {
     return 0;
 }
 
+// ---------------------------------------------------------------------
+// Docking
+//
+// imguiDockSpace(id, x, y, w, h) hosts a full dockspace inside an
+// invisible fixed-rect window (so it can be positioned to e.g. leave
+// room for a pinned Top Bar) and returns the dockspace's ImGuiID.
+// Individual panels then just call ui.beginWindow(title) with no
+// SetNextWindowPos/Size and without NoMove/NoResize, and they'll be
+// dockable into it.
+static int lua_imguiDockSpace(lua_State* L) {
+    const char* id = luaL_checkstring(L, 1);
+    float x = (float)luaL_checknumber(L, 2);
+    float y = (float)luaL_checknumber(L, 3);
+    float w = (float)luaL_checknumber(L, 4);
+    float h = (float)luaL_checknumber(L, 5);
+
+    ImGuiWindowFlags hostFlags =
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiWindowFlags_NoNavFocus |
+        ImGuiWindowFlags_NoBackground |
+        ImGuiWindowFlags_NoDocking;
+
+    ImGui::SetNextWindowPos(ImVec2(x, y));
+    ImGui::SetNextWindowSize(ImVec2(w, h));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin(id, nullptr, hostFlags);
+    ImGui::PopStyleVar();
+
+    ImGuiID dockspaceId = ImGui::GetID(id);
+
+    // PassthruCentralNode: don't paint ImGuiCol_DockingEmptyBg (a solid
+    // gray fill) over the central node's unclaimed area. Our layout
+    // always leaves that region unclaimed (it's the leftover behind
+    // the pinned Text Editor, showing the 3D scene) -- without this
+    // flag it paints over the 3D view every frame.
+    ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+
+    ImGui::End();
+
+    lua_pushinteger(L, (lua_Integer)dockspaceId);
+    return 1;
+}
+
+// True if the dockspace node has never been built/laid out before
+// (e.g. first launch, no imgui.ini entry for it yet). Lua uses this
+// to decide whether to run its one-time default-layout setup.
+static int lua_imguiDockBuilderNodeExists(lua_State* L) {
+    ImGuiID id = (ImGuiID)luaL_checkinteger(L, 1);
+    lua_pushboolean(L, ImGui::DockBuilderGetNode(id) != nullptr);
+    return 1;
+}
+
+// Wipes and recreates the dockspace node at full size. Call this once
+// before splitting/docking windows into a fresh default layout.
+static int lua_imguiDockBuilderReset(lua_State* L) {
+    ImGuiID id = (ImGuiID)luaL_checkinteger(L, 1);
+    float w = (float)luaL_checknumber(L, 2);
+    float h = (float)luaL_checknumber(L, 3);
+
+    ImGui::DockBuilderRemoveNode(id);
+    ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize(id, ImVec2(w, h));
+    return 0;
+}
+
+// Splits node `id` and returns (newNodeId, remainderNodeId).
+// dir: "Left" | "Right" | "Up" | "Down". ratio is the fraction of
+// `id` given to the new (first returned) node.
+static int lua_imguiDockBuilderSplit(lua_State* L) {
+    ImGuiID id = (ImGuiID)luaL_checkinteger(L, 1);
+    const char* dirStr = luaL_checkstring(L, 2);
+    float ratio = (float)luaL_checknumber(L, 3);
+
+    ImGuiDir dir = ImGuiDir_Left;
+    if (strcmp(dirStr, "Left") == 0) dir = ImGuiDir_Left;
+    else if (strcmp(dirStr, "Right") == 0) dir = ImGuiDir_Right;
+    else if (strcmp(dirStr, "Up") == 0) dir = ImGuiDir_Up;
+    else if (strcmp(dirStr, "Down") == 0) dir = ImGuiDir_Down;
+    else luaL_error(L, "imguiDockBuilderSplit: dir must be Left/Right/Up/Down");
+
+    ImGuiID newId = 0;
+    ImGuiID remainderId = 0;
+    ImGuiID resultId = ImGui::DockBuilderSplitNode(id, dir, ratio, &newId, &remainderId);
+    (void)resultId;
+
+    lua_pushinteger(L, (lua_Integer)newId);
+    lua_pushinteger(L, (lua_Integer)remainderId);
+    return 2;
+}
+
+// Docks a window (by title, matching ui.beginWindow's title) into a
+// dock node.
+static int lua_imguiDockBuilderDockWindow(lua_State* L) {
+    const char* windowTitle = luaL_checkstring(L, 1);
+    ImGuiID nodeId = (ImGuiID)luaL_checkinteger(L, 2);
+    ImGui::DockBuilderDockWindow(windowTitle, nodeId);
+    return 0;
+}
+
+// Commits the layout built via the DockBuilder* calls above. Must be
+// called once after all splits/docks for a given node are done.
+static int lua_imguiDockBuilderFinish(lua_State* L) {
+    ImGuiID id = (ImGuiID)luaL_checkinteger(L, 1);
+    ImGui::DockBuilderFinish(id);
+    return 0;
+}
+
 static int lua_imguiSetStyle(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     ImGuiStyle& style = ImGui::GetStyle();
@@ -2721,6 +2838,12 @@ static const luaL_Reg renderFunctions[] = {
     {"getWindowSize", lua_getWindowSize},
     {"imguiSetNextWindowPos", lua_imguiSetNextWindowPos},
     {"imguiSetNextWindowSize", lua_imguiSetNextWindowSize},
+    {"imguiDockSpace", lua_imguiDockSpace},
+    {"imguiDockBuilderNodeExists", lua_imguiDockBuilderNodeExists},
+    {"imguiDockBuilderReset", lua_imguiDockBuilderReset},
+    {"imguiDockBuilderSplit", lua_imguiDockBuilderSplit},
+    {"imguiDockBuilderDockWindow", lua_imguiDockBuilderDockWindow},
+    {"imguiDockBuilderFinish", lua_imguiDockBuilderFinish},
     {"imguiCollapsingHeader", lua_imguiCollapsingHeader},
     {"imguiSetStyle", lua_imguiSetStyle},
     {"imguiSetColor", lua_imguiSetColor},

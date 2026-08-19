@@ -227,6 +227,46 @@ function ui.windowCollapsed(id)
     return graphics.imguiWindowCollapsed(id)
 end
 
+-- Hosts a dockspace over the given screen rect. Individual panels then
+-- call ui.beginWindow(title) with no SetNextWindowPos/Size and no
+-- NoMove/NoResize, and they become dockable into it. Returns the
+-- dockspace's id (needed for the dockBuilder* calls below).
+function ui.dockSpace(id, x, y, w, h)
+    return graphics.imguiDockSpace(id, x, y, w, h)
+end
+
+-- True once the dockspace node has a saved layout (either built via
+-- dockBuilder* below, or restored from imgui.ini). False only on a
+-- genuinely fresh node, e.g. first launch.
+function ui.dockBuilderNodeExists(id)
+    return graphics.imguiDockBuilderNodeExists(id)
+end
+
+-- Wipes and recreates the dockspace node at full size. Call once
+-- before splitting/docking windows into a fresh default layout.
+function ui.dockBuilderReset(id, w, h)
+    graphics.imguiDockBuilderReset(id, w, h)
+end
+
+-- Splits node `id`. dir is "Left" | "Right" | "Up" | "Down". ratio is
+-- the fraction of `id` given to the new node on that side.
+-- Returns newNodeId, remainderNodeId.
+function ui.dockBuilderSplit(id, dir, ratio)
+    return graphics.imguiDockBuilderSplit(id, dir, ratio)
+end
+
+-- Docks a window (matched by the title passed to ui.beginWindow) into
+-- a dock node.
+function ui.dockBuilderDockWindow(title, nodeId)
+    graphics.imguiDockBuilderDockWindow(title, nodeId)
+end
+
+-- Commits the layout built via the dockBuilder* calls above. Call
+-- once after all splits/docks for a given node are done.
+function ui.dockBuilderFinish(id)
+    graphics.imguiDockBuilderFinish(id)
+end
+
 function ui.setStyle(style)
     graphics.imguiSetStyle(style)
 end

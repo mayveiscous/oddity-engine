@@ -200,11 +200,8 @@ local function sortedProperties(properties)
     return list
 end
 
-local function drawInspector(rects)
-    ui.setNextWindowPos(rects.x, rects.y)
-    ui.setNextWindowSize(rects.w, rects.h)
-
-    ui.beginWindow("Properties", {"NoMove"})
+local function drawInspector()
+    ui.beginWindow("Properties")
 
     if ui.isWindowHovered() then
         EditorState.AttentionFocus = "Properties"

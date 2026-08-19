@@ -19,18 +19,6 @@ function Layout.apply(collapsed)
     local editorWidth = winW - panelWidth
     local leftHeight = winH - editorStartY
 
-    local panelHeight = winH - topOffset
-
-    local explorerHeight
-
-    if collapsed.Explorer then
-        explorerHeight = collapsedMargin
-    else
-        explorerHeight = panelHeight * explorerHeightRatio
-    end
-
-    local inspectorHeight = panelHeight - explorerHeight
-
     return {
         TopBar = {
             x = 0,
@@ -53,26 +41,16 @@ function Layout.apply(collapsed)
             h = leftHeight - outputHeight,
         },
 
-        Explorer = {
-            x = winW - panelWidth,
-            y = topOffset,
-            w = panelWidth,
-            h = explorerHeight,
-        },
-
-        Inspector = {
-            x = winW - panelWidth,
-            y = topOffset + explorerHeight,
-            w = panelWidth,
-            h = inspectorHeight,
-        },
-
-        Output = {
+        Dock = {
             x = 0,
-            y = winH - outputHeight,
-            w = editorWidth,
-            h = outputHeight,
+            y = topOffset,
+            w = winW,
+            h = winH - topOffset,
         },
+
+        PanelWidth = panelWidth,
+        OutputHeight = outputHeight,
+        ExplorerHeightRatio = explorerHeightRatio,
     }
 end
 
