@@ -7,9 +7,15 @@
 
 ---
 
+# 84
+**Status:** *Commited*
+
+### Added
+- Added `Docking` for editor ui
+
 
 # 83
-**Status:** *Not commmited*
+**Status:** *Commmited*
 
 ### Added
 - Added `Game:GetService("DataService")`
