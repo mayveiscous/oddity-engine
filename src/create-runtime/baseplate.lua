@@ -1,6 +1,7 @@
 local Instance = require "src.core.instance"
 local Vector3 = require "src.types.vector3"
 local Color3 = require "src.types.color3"
+local Enum = require "src.types.enum"
 
 local game = require "src.game"
 
@@ -25,7 +26,13 @@ spawn.Color = Color3.new(100, 100, 150)
 
 spawn.Anchored = true
 spawn.CanCollide = true
+spawn.Material = "Plastic"
 spawn.Parent = game.Workspace
+
+local spawnTexture = Instance.new("Texture")
+spawnTexture.Face = Enum.Faces.Top
+spawnTexture.Image = "Special"
+spawnTexture.Parent = spawn
 
 local function getSpawnPoint()
     for _, obj in ipairs(game.Workspace:GetDescendants()) do

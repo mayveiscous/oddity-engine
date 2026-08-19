@@ -50,6 +50,7 @@ Game.LocalStorage = createCore("LocalStorage", Game)
 Game.ServerStorage = createCore("ServerStorage", Game)
 Game.ServerScripts = createCore("ServerScripts", Game)
 Game.PlayerScripts = createCore("PlayerScripts", Game)
+Game.ClientScripts = createCore("ClientScripts", Game)
 Game.SoundStorage = createCore("SoundStorage", Game)
 Game.DataService = createCore("DataService", Game)
 
@@ -99,6 +100,14 @@ function Game:GetService(name)
 
     if name == "DataService" then
         return Game.DataService
+    end
+
+    if name == "ClientScripts" then
+        return Game.ClientScripts
+    end
+
+    if name == "SoundStorage" then
+        return Game.SoundStorage
     end
 
     error(("Service '%s' does not exist."):format(name), 2)

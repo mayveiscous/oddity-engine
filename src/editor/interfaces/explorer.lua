@@ -16,6 +16,8 @@ local openRenamePopup = false
 local renameFocus = false
 local insertFocus = false
 
+local pendingInsertInstance = nil
+
 local explorerRoot = nil
 
 local function shouldExpand(instance)
@@ -133,6 +135,13 @@ local function drawInsertPanel(instance)
 end
 
 local function drawContextPanel(instance)
+    if ui.selectable("Add##ctx_add_" .. instance.UniqueId) then
+        insertSearch = ""
+        insertFocus = true
+        pendingInsertInstance = instance
+        ui.closeCurrentPopup()
+    end
+
     if ui.selectable("Rename##ctx_rename_" .. instance.UniqueId) then
         renameBuffer = instance.Name
         renameInstance = instance
@@ -300,14 +309,16 @@ local function drawExplorer(game)
     if ui.isWindowHovered() then
         EditorState.AttentionFocus = "Explorer"
     end
-    
+
     drawNode(game.Workspace)
     drawNode(game.Lighting)
     drawNode(game.Players)
     drawNode(game.ServerScripts)
     drawNode(game.ServerStorage)
     drawNode(game.LocalStorage)
+    drawNode(game.ClientScripts)
     drawNode(game.PlayerScripts)
+    drawNode(game.SoundStorage)
 
     if openRenamePopup then
         ui.openPopup("rename_popup")
@@ -317,6 +328,13 @@ local function drawExplorer(game)
     if ui.beginPopup("rename_popup") then
         drawRenamePanel()
         ui.endPopup()
+    end
+
+    if pendingInsertInstance then
+        local instance = pendingInsertInstance
+        pendingInsertInstance = nil
+
+        ui.openPopup("insert_popup_" .. instance.UniqueId)
     end
 
     ui.endWindow()

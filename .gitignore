@@ -5,9 +5,8 @@
 *.exe
 *.dll
 
-# TODO list
+# todo list
 TODO.*
-DATA_SYSTEM.*
 
 # ide & ignores
 .ignore/
@@ -21,10 +20,8 @@ src/render/imgui
 src/render/include
 src/render/build
 src/render/src/main.cpp
-
-# imgui
 *.ini
 
-# c -> imgui
+# c
 *.c
 *.h

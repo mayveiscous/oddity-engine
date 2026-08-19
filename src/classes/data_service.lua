@@ -7,7 +7,7 @@ local DataService = Instance:RegisterClass("DataService", "Service", {
     Properties = {
         ShowInExplorer = {
             type = "boolean",
-            default = true,
+            default = false,
             category = "Hidden"
         },
     },
