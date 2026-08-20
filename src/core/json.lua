@@ -1,3 +1,5 @@
+-- simple json encoding + decoding for data serialization/deserialization
+-- may also be exposed to API
 local json = {}
 
 local function escapeString(str)

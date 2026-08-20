@@ -12,7 +12,7 @@ local downLastFrame = {}
 function InputService.IsKeyDown(keyName)
     local code = KeyCodes[keyName]
     if not code then
-        error(("Unknown key '%s"):format(keyName))
+        error(("Unknown key '%s"):format(keyName), 2)
     end
     return graphics.isKeyDown(code)
 end
@@ -27,7 +27,7 @@ end
 
 function InputService.IsKeyPressed(keyName)
     if not KeyCodes[keyName] then
-        error(("Unknown key '%s"):format(keyName))
+        error(("Unknown key '%s"):format(keyName), 2)
     end
     return downThisFrame[keyName] and not downLastFrame[keyName]
 end
@@ -40,7 +40,7 @@ end
 function InputService.IsMouseButtonDown(buttonName)
     local code = MouseButtons[buttonName]
     if not code then
-        error(("Unknown mouse button '%s'"):format(buttonName))
+        error(("Unknown mouse button '%s'"):format(buttonName), 2)
     end
     return graphics.isMouseButtonDown(code)
 end

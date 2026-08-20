@@ -25,7 +25,7 @@ custom C++ renderer, with an in-engine editor built on Dear ImGui.
 
 - *Oddity Engine* is far from complete, many changes will be made and features added.
 - Default modules will be wrapped in LuaScript objects once API is capable.
-- This repository will **not** include *Oddity Runtime* once it begins development.
+- This repository will **not** include *Oddity Executor* (the runtime) once it begins development.
 
 ## License
 

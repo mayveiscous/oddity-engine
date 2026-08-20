@@ -2,6 +2,7 @@ local Instance = require "src.core.instance"
 
 local Internal = {}
 
+-- allows engine/editor to bypass ReadOnly flag
 function Internal.SetProperty(instance, propertyName, value)
     local state = rawget(instance, "_state")
     local old = state[propertyName]

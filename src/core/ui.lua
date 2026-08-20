@@ -1,5 +1,6 @@
 local graphics = require "oddity.graphics"
 
+-- ui wrapper for all imgui functions exposed by graphics.dll
 local ui = {}
 
 function ui.beginWindow(title, flags)

@@ -1,3 +1,5 @@
+-- list of GLFW keycodes for input handling both engine/editor input
+-- and user input API
 return {
     Keys = {
         Space = 32,
