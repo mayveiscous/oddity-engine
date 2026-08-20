@@ -1893,15 +1893,19 @@ static int lua_imguiTreeNodeEx(lua_State* L) {
     const char* label = luaL_checkstring(L, 1);
     bool selected = lua_toboolean(L, 2);
     bool forceOpen = lua_toboolean(L, 3);
+    bool leaf = lua_toboolean(L, 4);
+    bool isCore = lua_toboolean(L, 5);
 
-    ImGuiTreeNodeFlags flags =
-        ImGuiTreeNodeFlags_OpenOnArrow;
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
 
     if (selected)
         flags |= ImGuiTreeNodeFlags_Selected;
 
     if (forceOpen)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
+    if (leaf && !isCore)
+        flags |= ImGuiTreeNodeFlags_Leaf;
 
     bool open = ImGui::TreeNodeEx(label, flags);
 

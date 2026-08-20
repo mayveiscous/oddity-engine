@@ -9,6 +9,9 @@ local InputService = {}
 local downThisFrame = {}
 local downLastFrame = {}
 
+local mouseDownThisFrame = {}
+local mouseDownLastFrame = {}
+
 function InputService.IsKeyDown(keyName)
     local code = KeyCodes[keyName]
     if not code then
@@ -23,6 +26,13 @@ function InputService.Update()
     for keyName in pairs(KeyCodes) do
         downThisFrame[keyName] = InputService.IsKeyDown(keyName)
     end
+
+    mouseDownLastFrame = mouseDownThisFrame
+    mouseDownThisFrame = {}
+
+    for buttonName in pairs(MouseButtons) do
+        mouseDownThisFrame[buttonName] = InputService.IsMouseButtonDown(buttonName)
+    end
 end
 
 function InputService.IsKeyPressed(keyName)
@@ -35,6 +45,14 @@ end
 function InputService.GetMousePos()
     local x, y = graphics.getMousePos()
     return x, y
+end
+
+function InputService.IsMouseButtonPressed(buttonName)
+    if not MouseButtons[buttonName] then
+        error(("Unknown mouse button '%s'"):format(buttonName), 2)
+    end
+
+    return mouseDownThisFrame[buttonName] and not mouseDownLastFrame[buttonName]
 end
 
 function InputService.IsMouseButtonDown(buttonName)

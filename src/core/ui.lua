@@ -132,8 +132,8 @@ function ui.treeNode(label, selected)
     return graphics.imguiTreeNode(label, selected)
 end
 
-function ui.treeNodeEx(label, selected, forceOpen, isLeaf)
-    return graphics.imguiTreeNodeEx(label, selected, forceOpen, isLeaf)
+function ui.treeNodeEx(label, selected, forceOpen, isLeaf, isCoreService)
+    return graphics.imguiTreeNodeEx(label, selected, forceOpen, isLeaf, isCoreService)
 end
 
 function ui.openPopup(id)

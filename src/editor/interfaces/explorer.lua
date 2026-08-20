@@ -4,6 +4,7 @@ local InputService = require "src.classes.services.inputservice"
 local ui = require "src.core.ui"
 
 local EditorState = require "src.editor.state"
+local TextEditor = require "src.editor.interfaces.text_editor"
 
 local expanded = {}
 
@@ -19,6 +20,13 @@ local insertFocus = false
 local pendingInsertInstance = nil
 
 local explorerRoot = nil
+
+local selectionAnchor = nil
+
+local lastClickInstance = nil
+local lastClickTime = 0
+
+local DOUBLE_CLICK_TIME = 0.3
 
 local function shouldExpand(instance)
     local selected = SelectionService.current
@@ -90,16 +98,112 @@ local function ownsSelection(instance)
     return false
 end
 
+local function collectVisibleInstances(instance, result)
+    table.insert(result, instance)
+
+    if not expanded[instance.UniqueId] then
+        return
+    end
+
+    for _, child in ipairs(instance:GetChildren()) do
+        collectVisibleInstances(child, result)
+    end
+end
+
+local function getVisibleInstances(game)
+    local result = {}
+
+    collectVisibleInstances(game.Workspace, result)
+    collectVisibleInstances(game.Lighting, result)
+    collectVisibleInstances(game.Players, result)
+    collectVisibleInstances(game.ServerScripts, result)
+    collectVisibleInstances(game.ServerStorage, result)
+    collectVisibleInstances(game.LocalStorage, result)
+    collectVisibleInstances(game.ClientScripts, result)
+    collectVisibleInstances(game.PlayerScripts, result)
+    collectVisibleInstances(game.SoundStorage, result)
+
+    return result
+end
+
+local function selectRange(game, from, to)
+    local visible = getVisibleInstances(game)
+
+    local fromIndex = nil
+    local toIndex = nil
+
+    for i, instance in ipairs(visible) do
+        if instance == from then
+            fromIndex = i
+        end
+
+        if instance == to then
+            toIndex = i
+        end
+    end
+
+    if not fromIndex or not toIndex then
+        SelectionService.Select(to)
+        return
+    end
+
+    if fromIndex > toIndex then
+        fromIndex, toIndex = toIndex, fromIndex
+    end
+
+    SelectionService.Clear()
+
+    for i = fromIndex, toIndex do
+        SelectionService.Add(visible[i])
+    end
+end
+
+local function handleSelectionClick(game, instance)
+    local ctrl = InputService.IsKeyDown("LeftControl") or InputService.IsKeyDown("RightControl")
+    local shift = InputService.IsKeyDown("LeftShift") or InputService.IsKeyDown("RightShift")
+
+    if shift and selectionAnchor then
+        selectRange(game, selectionAnchor, instance)
+        return
+    end
+
+    if ctrl then
+        SelectionService.Toggle(instance)
+        selectionAnchor = instance
+        return
+    end
+
+    SelectionService.Select(instance)
+    selectionAnchor = instance
+end
+
+local function handleDoubleClick(instance)
+    local now = os.clock()
+
+    local isDoubleClick = lastClickInstance == instance and now - lastClickTime <= DOUBLE_CLICK_TIME
+
+    lastClickInstance = instance
+    lastClickTime = now
+
+    if not isDoubleClick then
+        return
+    end
+
+    if instance:IsA("LuaScript") then
+        TextEditor.openScript(instance)
+    end
+
+    lastClickInstance = nil
+    lastClickTime = 0
+end
+
 local function drawInsertPanel(instance)
     if insertFocus then
         ui.setKeyboardFocusHere()
         insertFocus = false
     end
 
-    insertSearch = ui.inputText(
-        "##insert_search_" .. instance.UniqueId,
-        insertSearch
-    )
+    insertSearch = ui.inputText("##insert_search_" .. instance.UniqueId, insertSearch)
 
     local query = insertSearch:lower()
     local firstMatch = nil
@@ -110,13 +214,7 @@ local function drawInsertPanel(instance)
                 firstMatch = entry
             end
 
-            local hit = ui.selectable(
-                entry.label ..
-                "##insert_item_" ..
-                instance.UniqueId ..
-                "_" ..
-                entry.label
-            )
+            local hit = ui.selectable(entry.label .. "##insert_item_" .. instance.UniqueId .. "_" .. entry.label)
 
             if hit then
                 InsertObject.CreateEntry(entry, instance)
@@ -158,6 +256,7 @@ local function drawContextPanel(instance)
 
         if ownedSelection then
             SelectionService.Clear()
+            selectionAnchor = nil
         end
 
         ui.closeCurrentPopup()
@@ -165,8 +264,11 @@ local function drawContextPanel(instance)
 
     if ui.selectable("Duplicate##ctx_duplicate_" .. instance.UniqueId) then
         local dup = instance:Duplicate()
+
         SelectionService.Clear()
         SelectionService.Select(dup)
+
+        selectionAnchor = dup
 
         ui.closeCurrentPopup()
     end
@@ -185,10 +287,7 @@ local function drawRenamePanel()
         renameFocus = false
     end
 
-    renameBuffer = ui.inputText(
-        "##rename",
-        renameBuffer
-    )
+    renameBuffer = ui.inputText("##rename", renameBuffer)
 
     if InputService.IsKeyPressed("Enter") then
         if renameBuffer ~= "" then
@@ -208,9 +307,9 @@ local function drawRenamePanel()
     end
 end
 
-local function drawNode(instance)
+local function drawNode(instance, game)
     local label = instance.Name .. "###" .. instance.UniqueId
-    local selected = SelectionService.current == instance
+    local selected = SelectionService.Contains(instance)
 
     local hasChild = #instance:GetChildren() > 0
 
@@ -226,13 +325,9 @@ local function drawNode(instance)
 
     local fOpen = hasChild and expanded[instance.UniqueId] == true
     local isLeaf = not hasChild
+    local isCore = instance.IsCoreService
 
-    local open, clicked, rightClicked = ui.treeNodeEx(
-        label,
-        selected,
-        fOpen,
-        isLeaf
-    )
+    local open, clicked, rightClicked = ui.treeNodeEx(label, selected, fOpen, not hasChild, isCore)
 
     if not instance.IsCoreService then
         if ui.beginDragDropSource() then
@@ -249,7 +344,8 @@ local function drawNode(instance)
 
         if draggedId then
             local dragged = findInstanceById(explorerRoot, draggedId)
-             if dragged and canReparent(dragged, instance) then
+
+            if dragged and canReparent(dragged, instance) then
                 dragged.Parent = instance
             end
         end
@@ -262,15 +358,17 @@ local function drawNode(instance)
     end
 
     if clicked then
-        SelectionService.Select(instance)
+        handleSelectionClick(game, instance)
+        handleDoubleClick(instance)
     end
 
     local insertId = "insert_popup_" .. instance.UniqueId
-
     local contextId = "context_popup_" .. instance.UniqueId
 
     if rightClicked then
         SelectionService.Select(instance)
+        selectionAnchor = instance
+
         ui.openPopup(contextId)
     end
 
@@ -294,7 +392,7 @@ local function drawNode(instance)
 
     if open then
         for _, child in ipairs(instance:GetChildren()) do
-            drawNode(child)
+            drawNode(child, game)
         end
 
         ui.treePop()
@@ -310,15 +408,15 @@ local function drawExplorer(game)
         EditorState.AttentionFocus = "Explorer"
     end
 
-    drawNode(game.Workspace)
-    drawNode(game.Lighting)
-    drawNode(game.Players)
-    drawNode(game.ServerScripts)
-    drawNode(game.ServerStorage)
-    drawNode(game.LocalStorage)
-    drawNode(game.ClientScripts)
-    drawNode(game.PlayerScripts)
-    drawNode(game.SoundStorage)
+    drawNode(game.Workspace, game)
+    drawNode(game.Lighting, game)
+    drawNode(game.Players, game)
+    drawNode(game.ServerScripts, game)
+    drawNode(game.ServerStorage, game)
+    drawNode(game.LocalStorage, game)
+    drawNode(game.ClientScripts, game)
+    drawNode(game.PlayerScripts, game)
+    drawNode(game.SoundStorage, game)
 
     if openRenamePopup then
         ui.openPopup("rename_popup")
@@ -339,6 +437,7 @@ local function drawExplorer(game)
 
     ui.endWindow()
 end
+
 
 return {
     drawExplorer = drawExplorer,

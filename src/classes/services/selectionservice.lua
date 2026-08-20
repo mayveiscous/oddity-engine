@@ -28,9 +28,12 @@ function SelectionService.Toggle(inst)
 end
 
 function SelectionService.Contains(inst)
+    if inst == SelectionService.current then return true end
+
     for _, s in ipairs(SelectionService._selected) do
         if s == inst then return true end
     end
+
     return false
 end
 

@@ -8,6 +8,7 @@ local Snapshot = require "src.editor.state.playtest_snapshot"
 local PhysicsEngine = require "src.physics.core.engine"
 local PhysicsObject = require "src.physics.core.physics_object"
 
+local Log = require "src.editor.state.log"
 local Tabs = require "src.editor.state.tabs"
 
 local Game = require "src.game"
@@ -70,6 +71,8 @@ local function beginPlaytest()
     end
 
     beginPlaytestPhysics()
+
+    Log.clear()
 
     Tabs.setActiveIndex(Tabs.getSceneIndex())
     Game.beginPlaytest()

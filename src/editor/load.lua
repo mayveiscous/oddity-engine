@@ -37,7 +37,7 @@ local function draw(workspace)
     local rects = Layout.apply(EditorState.collapsed)
 
     local dockId = ui.dockSpace("MainDockspace", rects.Dock.x, rects.Dock.y, rects.Dock.w, rects.Dock.h)
-    
+
     local sizeChanged = lastDockW ~= nil and (
         math.abs(rects.Dock.w - lastDockW) > 0.5 or
         math.abs(rects.Dock.h - lastDockH) > 0.5
