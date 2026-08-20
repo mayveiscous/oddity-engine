@@ -80,14 +80,14 @@ Enum.Materials = {
 }
 
 Enum.MaterialNames = {
-    Plastic = "Plastic",
-    Metal = "Metal",
-    Wood = "Wood",
-    Fabric = "Fabric",
-    Glass = "Glass",
-    Brick = "Brick",
-    Grass = "Grass",
-    Concrete = "Concrete"
+    "Plastic",
+    "Metal",
+    "Wood",
+    "Fabric",
+    "Glass",
+    "Brick",
+    "Grass",
+    "Concrete"
 }
 
 Enum.Faces = {

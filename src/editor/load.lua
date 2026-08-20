@@ -60,11 +60,12 @@ local function draw(workspace)
     lastDockW, lastDockH = rects.Dock.w, rects.Dock.h
 
     Explorer.drawExplorer(workspace)
-    Inspector.drawInspector()
     Output.draw()
     TopBar.draw(rects.TopBar)
     AnimationEditor.draw()
     TextEditor.draw(rects)
+
+    Inspector.drawInspector()
 
     EditorState.collapsed.TopBar = graphics.imguiWindowCollapsed("Top Bar")
 end

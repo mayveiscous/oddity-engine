@@ -15,8 +15,8 @@ local height = 0.5
 local mouseSensitivity = 0.12
 local pitchLimit = 80
 
-local minScroll = 5
-local maxScroll = 70
+local minScroll = 15
+local maxScroll = 35
 
 local defaultYaw = 90
 local defaultPitch = -15
