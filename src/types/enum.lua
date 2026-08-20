@@ -79,6 +79,17 @@ Enum.Materials = {
     Concrete = Materials.Concrete
 }
 
+Enum.MaterialNames = {
+    Plastic = "Plastic",
+    Metal = "Metal",
+    Wood = "Wood",
+    Fabric = "Fabric",
+    Glass = "Glass",
+    Brick = "Brick",
+    Grass = "Grass",
+    Concrete = "Concrete"
+}
+
 Enum.Faces = {
     All = "All",
     Front = "Front",
@@ -87,6 +98,12 @@ Enum.Faces = {
     Right = "Right",
     Top = "Top",
     Bottom = "Bottom",
+}
+
+Enum.Shapes = {
+    Block = "Block",
+    Wedge = "Wedge",
+    Sphere = "Sphere"
 }
 
 Enum.KeyCodes = KeyCodes.Keys

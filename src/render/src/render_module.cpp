@@ -536,8 +536,13 @@ static GLuint compileSkyShaderProgram() {
 
 static double g_scrollDeltaY = 0.0;
 
+static GLFWscrollfun g_prevScrollCallback = nullptr;
+
 static void glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
     g_scrollDeltaY += yoffset;
+
+    if (g_prevScrollCallback)
+        g_prevScrollCallback(window, xoffset, yoffset);
 }
 
 static double g_mouseDeltaX = 0.0;
@@ -782,7 +787,7 @@ static int lua_init(lua_State* L) {
     ImGui_ImplGlfw_InitForOpenGL(g_window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glfwSetScrollCallback(g_window, glfwScrollCallback);
+    g_prevScrollCallback = glfwSetScrollCallback(g_window, glfwScrollCallback);
     g_prevCursorPosCallback = glfwSetCursorPosCallback(g_window, glfwCursorPosCallback);
 
     glEnable(GL_DEPTH_TEST);
@@ -1406,9 +1411,6 @@ static int lua_beginFrame(lua_State* L) {
         500.0f
     );
 
-    // Sky pass: drawn first, depth write disabled, so real geometry (which
-    // depth-tests against the untouched, freshly-cleared depth buffer)
-    // naturally draws over it wherever it covers the screen.
     {
         glm::mat4 invViewProj = glm::inverse(projection * view);
 
@@ -2109,15 +2111,6 @@ static int lua_imguiSetNextWindowSize(lua_State* L) {
     return 0;
 }
 
-// ---------------------------------------------------------------------
-// Docking
-//
-// imguiDockSpace(id, x, y, w, h) hosts a full dockspace inside an
-// invisible fixed-rect window (so it can be positioned to e.g. leave
-// room for a pinned Top Bar) and returns the dockspace's ImGuiID.
-// Individual panels then just call ui.beginWindow(title) with no
-// SetNextWindowPos/Size and without NoMove/NoResize, and they'll be
-// dockable into it.
 static int lua_imguiDockSpace(lua_State* L) {
     const char* id = luaL_checkstring(L, 1);
     float x = (float)luaL_checknumber(L, 2);

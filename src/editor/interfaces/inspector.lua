@@ -6,8 +6,9 @@ local EditorState = require "src.editor.state"
 local Vector3 = require "src.types.vector3"
 local Vector2 = require "src.types.vector2"
 local Color3 = require "src.types.color3"
+local Enum = require "src.types.enum"
 
-local LABEL_WIDTH = 100
+local LABEL_WIDTH = 110
 
 local function isVector3(v)
     return type(v) == "table"
@@ -33,13 +34,28 @@ local function isInstance(v)
         and v.ClassName ~= nil
 end
 
-local function drawLabel(name)
+local PROPERTY_OPTIONS = {
+    Face = Enum.Faces,
+    Material = Enum.MaterialNames,
+    Shape = Enum.Shapes,
+}
+
+local function getPropertyOptions(name)
+    return PROPERTY_OPTIONS[name]
+end
+
+local function drawPropertyLabel(name)
     ui.text(name)
     ui.sameLine()
     ui.setCursorPosX(LABEL_WIDTH)
 end
 
-local function drawCombo(name, value, options)
+local function drawPropertyRow(name, drawControl)
+    drawPropertyLabel(name)
+    return drawControl("##" .. name)
+end
+
+local function drawCombo(id, value, options)
     local current = 0
 
     for i, option in ipairs(options) do
@@ -50,7 +66,7 @@ local function drawCombo(name, value, options)
     end
 
     local newCurrent, changed = ui.combo(
-        "##" .. name,
+        id,
         current,
         options
     )
@@ -62,124 +78,94 @@ local function drawCombo(name, value, options)
     return value, false
 end
 
-local function getPropertyOptions(name, value)
-    if name == "Face" then
-        return {
-            "All",
-            "Top",
-            "Bottom",
-            "Left",
-            "Right",
-            "Front",
-            "Back",
-        }
-    end
-
-    if name == "Material" then
-        return {
-            "Plastic",
-            "Wood",
-            "Fabric",
-            "Metal",
-            "Glass",
-            "Concrete",
-            "Brick",
-            "Grass",
-        }
-    end
-
-    if name == "Shape" then
-        return {
-            "Block",
-            "Sphere",
-            "Wedge",
-        }
-    end
-
-    return nil
-end
-
-local function drawProperty(name, value, readOnly)
-    drawLabel(name)
-
-    if readOnly then
-        ui.textDisabled(tostring(value))
-        return value
-    end
-
-    local options = getPropertyOptions(name, value)
+local function drawPropertyControl(name, value)
+    local options = getPropertyOptions(name)
 
     if options then
-        local newValue, changed = drawCombo(
-            name,
-            value,
-            options
-        )
-
-        if changed then
-            return newValue
-        end
-
-        return value
+        return drawPropertyRow(name, function(id)
+            return drawCombo(id, value, options)
+        end)
     end
+
     if type(value) == "boolean" then
-        local newValue, changed =
-            ui.checkbox("##" .. name, value)
-
-        if changed then
-            return newValue
-        end
-    elseif type(value) == "number" then
-        local newValue, changed = ui.inputFloat("##" .. name, value)
-
-        if changed then
-            return newValue
-        end
-    elseif type(value) == "string" then
-        local newValue, changed = ui.inputText("##" .. name, value)
-
-        if changed then
-            return newValue
-        end
-    elseif isVector3(value) then
-        local x, y, z, changed = ui.vector3(
-            "##" .. name,
-            value.X,
-            value.Y,
-            value.Z
-        )
-
-        if changed then
-            return Vector3.new(x, y, z)
-        end
-    elseif isVector2(value) then
-        local x, y, changed = ui.vector2(
-            "##" .. name,
-            value.X,
-            value.Y
-        )
-
-        if changed then
-            return Vector2.new(x, y)
-        end
-    elseif isColor3(value) then
-        local r, g, b, changed = ui.color(
-            "##" .. name,
-            value.R,
-            value.G,
-            value.B
-        )
-
-        if changed then
-            return Color3.new(r, g, b)
-        end
-    elseif isInstance(value) then
-        ui.text(value.Name or value.ClassName)
-    else
-        ui.text(tostring(value))
+        return drawPropertyRow(name, function(id)
+            return ui.checkbox(id, value)
+        end)
     end
 
-    return value
+    if type(value) == "number" then
+        return drawPropertyRow(name, function(id)
+            return ui.inputFloat(id, value)
+        end)
+    end
+
+    if type(value) == "string" then
+        return drawPropertyRow(name, function(id)
+            return ui.inputText(id, value)
+        end)
+    end
+
+    if isVector3(value) then
+        return drawPropertyRow(name, function(id)
+            local x, y, z, changed = ui.vector3(
+                id,
+                value.X,
+                value.Y,
+                value.Z
+            )
+
+            if changed then
+                return Vector3.new(x, y, z), true
+            end
+
+            return value, false
+        end)
+    end
+
+    if isVector2(value) then
+        return drawPropertyRow(name, function(id)
+            local x, y, changed = ui.vector2(
+                id,
+                value.X,
+                value.Y
+            )
+
+            if changed then
+                return Vector2.new(x, y), true
+            end
+
+            return value, false
+        end)
+    end
+
+    if isColor3(value) then
+        return drawPropertyRow(name, function(id)
+            local r, g, b, changed = ui.color(
+                id,
+                value.R,
+                value.G,
+                value.B
+            )
+
+            if changed then
+                return Color3.new(r, g, b), true
+            end
+
+            return value, false
+        end)
+    end
+
+    if isInstance(value) then
+        drawPropertyLabel(name)
+        ui.textDisabled(value.Name or value.ClassName)
+
+        return value, false
+    end
+
+    drawPropertyLabel(name)
+    ui.textDisabled(tostring(value))
+
+    return value, false
 end
 
 local function sortedProperties(properties)
@@ -200,6 +186,29 @@ local function sortedProperties(properties)
     return list
 end
 
+local function sortedCategories(properties)
+    local categories = {}
+
+    for category in pairs(properties) do
+        if category ~= "Hidden" then
+            table.insert(categories, category)
+        end
+    end
+
+    table.sort(categories)
+
+    return categories
+end
+
+local function drawObjectHeader(inst)
+    ui.text(inst.Name)
+
+    ui.sameLine()
+    ui.textDisabled("[" .. inst.ClassName .. "]")
+
+    ui.separator()
+end
+
 local function drawInspector()
     ui.beginWindow("Properties")
 
@@ -210,33 +219,38 @@ local function drawInspector()
     local inst = Explorer.getSelected()
 
     if not inst then
-        ui.textDisabled("No object selected")
+        ui.spacing()
+        ui.textDisabled("Select an object to view its properties.")
         ui.endWindow()
         return
     end
 
-    ui.text(inst.Name)
-    ui.textDisabled(inst.ClassName)
-
-    ui.separator()
+    drawObjectHeader(inst)
 
     local props = inst:GetProperties()
 
-    for category, properties in pairs(props) do
-        if category ~= "Hidden" then
-            if ui.collapsingHeader(category, true) then
-                for _, property in ipairs(sortedProperties(properties)) do
-                    local oldValue = property.value
+    for _, category in ipairs(sortedCategories(props)) do
+        local properties = props[category]
 
-                    local newValue = drawProperty(
+        if ui.collapsingHeader(category, true) then
+            for _, property in ipairs(sortedProperties(properties)) do
+                local definition = property.definition
+                local oldValue = property.value
+
+                local newValue, changed
+
+                if definition.readOnly then
+                    drawPropertyLabel(property.name)
+                    ui.textDisabled(tostring(oldValue))
+                else
+                    newValue, changed = drawPropertyControl(
                         property.name,
-                        oldValue,
-                        property.definition.readOnly
+                        oldValue
                     )
+                end
 
-                    if not property.definition.readOnly and newValue ~= oldValue then
-                        inst[property.name] = newValue
-                    end
+                if changed and newValue ~= oldValue then
+                    inst[property.name] = newValue
                 end
             end
         end

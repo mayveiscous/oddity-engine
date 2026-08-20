@@ -18,13 +18,6 @@ local EditorState = require "src.editor.state"
 local graphics = require "oddity.graphics"
 local hasApplied = false
 
--- Tracks the dockspace's last known size so we can rebuild the split
--- layout whenever the window is resized (fullscreen toggle, dragging
--- the border, etc). DockBuilder-built splits don't reliably re-flow
--- on their own when the host window changes size later, so we force
--- it. NOTE: this means manually-redocked panels reset to the default
--- layout on resize -- acceptable for now, revisit once basic resize
--- is confirmed working.
 local lastDockW, lastDockH = nil, nil
 
 local function draw(workspace)
@@ -37,13 +30,14 @@ local function draw(workspace)
 
     EditorState.Typing = ui.wantTextInput()
 
+    if not ui.wantsMouse() then
+        EditorState.AttentionFocus = "Renderer"
+    end
+
     local rects = Layout.apply(EditorState.collapsed)
 
     local dockId = ui.dockSpace("MainDockspace", rects.Dock.x, rects.Dock.y, rects.Dock.w, rects.Dock.h)
-
-    -- Rebuild the default split whenever the dockspace's size changes
-    -- (first launch, no imgui.ini entry yet -- OR the window/fullscreen
-    -- was resized and the previously-built node needs to catch up).
+    
     local sizeChanged = lastDockW ~= nil and (
         math.abs(rects.Dock.w - lastDockW) > 0.5 or
         math.abs(rects.Dock.h - lastDockH) > 0.5

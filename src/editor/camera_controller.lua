@@ -161,13 +161,13 @@ RunService.Heartbeat:Connect(function(dt)
     local direction = directionFromYawPitch(yaw, pitch)
     cam.LookAt = Vector3.new(
         cam.Position.X + direction.X,
-        cam.Position.Y + direction.Y,
+    cam.Position.Y + direction.Y,
         cam.Position.Z + direction.Z
     )
 
     local scroll = InputService.GetMouseScroll()
 
-    if scroll ~= 0 and not EditorState.AttentionFocusedTo("Properties") then
+    if scroll ~= 0 and EditorState.AttentionFocusedTo("Renderer") then
         local distance = math.max(
             scrollDistance,
             currentSpeed * 0.15
